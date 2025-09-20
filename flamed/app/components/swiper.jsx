@@ -134,35 +134,69 @@ export default function Swiper() {
                 </AnimatePresence>
             </div>
 
-            <div className="flex gap-3 mt-6">
-                <button
-                    //onClick={rejectedItem}
-                    //triggerar reject action sem lætur cardið fljúga til vinstri sem triggerar rejectedItem
-                    onClick={() => triggerAction('reject')}
-                    className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded">
-                    Reject
+            <div className="mt-8 pt-2 px-2 sm:px-0 flex items-center gap-3">
+                
+                <button onClick={() => triggerAction('reject')}
+                    aria-label="Reject" 
+                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-red-600 dark:text-red-400 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 hover:bg-red-50/60 dark:hover:bg-red-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-95 active:-translate-y-0.5 active:shadow-inner">
+                    
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="hidden md:inline">Reject</span>
                 </button>
-                <button
-                    //onClick={ignoreItem}
-                    //triggerar skip action sem lætur cardið fljúga upp og triggerar svo ignoreItem
-                    onClick={() => triggerAction('skip')}
-                    className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
-                    Skip
-                </button>
-                <button
-                    //onClick={acceptedItem}
-                    //triggerar accept action sem lætur cardið fljúga til hægri sem triggerar acceptedItem
-                    onClick={() => triggerAction('accept')}
-                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
-                    Accept
-                </button>
-            </div>
 
+                <button onClick={() => triggerAction('skip')}
+                    aria-label="Skip"
+                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600 hover:bg-gray-50/60 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner">
+                    
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="9" />
+                        <path strokeLinecap="round" d="M8 12h8" />
+                    </svg>
+                    <span className="hidden md:inline">Skip</span>
+                </button>
+
+                <button onClick={() => triggerAction('accept')}
+                    aria-label="Accept"
+                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-green-600 dark:text-green-400 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50/60 dark:hover:bg-green-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner">
+                    
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="hidden md:inline">Accept</span>
+                </button>
+                
+            </div>
             <div className="text-sm text-gray-500 mt-4">
                 {current + 1} / {restaurants.length}
             </div>
         </div>
     );
+    /* gömlu takkarnir, til örrygis
+        <button
+            //onClick={rejectedItem}
+            //triggerar reject action sem lætur cardið fljúga til vinstri sem triggerar rejectedItem
+            onClick={() => triggerAction('reject')}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded">
+            Reject
+        </button>
+        <button
+            //onClick={ignoreItem}
+            //triggerar skip action sem lætur cardið fljúga upp og triggerar svo ignoreItem
+            onClick={() => triggerAction('skip')}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
+            Skip
+        </button>
+        <button
+            //onClick={acceptedItem}
+            //triggerar accept action sem lætur cardið fljúga til hægri sem triggerar acceptedItem
+            onClick={() => triggerAction('accept')}
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
+            Accept
+        </button>
+    </div>
+    */
 }
 
 function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignoreItem, action, onActionConsumed }) {
@@ -226,7 +260,7 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
     const swipeSkip = () => {
         //notar vh í stað vw til þess að láta cardið fljúga lóðrétt upp
         const target = (vh + 200) * -1;
-        const duration = Math.max(0.3, 0.14 + vh / 8000); //dynamic animation duration eftir skjástærð
+        const duration = Math.max(0.4, 0.14 + vh / 8000); //dynamic animation duration eftir skjástærð
         animate(y, target, {
             type: 'tween',
             ease: 'easeOut',
@@ -240,7 +274,7 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
     //function sem lætur cardið fljúga til hægri eða vinstri útfrá tökkunum
     const swipe = (direction) => {
         const target = (vw + 200) * (direction === 'right' ? 1 : -1); //target aðeins lengra en window width þannig cardið hverfi alveg
-        const duration = Math.max(0.3, 0.14 + vw / 8000); //dynamic animation duration eftir skjástærð
+        const duration = Math.max(0.4, 0.14 + vw / 8000); //dynamic animation duration eftir skjástærð
         animate(x, target, {
             type: 'tween',
             ease: 'easeOut',
