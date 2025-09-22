@@ -81,7 +81,7 @@ export default function Preferences() {
     // Save preferences to localStorage
     localStorage.setItem('restaurantPreferences', JSON.stringify(preferences));
     // Redirect to home page instead of non-existent /swipe
-    router.push('/swipe');
+    router.push('/swiper');
   };
 
   return (
