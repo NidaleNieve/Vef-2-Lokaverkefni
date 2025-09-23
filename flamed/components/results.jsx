@@ -38,11 +38,14 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         body: JSON.stringify(info),
         credentials: 'include',
       });
+
+      //hef error handling fyrir respons
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.error || `Submit failed (${res.status})`);
       }
-      setSubmitted(true);
+      setSubmitted(true); //set submitted true til að láta vita að async sé búið successfully
+    //hef error handling fyrir allt þetta, og set submitting false til að láta vita að async sé búið 
     } catch (e) {
       setErr(e.message || 'Failed to submit results.');
     } finally {
@@ -50,21 +53,28 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
+  //function fyrir refresha og sækja niðurstöður, mun vera automatic
   async function refreshGroupResult() {
-    if (!groupId || !sessionId) {
-      setErr('Missing groupId or sessionId.');
+    //error handling fyrir groupId og sessionId
+    if (!groupId || !sessionId) { 
+      setErr('Missing groupId or sessionId.');//nota setErr til þess að geta svo byrt villu
       return;
     }
-    setErr('');
-    setFetching(true);
+    setErr(''); //ef engin villa, þá set ég hana blank
+    setFetching(true); //stilli set fetching til þess að láta vita að það sé verið að fetcha asynchronously
+
     try {
+      //sæki niðurstöður frá api endpointinu
       const res = await fetch(`/api/groups/${groupId}/results?session_id=${encodeURIComponent(sessionId)}`, {
         method: 'GET',
         credentials: 'include',
       });
+
+      //error handling fyrir response
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
       setAgg(j);
+    //hef error handling fyrir allt þetta
     } catch (e) {
       setErr(e.message || 'Failed to fetch results.');
     } finally {
@@ -72,10 +82,12 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
+  //finn nöfn vetitingastaðan úr id
   const idToName = new Map(restaurants.map(r => [r.id, r.name]));
+  //finn nöfn af consensus veitingastaðunum
   const consensusNames = (agg?.consensus_ids || []).map(id => idToName.get(id) || String(id));
 
-  // Sort top picks by percentage desc for display (e.g. top 5)
+  // Sort top picks by percentage consensus
   const topPicks = agg?.percentages
     ? Object.entries(agg.percentages)
         .sort((a, b) => b[1] - a[1])
@@ -83,6 +95,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         .map(([id, pct]) => ({ id, name: idToName.get(Number(id)) || String(id), pct }))
     : [];
 
+  //Temp html
   return (
     <div className="bg-white rounded-lg p-6 dark:bg-black 
                     shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)]">

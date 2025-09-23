@@ -42,7 +42,7 @@ export default function Swiper() {
                     price_tag,
                     review_count,
                     hero_img_url,
-                    square_img_url    
+                    square_img_url
                 `)
                 .limit(10); //temp limit
 
