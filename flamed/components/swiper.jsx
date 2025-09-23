@@ -17,7 +17,12 @@ const vw = typeof window !== 'undefined' ? window.innerWidth : 1000;
 const vh = typeof window !== 'undefined' ? window.innerHeight : 1000;
 
 //Main functioninið, sem renderar veitingastaðina
-export default function Swiper() {
+export default function Swiper({ groupId }) {
+    //Fæ session id, sem er random uuid
+    const [sessionId] = useState(() =>
+        typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
+    );
+
     //bý til breytur sem halda utan um veitingastaðina og hvað er valið
     const [restaurants, setRestaurants] = useState([]); // restaurants state
     const [loading, setLoading] = useState(true);//breyta til þess að geta byrt loading
@@ -95,6 +100,9 @@ export default function Swiper() {
                 restaurants={restaurants}
                 acceptedIds={accepted}
                 rejectedIds={rejected}
+                //group id og session id
+                groupId={groupId}
+                sessionId={sessionId}
             />
         );
     }

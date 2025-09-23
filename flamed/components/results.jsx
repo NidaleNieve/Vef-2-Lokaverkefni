@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
   const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
