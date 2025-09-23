@@ -1,3 +1,5 @@
+//ChatGPT generated kóði sem finnur niðurstöðurnar, og reiknar út consensus
+
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/utils/supabase/server'
 

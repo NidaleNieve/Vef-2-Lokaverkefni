@@ -18,10 +18,16 @@ const vh = typeof window !== 'undefined' ? window.innerHeight : 1000;
 
 //Main functioninið, sem renderar veitingastaðina
 export default function Swiper({ groupId }) {
-    //Fæ session id, sem er random uuid
+    /*Fæ session id, sem er random uuid
     const [sessionId] = useState(() =>
         typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
     );
+    */
+
+    //
+    const [sessionId, setSessionId] = useState(null);
+    const [roundLoading, setRoundLoading] = useState(false);
+    const [roundError, setRoundError] = useState('');
 
     //bý til breytur sem halda utan um veitingastaðina og hvað er valið
     const [restaurants, setRestaurants] = useState([]); // restaurants state
