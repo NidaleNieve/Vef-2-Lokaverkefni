@@ -32,7 +32,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "app/groups/[id]/results/route.js"  ],
   "exclude": [
     "node_modules"
   ]
