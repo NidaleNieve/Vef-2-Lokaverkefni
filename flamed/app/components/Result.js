@@ -1,6 +1,17 @@
-export default function Results({ restaurants, acceptedIds, rejectedIds, onRestart }) {
+'use client';
+
+import { useRouter } from 'next/navigation';
+
+export default function Results({ restaurants, acceptedIds, rejectedIds }) {
+  // get the router instance for navigationm
+  const router = useRouter();
   const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
   const rejected = restaurants.filter(r => rejectedIds.includes(r.id));
+
+  // when the button is clicked, go to the choose games page
+  const handleChooseGame = () => {
+    router.push('/choose_games');
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[60vh] px-4">
@@ -10,23 +21,23 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, onResta
         
         {/* Header */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold bg-gradient-to-r --nav-text">
             Your Results
           </h2>
           <p className="text-[var(--muted)] mt-2">Here's how you decided</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
           {/* Accepted Section */}
           <div className="bg-gradient-to-br from-white/60 to-white/40 dark:from-black/40 dark:to-black/20 
-                          rounded-xl p-6 border border-green-100/50 dark:border-green-800/30
+                          rounded-xl p-6 border border-green-200 dark:border-green-800/30
                           shadow-lg">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              <h3 className="font-bold text-lg text-green-700 dark:text-green-300">
+              <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
+              <h3 className="font-bold text-lg text-green-800 dark:text-green-200">
                 Accepted
               </h3>
-              <span className="ml-auto bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 
+              <span className="ml-auto bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 
                              px-2 py-1 rounded-full text-sm font-medium">
                 {accepted.length}
               </span>
@@ -36,11 +47,11 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, onResta
               <ul className="space-y-3">
                 {accepted.map((r, index) => (
                   <li key={r.id} 
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-black/30 
-                                 border border-green-50 dark:border-green-900/20
+                      className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 
+                                 border border-green-100 dark:border-green-800/20
                                  transform transition-transform hover:scale-[1.02]">
-                    <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-900 
-                                   text-green-600 dark:text-green-400 rounded-full text-sm font-medium">
+                    <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-900/30 
+                                   text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
                       {index + 1}
                     </span>
                     <span className="font-medium">{r.name}</span>
@@ -60,14 +71,14 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, onResta
 
           {/* Rejected Section */}
           <div className="bg-gradient-to-br from-white/60 to-white/40 dark:from-black/40 dark:to-black/20 
-                          rounded-xl p-6 border border-red-100/50 dark:border-red-800/30
+                          rounded-xl p-6 border border-red-200 dark:border-red-800/30
                           shadow-lg">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-              <h3 className="font-bold text-lg text-red-700 dark:text-red-300">
+              <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
+              <h3 className="font-bold text-lg text-red-800 dark:text-red-200">
                 Rejected
               </h3>
-              <span className="ml-auto bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 
+              <span className="ml-auto bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 
                              px-2 py-1 rounded-full text-sm font-medium">
                 {rejected.length}
               </span>
@@ -77,11 +88,11 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, onResta
               <ul className="space-y-3">
                 {rejected.map((r, index) => (
                   <li key={r.id} 
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-black/30 
-                                 border border-red-50 dark:border-red-900/20
+                      className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 
+                                 border border-red-100 dark:border-red-800/20
                                  transform transition-transform hover:scale-[1.02]">
-                    <span className="flex items-center justify-center w-6 h-6 bg-red-100 dark:bg-red-900 
-                                   text-red-600 dark:text-red-400 rounded-full text-sm font-medium">
+                    <span className="flex items-center justify-center w-6 h-6 bg-red-100 dark:bg-red-900/30 
+                                   text-red-700 dark:text-red-300 rounded-full text-sm font-medium">
                       {index + 1}
                     </span>
                     <span className="font-medium">{r.name}</span>
@@ -98,6 +109,19 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, onResta
               </div>
             )}
           </div>
+        </div>
+
+        {/* Choose a Game Button */}
+        <div className="text-center">
+          <button 
+            onClick={handleChooseGame}
+            className="bg-[var(--nav-bg)] text-white px-8 py-3 rounded-full font-semibold
+                       hover:opacity-90 transition-opacity duration-200
+                       shadow-lg hover:shadow-xl transform hover:scale-105 transition-transform
+                       border-2 border-white/20"
+          >
+            Choose a Game
+          </button>
         </div>
       </div>
     </div>

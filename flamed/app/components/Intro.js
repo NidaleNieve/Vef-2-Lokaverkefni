@@ -75,7 +75,7 @@ export default function Intro() {
         <DarkModeToggle />
       </div>
 
-      {/* Welcome Message with animation */}
+      {/* Welcome Message */}
       <div className="text-center mb-6 mt-8 animate-fade-in-up">
         <h1 className="text-4xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
           Welcome to <span className="animate-color-shift" style={{ color: 'var(--accent)' }}>GastroSwipe!</span>

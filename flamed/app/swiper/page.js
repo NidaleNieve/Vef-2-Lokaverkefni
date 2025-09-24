@@ -109,8 +109,8 @@ export default function Swiper() {
     };
 
     return (
-        <div className="min-h-[28rem] flex flex-col items-center justify-center">
-            <div className="relative w-72 h-96">
+        <div className="min-h-[28rem] flex flex-col items-center justify-center p-4">
+            <div className="relative w-72 h-96 max-w-full">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}
                 <AnimatePresence initial={false} mode="popLayout">
                     {visibleCards.map((restaurant, index) => {
@@ -168,7 +168,7 @@ export default function Swiper() {
                 </button>
                 
             </div>
-            <div className="text-sm text-gray-500 mt-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-4">
                 {current + 1} / {restaurants.length}
             </div>
         </div>
@@ -311,12 +311,14 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
             transition={{ type: 'spring', stiffness: 260, damping: 22 }}
         >
             <motion.div
-                //nota tailwind fyrir sum style til þess að stylea fyrir dark mode létllega
-                className="bg-white dark:bg-black 
-                            shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)] 
-                            border border-gray-300 dark:border-gray-700
-                            [--drag-shadow:0_8px_25px_rgba(0,0,0,0.35)] 
-                            dark:[--drag-shadow:0_8px_15px_rgba(128,128,128,0.25)]"
+                //UPDATED: Enhanced box border styling for better visual appearance
+                className="bg-white dark:bg-gray-900 
+                            shadow-[0_4px_20px_rgba(168,85,138,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] 
+                            border-2 border-pink-300 dark:border-gray-600
+                            [--drag-shadow:0_12px_35px_rgba(168,85,138,0.25)] 
+                            dark:[--drag-shadow:0_12px_35px_rgba(0,0,0,0.6)]
+                            relative
+                            before:absolute before:inset-0 before:rounded-[14px] before:border before:border-white/50 dark:before:border-gray-400/30 before:pointer-events-none"
                     style={{
                     x,
                     y,
@@ -324,9 +326,7 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     width: '100%',
                     height: '100%',
                     borderRadius: '16px',
-                    //backgroundColor: '#fff',
                     overflow: 'hidden',
-                    //boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     position: 'absolute',
                     cursor: isTop ? 'grab' : 'auto',
                     scale: 1 - stackIndex * 0.02,
@@ -344,22 +344,29 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     boxShadow: "var(--drag-shadow)"
                 }}
             >
+                {/* Inner container for additional border effect */}
+                <div className="absolute inset-0 rounded-[14px] border border-white/40 dark:border-gray-500/30 pointer-events-none z-10" />
+                
                 <Image
                     src={imageSrc}
                     alt={restaurant.name}
                     width={300}
                     height={400}
-                    className="w-full h-72 object-cover"
+                    className="w-full h-72 object-cover relative z-0"
                     draggable={false}
                     onError={handleImageError}
                 />
-                <div className="p-3">
-                    <h3 className="text-lg font-semibold">
+                <div className="p-4 bg-white dark:bg-gray-900 relative z-0 border-t border-pink-100 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                         {restaurant.name}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {restaurant.parent_city} • {restaurant.avg_rating ?? 'N/A'} ({restaurant.review_count ?? 0})
+                    <p className="text-sm text-gray-700 dark:text-gray-400 mb-1">
+                        {restaurant.parent_city}
                     </p>
+                    <div className="flex justify-between items-center text-sm text-gray-700 dark:text-gray-400">
+                        <span>⭐ {restaurant.avg_rating ?? 'N/A'}</span>
+                        <span>({restaurant.review_count ?? 0} reviews)</span>
+                    </div>
                 </div>
         </motion.div>
 

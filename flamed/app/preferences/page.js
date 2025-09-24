@@ -8,7 +8,7 @@ export default function Preferences() {
     cuisine: [],
     priceRange: [],
     dietaryRestrictions: [],
-    distance: 5, // Now in km
+    distance: 5, // in kilometers
   });
   
   const router = useRouter();
@@ -80,7 +80,7 @@ export default function Preferences() {
     e.preventDefault();
     // Save preferences to localStorage
     localStorage.setItem('restaurantPreferences', JSON.stringify(preferences));
-    // Redirect to home page instead of non-existent /swipe
+    // Redirect to /swipe page
     router.push('/swiper');
   };
 
@@ -188,7 +188,7 @@ export default function Preferences() {
             </div>
           </div>
 
-          {/* Distance - Now in KM */}
+          {/* Distance  */}
           <div>
             <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
               Maximum Distance: {preferences.distance} km
@@ -214,7 +214,7 @@ export default function Preferences() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 rounded-lg font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2 animate-float"
+            className="w-full py-3 rounded-lg font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2 "
             style={{
               backgroundColor: 'var(--accent)',
               color: 'var(--nav-text)'

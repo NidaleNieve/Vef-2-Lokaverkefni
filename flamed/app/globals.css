@@ -2,14 +2,14 @@
 
 :root {
   /* Light Theme Colors */
-  --background: #FFF6FB;
+  --background: #FFDFEF;
   --foreground: #1e293b;
-  --nav-bg: #FFE3F0;
+  --nav-bg: #AA60C8;
   --nav-text: #374151;
   --nav-item-bg: rgba(255, 255, 255, 0.5);
   --nav-item-hover: rgba(255, 184, 224, 0.3);
   --nav-shadow: rgba(79, 70, 229, 0.15);
-  --accent: #FFD6E8;
+  --accent: #D69ADE;
   --muted: #A0AEC0;
 }
 
