@@ -24,21 +24,25 @@ export default function HomeClient() {
 
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
   async function startRound() {
+    //ef að groupID er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik 
     if (!groupInput.trim()) return
     const res = await fetch(`/api/groups/${groupInput.trim()}/round`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       credentials: 'include',
     })
+    //error handling
     const j = await res.json().catch(() => ({}))
     if (!res.ok) {
       alert(j?.error || `Failed to start round (${res.status})`)
       return
     }
+    //geymi groupId
     setGroupId(groupInput.trim())
   }
 
   //temp html
+  //swiper tekur inn groupid, sem joinar game ef að það er til
   return (
     <div className="w-full max-w-xl">
       <h1 className="text-4xl font-bold mb-4">Restaurants</h1>

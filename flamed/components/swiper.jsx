@@ -38,10 +38,11 @@ export default function Swiper({ groupId }) {
 
         let cancelled = false;
         async function loadRound() {
-            //loada roundið 
+            //loada leikinn 
             setRoundLoading(true);
             setRoundError(''); //núllstilli error
             try {
+                //fetcha info um leikinn með 'round' endpointinu
                 const res = await fetch(`/api/groups/${groupId}/round`, { credentials: 'include' });
                 const j = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(j?.error || `Failed to load round (${res.status})`);
