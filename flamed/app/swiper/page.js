@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react"; //bætti við useRef, forwardRef, useImperativeHandle til þess að geta notað takkana sem swipe
 import { supabase } from "../../lib/supabaseClient";
 import Results from "../components/Result";
+import Navbar from '../components/Navbar';
 
 //Next image renderer fyrir myndir
 import Image from "next/image";
@@ -110,7 +111,11 @@ export default function Swiper() {
 
     return (
         <div className="min-h-[28rem] flex flex-col items-center justify-center p-4">
-            <div className="relative w-72 h-96 max-w-full">
+            {/* navbar at the top */}
+            <Navbar />
+
+            {/* add a margin to put the vards lower */}
+            <div className="relative w-72 h-96 max-w-full mt-15">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}
                 <AnimatePresence initial={false} mode="popLayout">
                     {visibleCards.map((restaurant, index) => {

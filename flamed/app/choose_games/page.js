@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Navbar from '../components/Navbar';
 
 export default function ChooseGame() {
   const router = useRouter();
@@ -74,7 +75,10 @@ export default function ChooseGame() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+      {/* navbar at the top */}
+      <Navbar />
+
+      <div className="max-w-7xl mx-auto mt-12">
         {/* header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[var(--nav-bg)] to-[var(--accent)] bg-clip-text text-transparent mb-4">

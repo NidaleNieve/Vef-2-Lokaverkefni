@@ -2,6 +2,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Navbar from '../components/Navbar';
 
 export default function Preferences() {
   const [preferences, setPreferences] = useState({
@@ -86,7 +87,10 @@ export default function Preferences() {
 
   return (
     <div className="min-h-screen py-8 px-4 animate-fade-in" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
-      <div className="max-w-md mx-auto rounded-xl shadow-md overflow-hidden p-6" style={{ 
+      {/* navbar at the top */}
+      <Navbar />
+
+      <div className="max-w-md mx-auto rounded-xl shadow-md overflow-hidden p-6 mt-12" style={{ 
         backgroundColor: 'var(--nav-item-bg)',
         boxShadow: '0 4px 6px var(--nav-shadow)'
       }}>

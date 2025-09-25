@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Navbar from '../components/Navbar';
 
 export default function Results({ restaurants, acceptedIds, rejectedIds }) {
   // get the router instance for navigationm
@@ -15,9 +16,11 @@ export default function Results({ restaurants, acceptedIds, rejectedIds }) {
 
   return (
     <div className="flex items-center justify-center min-h-[60vh] px-4">
+      {/* navbar at the top */}
+      <Navbar />
       <div className="bg-[var(--nav-item-bg)] rounded-2xl p-8 max-w-4xl w-full
                       shadow-[0_10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(128,128,128,0.15)]
-                      border border-white/30 backdrop-blur-sm">
+                      border border-white/30 backdrop-blur-sm mt-20">
         
         {/* Header */}
         <div className="text-center mb-8">
