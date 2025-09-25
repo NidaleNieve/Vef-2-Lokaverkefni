@@ -1,7 +1,7 @@
 //ChatGPT generated kóði sem finnur niðurstöðurnar, og reiknar út consensus
 
 import { NextResponse } from 'next/server'
-import { supabaseServer } from '@/utils/supabase/server'
+import { serverClient } from '@/utils/supabase/server'
 
 export async function GET(req, { params }) {
   const groupId = params?.id
@@ -14,7 +14,7 @@ export async function GET(req, { params }) {
     return NextResponse.json({ ok: false, error: 'Missing session_id' }, { status: 400 })
   }
 
-  const supa = supabaseServer()
+  const supa = await serverClient()
 
   // Ensure user is signed in so RLS returns the right rows
   const { data: { user } = {} } = await supa.auth.getUser().catch(() => ({}))
