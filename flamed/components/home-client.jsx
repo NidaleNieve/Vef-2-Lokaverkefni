@@ -8,6 +8,7 @@ export default function HomeClient() {
   const [groupInput, setGroupInput] = useState('')
   const [groupId, setGroupId] = useState('')
 
+  //sækir groupId úr local storage, qol feature
   useEffect(() => {
     const last = localStorage.getItem('lastGroupId') || ''
     if (last) {
@@ -16,10 +17,12 @@ export default function HomeClient() {
     }
   }, [])
 
+  //geymir groupId í localstorage þegar það breytist
   useEffect(() => {
     if (groupId) localStorage.setItem('lastGroupId', groupId)
   }, [groupId])
 
+  //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
   async function startRound() {
     if (!groupInput.trim()) return
     const res = await fetch(`/api/groups/${groupInput.trim()}/round`, {
@@ -58,7 +61,7 @@ export default function HomeClient() {
           onClick={startRound}
           disabled={!groupInput.trim()}
         >
-          Start round
+          Create Game
         </button>
       </div>
       <Swiper groupId={groupId || undefined} />

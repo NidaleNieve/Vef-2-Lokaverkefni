@@ -1,7 +1,6 @@
 //import path og promises, til þess að geta lesið skjöl async
 import path from "path";
 import { promises as fs } from "fs";
-import Swiper from "../components/swiper";
 import Image from "next/image";
 import HomeClient from "../components/home-client";
 
