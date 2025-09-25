@@ -68,6 +68,14 @@ export default function Swiper({ groupId }) {
     const [rejected, setRejected] = useState([]);
     const [action, setAction] = useState(null); //action state til þess að geta triggerað swipe með tökkum
 
+    //læsir UI þegar verið er að swipa með tökkum
+    const [uiLocked, setUiLocked] = useState(false);
+
+    //passa að takkarnir triggeri ekki sama cardið oftar en einu sinni. Unlocka þegar næsta card er komið
+    useEffect(() => {
+        setUiLocked(false);
+    }, [current]);
+
     //function sem fetchar veitingastaðina frá supabase og byrtir loading screen
     useEffect(() => {
         const load = async () => {
@@ -159,8 +167,10 @@ export default function Swiper({ groupId }) {
 
     //top level function sem triggerar action útfrá tökkum á rétta cardið
     const triggerAction = (type) => {
+        if (uiLocked) return; //Þetta er lásinn fyrir takkana
         const top = restaurants[current];
         if (!top) return;
+        setUiLocked(true); //Locka cardið þegar það er verið að swipa
         setAction({ type, id: top.id });
     };
 

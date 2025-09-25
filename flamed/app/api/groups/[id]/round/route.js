@@ -50,11 +50,9 @@ export async function POST(req, { params }) {
     .eq('user_id', user.id)
     .limit(1)
 
-  //checka hvort að user sé admin eða owner til þess að geta búið til leik
   if (mErr) return NextResponse.json({ ok: false, error: mErr.message }, { status: 500 })
-  const role = Array.isArray(membership) && membership[0]?.role
-  if (!role || !['owner', 'admin'].includes(role)) {
-    return NextResponse.json({ ok: false, error: 'Forbidden (admin/owner only)' }, { status: 403 })
+  if (!Array.isArray(membership) || membership.length === 0) {
+    return NextResponse.json({ ok: false, error: 'Not a member of this group' }, { status: 403 })
   }
 
   const session_id = randomUUID()

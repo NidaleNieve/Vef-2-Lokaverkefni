@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Swiper from './swiper'
 
+//þetta er temp skjal sem renderar allt á swipe síðunni. Það leyfir manni að starta leik og að swipa
 export default function HomeClient() {
   const [groupInput, setGroupInput] = useState('')
   const [groupId, setGroupId] = useState('')
@@ -34,6 +35,7 @@ export default function HomeClient() {
     setGroupId(groupInput.trim())
   }
 
+  //temp html
   return (
     <div className="w-full max-w-xl">
       <h1 className="text-4xl font-bold mb-4">Restaurants</h1>
