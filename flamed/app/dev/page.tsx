@@ -1,6 +1,7 @@
 // app/dev/page.tsx
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabaseBrowser } from '@/utils/supabase/browser'
 
 type MyGroup = {
@@ -103,6 +104,39 @@ export default function Dev() {
               </option>
             ))}
           </select>
+        )}
+
+        {groupId && (
+          <div className="flex gap-2 items-center">
+            <Link
+              href={`/groups/${groupId}`}
+              className="border px-3 py-2 rounded"
+            >
+              Open chat for this group
+            </Link>
+
+            <Link
+              href={`/groups/${groupId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border px-3 py-2 rounded"
+            >
+              Open in new tab
+            </Link>
+
+            <button
+              className="border px-3 py-2 rounded"
+              onClick={async () => {
+                const url = `${window.location.origin}/groups/${groupId}`
+                await navigator.clipboard.writeText(url)
+                // optional: log so you can see it in the dev console panel
+                // @ts-ignore
+                if (typeof logit === 'function') logit({ copied: url })
+              }}
+            >
+              Copy chat URL
+            </button>
+          </div>
         )}
       </div>
 
