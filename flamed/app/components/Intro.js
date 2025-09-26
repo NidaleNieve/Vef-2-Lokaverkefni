@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useState, useEffect } from 'react';
+import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import DarkModeToggle from './DarkModeToggle';
 
 export default function Intro() {
@@ -9,61 +9,76 @@ export default function Intro() {
   const [isClicked, setIsClicked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [codeInput, setCodeInput] = useState('');
-  const { hasSession, setHasSession, setUserCode } = useApp();
+  const [showFoodIcons, setShowFoodIcons] = useState(false);
+  const router = useRouter();
 
-  // Replace the setTimeout function in handleCircleClick with actual code generation logic
-  const handleCircleClick = () => {
-    if (hasSession) return;
+  // animated food icons that float around
+  const FoodIcon = ({ icon: Icon, style }) => (
+    <div 
+      className="absolute animate-float" 
+      style={style}
+    >
+      <Icon size={24} style={{ color: 'var(--accent)' }} />
+    </div>
+  );
+
+  useEffect(() => {
+    // Show floating food icons after initial load
+    const timer = setTimeout(() => {
+      setShowFoodIcons(true);
+    }, 1000);
     
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleCircleClick = () => {
     setIsClicked(true);
     setTimeout(() => setIsClicked(false), 500);
     
     setGeneratedCode('GENERATING...');
     
     setTimeout(() => {
-    // This is where the final code generation should go
       const code = Math.random().toString(36).substr(2, 8).toUpperCase();
       setGeneratedCode(code);
-      setUserCode(code);
-      setHasSession(true);
+      
+      // Redirect to preferences with the generated code
+      router.push(`/preferences?code=${code}`);
     }, 2000);
   };
 
   const handleCodeSubmit = (e) => {
     e.preventDefault();
-    if (codeInput.trim() && !hasSession) {
+    if (codeInput.trim()) {
       if (codeInput.length >= 4) {
-        setUserCode(codeInput);
-        setHasSession(true);
-        setCodeInput('');
+        // Redirect to preferences with the entered code
+        router.push(`/preferences?code=${codeInput.toUpperCase()}`);
       } else {
         alert('Please enter a valid code (at least 4 characters)');
       }
     }
   };
 
-  if (hasSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Session Active!</h1>
-          <p>You're already in a session with code.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 relative" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div className="min-h-screen flex flex-col items-center p-4 relative overflow-hidden" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+      {/* Animated background elements */}
+      {showFoodIcons && (
+        <>
+          <FoodIcon icon={Utensils} style={{ top: '15%', left: '10%', animationDelay: '0s', animationDuration: '15s' }} />
+          <FoodIcon icon={Sparkles} style={{ top: '25%', right: '15%', animationDelay: '1s', animationDuration: '12s' }} />
+          <FoodIcon icon={Users} style={{ bottom: '20%', left: '20%', animationDelay: '2s', animationDuration: '18s' }} />
+          <FoodIcon icon={Sparkles} style={{ bottom: '30%', right: '10%', animationDelay: '1.5s', animationDuration: '14s' }} />
+        </>
+      )}
+      
       {/* Dark Mode Toggle */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 z-10">
         <DarkModeToggle />
       </div>
 
       {/* Welcome Message */}
-      <div className="text-center mb-6 mt-8">
+      <div className="text-center mb-6 mt-8 animate-fade-in-up">
         <h1 className="text-4xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
-          Welcome to <span style={{ color: 'var(--accent)' }}>GastroSwipe!</span>
+          Welcome to <span className="animate-color-shift" style={{ color: 'var(--accent)' }}>GastroSwipe!</span>
         </h1>
         <p className="text-lg max-w-md" style={{ color: 'var(--muted)' }}>
           Click the circle to generate a code or enter an existing code to join.
@@ -73,10 +88,10 @@ export default function Intro() {
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center flex-grow space-y-6">
         
-        {/* Clickable Circle */}
+        {/* Clickable Circle with enhanced animation */}
         <div className="relative flex items-center justify-center">
-          {/* Arrow pointing at circle */}
-          <div className="absolute right-full mr-2 flex items-center animate-float">
+          {/* Arrow pointing at circle with bounce animation */}
+          <div className="absolute right-full mr-2 flex items-center animate-bounce-side">
             <div className="text-lg font-bold whitespace-nowrap" style={{ color: 'var(--muted)' }}>
               Click me!
             </div>
@@ -91,10 +106,18 @@ export default function Intro() {
             </svg>
           </div>
           
-          {/* Clickable Circle */}
+          {/* Pulsing circle behind main circle */}
+          <div 
+            className={`absolute inset-0 rounded-full opacity-20 ${
+              isHovered ? 'animate-ping' : ''
+            }`}
+            style={{ backgroundColor: 'var(--accent)' }}
+          ></div>
+          
+          {/* Clickable Circle with enhanced animations */}
           <div
-            className={`flex items-center justify-center w-50 h-50 md:w-66 md:h-66 rounded-full cursor-pointer shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
-              isClicked ? 'animate-subtle-ping' : ''
+            className={`relative flex items-center justify-center w-50 h-50 md:w-66 md:h-66 rounded-full cursor-pointer shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
+              isClicked ? 'animate-pulse-shrink' : ''
             }`}
             style={{
               backgroundColor: 'var(--accent)',
@@ -105,17 +128,29 @@ export default function Intro() {
             onMouseLeave={() => setIsHovered(false)}
           >
             <Plus size={120} className="transition-transform duration-300 hover:rotate-90" />
+            
+            {/* Sparkle effects on hover */}
+            {isHovered && (
+              <>
+                <div className="absolute top-2 right-2 animate-sparkle-1">
+                  <Sparkles size={16} fill="currentColor" />
+                </div>
+                <div className="absolute bottom-2 left-2 animate-sparkle-2">
+                  <Sparkles size={16} fill="currentColor" />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Generated Code Display */}
+        {/* Generated Code Display with enhanced animation */}
         {generatedCode && (
-          <div className="border rounded-2xl p-6 text-center animate-fade-in" 
+          <div className="border rounded-2xl p-6 text-center animate-fade-in-grow" 
                style={{ backgroundColor: 'var(--nav-item-bg)', borderColor: 'var(--accent)', color: 'var(--foreground)' }}>
             <h3 className="font-semibold mb-2" style={{ color: 'var(--accent)' }}>
               {generatedCode === 'GENERATING...' ? 'Generating Code...' : 'Your Circle Code:'}
             </h3>
-            <p className="text-2xl font-bold font-mono" style={{ color: 'var(--accent)' }}>
+            <p className="text-2xl font-bold font-mono animate-text-pulse" style={{ color: 'var(--accent)' }}>
               {generatedCode}
             </p>
             {generatedCode !== 'GENERATING...' && (
@@ -126,15 +161,15 @@ export default function Intro() {
           </div>
         )}
 
-        {/* Code Input Form */}
-        <form onSubmit={handleCodeSubmit} className="w-full max-w-md">
+        {/* Code Input Form with animation */}
+        <form onSubmit={handleCodeSubmit} className="w-full max-w-md animate-fade-in-up-delayed">
           <div className="flex gap-3">
             <input
               type="text"
               value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              onChange={(e) => setCodeInput(e.target.value)}
               placeholder="ENTER EXISTING CODE"
-              className="flex-1 px-4 py-3 border-2 rounded-xl font-mono font-semibold text-center focus:outline-none"
+              className="flex-1 px-4 py-3 border-2 rounded-xl font-mono font-semibold text-center focus:outline-none transition-all duration-300 focus:scale-105"
               style={{
                 borderColor: 'var(--accent)',
                 backgroundColor: 'var(--background)',
@@ -143,7 +178,7 @@ export default function Intro() {
             />
             <button 
               type="submit"
-              className="px-6 py-3 rounded-xl font-semibold transition-colors"
+              className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: 'var(--accent)',
                 color: 'var(--nav-text)'
@@ -155,9 +190,10 @@ export default function Intro() {
         </form>
       </div>
 
-      <footer className="mt-8 text-center text-sm" style={{ color: 'var(--muted)' }}>
+      <footer className="mt-8 text-center text-sm animate-fade-in" style={{ color: 'var(--muted)' }}>
         <p>Click • Connect • Create</p>
       </footer>
+
     </div>
   );
 }

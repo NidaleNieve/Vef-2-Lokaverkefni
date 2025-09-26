@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2017",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
-    "target": "ES2017",
     "lib": [
       "dom",
       "dom.iterable",
@@ -33,7 +34,7 @@
     "**/*.jsx",
     "**/*.ts",
     "**/*.tsx",
-    "next-env.d.ts",
+    "app/api/groups/[id]/results/route.js",
     ".next/types/**/*.ts"
   ],
   "exclude": [
