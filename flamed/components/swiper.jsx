@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react"; //bætti við useRef, forwardRef, useImperativeHandle til þess að geta notað takkana sem swipe
 import { supabase } from "../lib/supabaseClient";
 import Results from "./results";
+import AllergenSettings from "./AllergenSettings";
 
 //Next image renderer fyrir myndir
 import Image from "next/image";
@@ -10,6 +11,10 @@ import Image from "next/image";
 //framer motion fyrir swiping cards
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom"; //fyrir edge glow like/dislike
+
+// Allergen utilities
+import { getAllergensFromCuisines } from "../utils/allergenMapping";
+import { getMatchingUserAllergens } from "../utils/userAllergens";
 
 //finnur vindow width og height, með gott error handling
 //const vw = window?.innerWidth || 1000;
@@ -28,6 +33,9 @@ export default function Swiper({ groupId }) {
     const [sessionId, setSessionId] = useState(null);
     const [roundLoading, setRoundLoading] = useState(false);
     const [roundError, setRoundError] = useState('');
+    
+    // Allergen settings state
+    const [showAllergenSettings, setShowAllergenSettings] = useState(false);
     //Fæ session id
     useEffect(() => {
         //error handling ef ekki í group
@@ -176,6 +184,7 @@ export default function Swiper({ groupId }) {
     };
 
     return (
+        <>
         <div className="min-h-[28rem] flex flex-col items-center justify-center">
             <div className="relative w-72 h-96">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}
@@ -238,7 +247,24 @@ export default function Swiper({ groupId }) {
             <div className="text-sm text-gray-500 mt-4">
                 {current + 1} / {restaurants.length}
             </div>
+            
+            {/* Allergen Settings Button */}
+            <button
+                onClick={() => setShowAllergenSettings(true)}
+                className="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 
+                         dark:hover:text-gray-200 underline"
+                title="Set your allergen preferences"
+            >
+                ⚙️ Allergen Settings
+            </button>
         </div>
+        
+        {/* Allergen Settings Modal */}
+        <AllergenSettings 
+            isOpen={showAllergenSettings}
+            onClose={() => setShowAllergenSettings(false)}
+        />
+        </>
     );
     /* gömlu takkarnir, til örrygis
         <button
@@ -272,6 +298,16 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
     const rotate = useTransform(x, [-200, 200], [-15, 15]);
     const likeOpacity = useTransform(x, [0, 200, vw], [0, 1, 0]);
     const dislikeOpacity = useTransform(x, [-vw, -200, 0], [0, 1, 0]);
+
+    // Get potential allergens based on restaurant cuisines
+    const potentialAllergens = useMemo(() => {
+        return getAllergensFromCuisines(restaurant.cuisines);
+    }, [restaurant.cuisines]);
+
+    // Check which allergens match user's allergen preferences
+    const userMatchingAllergens = useMemo(() => {
+        return getMatchingUserAllergens(potentialAllergens);
+    }, [potentialAllergens]);
 
     //Þetta function lætur cardsin fljúga út úr skjánum þegar þau eru swiped
     const handleDragEnd = (_, info) => {
@@ -420,6 +456,26 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     draggable={false}
                     onError={handleImageError}
                 />
+                
+                {/* Allergen warning tags */}
+                {userMatchingAllergens.length > 0 && (
+                    <div className="px-3 py-2 border-b border-red-100">
+                        <div className="flex flex-wrap gap-1">
+                            {userMatchingAllergens.map((allergen) => (
+                                <span
+                                    key={allergen}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium 
+                                             bg-red-50 text-red-700 border border-red-200 rounded-md
+                                             dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+                                    title={`Contains ${allergen}`}
+                                >
+                                    ⚠️ {allergen}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
                 <div className="p-3">
                     <h3 className="text-lg font-semibold">
                         {restaurant.name}
