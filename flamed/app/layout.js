@@ -4,7 +4,11 @@ import { AppProvider } from './context/AppContext';
 import ConditionalNavbar from './components/ConditionalNavbar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const roboto = Roboto({ subsets: ['latin'], variable: '--font-mono' });
+const roboto = Roboto({ 
+  subsets: ['latin'], 
+  variable: '--font-mono',
+  weight: ['400', '700']
+});
 
 export const metadata = {
   title: 'Swipe App',
@@ -19,6 +23,28 @@ export default function RootLayout({ children }) {
           <ConditionalNavbar />
           <main className="flex-grow">{children}</main>
         </AppProvider>
+      
+        {/* Dev link for development */}
+        <a
+          href="/dev"
+          style={{
+            position: "fixed",
+            top: "1rem",
+            right: "1rem",
+            zIndex: 1000,
+            background: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            padding: "0.5rem 1rem",
+            fontWeight: 500,
+            textDecoration: "none",
+            color: "#222",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            transition: "background 0.2s"
+          }}
+        >
+          Dev
+        </a>
       </body>
     </html>
   );

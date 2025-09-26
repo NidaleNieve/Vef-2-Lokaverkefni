@@ -18,7 +18,48 @@ const vw = typeof window !== 'undefined' ? window.innerWidth : 1000;
 const vh = typeof window !== 'undefined' ? window.innerHeight : 1000;
 
 //Main functioninið, sem renderar veitingastaðina
-export default function Swiper() {
+export default function Swiper({ groupId }) {
+    /*Fæ session id, sem er random uuid
+    const [sessionId] = useState(() =>
+        typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
+    );
+    */
+
+    //Stilli session með error handling og loading
+    const [sessionId, setSessionId] = useState(null);
+    const [roundLoading, setRoundLoading] = useState(false);
+    const [roundError, setRoundError] = useState('');
+    //Fæ session id
+    useEffect(() => {
+        //error handling ef ekki í group
+        if (!groupId) {
+            setSessionId(null);
+            return;
+        }
+
+        let cancelled = false;
+        async function loadRound() {
+            //loada leikinn 
+            setRoundLoading(true);
+            setRoundError(''); //núllstilli error
+            try {
+                //fetcha info um leikinn með 'round' endpointinu
+                const res = await fetch(`/api/groups/${groupId}/round`, { credentials: 'include' });
+                const j = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(j?.error || `Failed to load round (${res.status})`);
+                //set session id ef ekki cancelled
+                if (!cancelled) setSessionId(j?.session_id ?? null);
+            //error handling fyrir allt þetta
+            } catch (e) {
+                if (!cancelled) setRoundError(e.message || 'Failed to load round');
+            } finally {
+                if (!cancelled) setRoundLoading(false);
+            }
+        }
+        loadRound();
+        return () => { cancelled = true; }
+    }, [groupId]);
+
     //bý til breytur sem halda utan um veitingastaðina og hvað er valið
     const [restaurants, setRestaurants] = useState([]); // restaurants state
     const [loading, setLoading] = useState(true);//breyta til þess að geta byrt loading
@@ -28,6 +69,14 @@ export default function Swiper() {
     const [accepted, setAccepted] = useState([]); //array sem geymir veitingastaðin sem eru samþykktir
     const [rejected, setRejected] = useState([]);
     const [action, setAction] = useState(null); //action state til þess að geta triggerað swipe með tökkum
+
+    //læsir UI þegar verið er að swipa með tökkum
+    const [uiLocked, setUiLocked] = useState(false);
+
+    //passa að takkarnir triggeri ekki sama cardið oftar en einu sinni. Unlocka þegar næsta card er komið
+    useEffect(() => {
+        setUiLocked(false);
+    }, [current]);
 
     //function sem fetchar veitingastaðina frá supabase og byrtir loading screen
     useEffect(() => {
@@ -43,7 +92,7 @@ export default function Swiper() {
                     price_tag,
                     review_count,
                     hero_img_url,
-                    square_img_url    
+                    square_img_url
                 `)
                 .limit(10); //temp limit
 
@@ -89,6 +138,19 @@ export default function Swiper() {
         setCurrent((prev) => prev + 1);
     };
 
+    //byrti loading eða error ef í group ef round er ekki byrjað
+    if (groupId && roundLoading) {
+        return <div className="text-gray-600">Loading game…</div>;
+    }
+    if (groupId && sessionId === null) {
+        return (
+            <div className="text-gray-700 dark:text-gray-300">
+                <p>No active game in this group. Ask the host to start a round.</p>
+                {roundError && <p className="text-red-600 mt-2">{roundError}</p>}
+            </div>
+        );
+    }
+
     //ef að allir veitingastaðirnir eru búnir, þá sýnir results component úr results skjalinu
     if (current >= restaurants.length) {
         return (
@@ -96,6 +158,9 @@ export default function Swiper() {
                 restaurants={restaurants}
                 acceptedIds={accepted}
                 rejectedIds={rejected}
+                //group id og session id
+                groupId={groupId}
+                sessionId={sessionId}
             />
         );
     }
@@ -104,8 +169,10 @@ export default function Swiper() {
 
     //top level function sem triggerar action útfrá tökkum á rétta cardið
     const triggerAction = (type) => {
+        if (uiLocked) return; //Þetta er lásinn fyrir takkana
         const top = restaurants[current];
         if (!top) return;
+        setUiLocked(true); //Locka cardið þegar það er verið að swipa
         setAction({ type, id: top.id });
     };
 
