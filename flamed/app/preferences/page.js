@@ -108,26 +108,24 @@ export default function Preferences() {
   };
 
   // get current location coordinates
+  // TODO: Backend will implement proper location handling
   const handleGetCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setPreferences(prev => ({
-            ...prev,
-            coordinates: {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            }
-          }));
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          alert('Unable to get your location. Using default Reykjavik coordinates.');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
+    // temporary frontend placeholder - maintains UI functionality
+    // real implementation will be added later
+    
+    // mock successful location update for frontend development
+    const mockCoordinates = {
+      lat: 64.1466 + (Math.random() - 0.5) * 0.01, // slight random variation
+      lng: -21.9426 + (Math.random() - 0.5) * 0.01
+    };
+    
+    setPreferences(prev => ({
+      ...prev,
+      coordinates: mockCoordinates
+    }));
+    
+    // visual feedback for development
+    alert('Location updated! (Frontend placeholder - real location will be implemented by backend team)');
   };
 
   const handleSubmit = (e) => {
