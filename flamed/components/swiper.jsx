@@ -80,26 +80,74 @@ export default function Swiper({ groupId }) {
     //function sem fetchar veitingastaðina frá supabase og byrtir loading screen
     useEffect(() => {
         const load = async () => {
-            const { data, error } = await supabase
-                .from('restaurants')
-                .select(`
-                    id,
-                    name,
-                    parent_city,
-                    avg_rating,
-                    cuisines,
-                    price_tag,
-                    review_count,
-                    hero_img_url,
-                    square_img_url
-                `)
-                .limit(10); //temp limit
+            // Mock data for development
+            const mockData = [
+                {
+                    id: '1',
+                    name: 'Pizza Palace',
+                    parent_city: 'Reykjavík',
+                    avg_rating: 4.2,
+                    cuisines: ['Italian', 'Pizza'],
+                    price_tag: '$$',
+                    review_count: 124,
+                    hero_img_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+                    square_img_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
+                    has_menu: true,
+                    menu_url: 'https://example.com/menu',
+                    status: 'open',
+                    review_snippets: [
+                        { text: "Amazing pizza with fresh ingredients!", rating: 5 },
+                        { text: "Great atmosphere and friendly staff", rating: 4 },
+                        { text: "Best pizza in town", rating: 5 }
+                    ]
+                },
+                {
+                    id: '2',
+                    name: 'Sushi Zen',
+                    parent_city: 'Reykjavík',
+                    avg_rating: 4.7,
+                    cuisines: ['Japanese', 'Sushi'],
+                    price_tag: '$$$',
+                    review_count: 89,
+                    hero_img_url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop',
+                    square_img_url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop',
+                    has_menu: true,
+                    menu_url: 'https://example.com/sushi-menu',
+                    status: 'open',
+                    review_snippets: [
+                        { text: "Fresh fish and excellent presentation", rating: 5 },
+                        { text: "Authentic Japanese experience", rating: 5 },
+                        { text: "A bit pricey but worth it", rating: 4 }
+                    ]
+                },
+                {
+                    id: '3',
+                    name: 'Burger Barn',
+                    parent_city: 'Akureyri',
+                    avg_rating: 3.9,
+                    cuisines: ['American', 'Burgers'],
+                    price_tag: '$',
+                    review_count: 201,
+                    hero_img_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
+                    square_img_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=300&fit=crop',
+                    has_menu: false,
+                    menu_url: null,
+                    status: 'open',
+                    review_snippets: [
+                        { text: "Good burgers for the price", rating: 4 },
+                        { text: "Fast service, decent food", rating: 3 },
+                        { text: "Great value for money", rating: 4 }
+                    ]
+                }
+            ];
 
-            if (error) {
+            try {
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setRestaurants(mockData);
+            } catch (error) {
                 setError(error.message);
                 setRestaurants([]);
-            } else {
-                setRestaurants(data || []);
             }
             setLoading(false);
         };
