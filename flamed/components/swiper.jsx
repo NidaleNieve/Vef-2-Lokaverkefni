@@ -13,7 +13,7 @@ import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "
 import { createPortal } from "react-dom"; //fyrir edge glow like/dislike
 
 // Allergen utilities
-import { getAllergensFromCuisines, getAllergenDescriptions } from "../utils/allergenMapping";
+import { getAllergensFromCuisines } from "../utils/allergenMapping";
 import { getMatchingUserAllergens } from "../utils/userAllergens";
 
 //finnur vindow width og height, með gott error handling
@@ -88,33 +88,26 @@ export default function Swiper({ groupId }) {
     //function sem fetchar veitingastaðina frá supabase og byrtir loading screen
     useEffect(() => {
         const load = async () => {
-            // For development/testing - use mock data if Supabase isn't configured
-            try {
-                const { data, error } = await supabase
-                    .from('restaurants')
-                    .select(`
-                        id,
-                        name,
-                        parent_city,
-                        avg_rating,
-                        cuisines,
-                        price_tag,
-                        review_count,
-                        hero_img_url,
-                        square_img_url
-                    `)
-                    .limit(10); //temp limit
+            const { data, error } = await supabase
+                .from('restaurants')
+                .select(`
+                    id,
+                    name,
+                    parent_city,
+                    avg_rating,
+                    cuisines,
+                    price_tag,
+                    review_count,
+                    hero_img_url,
+                    square_img_url
+                `)
+                .limit(10); //temp limit
 
-                if (error) {
-                    throw error;
-                } else {
-                    setRestaurants(data || []);
-                }
-            } catch (error) {
-                console.warn('Supabase not configured, using test data:', error);
-                // Import test data dynamically to avoid build issues
-                const { testRestaurants } = await import('../utils/testData');
-                setRestaurants(testRestaurants);
+            if (error) {
+                setError(error.message);
+                setRestaurants([]);
+            } else {
+                setRestaurants(data || []);
             }
             setLoading(false);
         };
