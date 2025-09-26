@@ -71,6 +71,7 @@ export default function Swiper({ groupId }) {
 
     //læsir UI þegar verið er að swipa með tökkum
     const [uiLocked, setUiLocked] = useState(false);
+    const [expandedCard, setExpandedCard] = useState(null); // Track which card is expanded
 
     //passa að takkarnir triggeri ekki sama cardið oftar en einu sinni. Unlocka þegar næsta card er komið
     useEffect(() => {
@@ -92,6 +93,11 @@ export default function Swiper({ groupId }) {
                     review_count: 124,
                     hero_img_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
                     square_img_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+                        'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=400&h=300&fit=crop',
+                        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop'
+                    ],
                     has_menu: true,
                     menu_url: 'https://example.com/menu',
                     status: 'open',
@@ -111,6 +117,11 @@ export default function Swiper({ groupId }) {
                     review_count: 89,
                     hero_img_url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop',
                     square_img_url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop',
+                        'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
+                        'https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=400&h=300&fit=crop'
+                    ],
                     has_menu: true,
                     menu_url: 'https://example.com/sushi-menu',
                     status: 'open',
@@ -130,6 +141,11 @@ export default function Swiper({ groupId }) {
                     review_count: 201,
                     hero_img_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
                     square_img_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=300&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
+                        'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
+                        'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=400&h=300&fit=crop'
+                    ],
                     has_menu: false,
                     menu_url: null,
                     status: 'open',
@@ -216,7 +232,7 @@ export default function Swiper({ groupId }) {
 
     //top level function sem triggerar action útfrá tökkum á rétta cardið
     const triggerAction = (type) => {
-        if (uiLocked) return; //Þetta er lásinn fyrir takkana
+        if (uiLocked || expandedCard) return; //Þetta er lásinn fyrir takkana og ekki má swipa ef card er expanded
         const top = restaurants[current];
         if (!top) return;
         setUiLocked(true); //Locka cardið þegar það er verið að swipa
@@ -243,6 +259,8 @@ export default function Swiper({ groupId }) {
                             ignoreItem={ignoreItem}
                             action={action}
                             onActionConsumed={() => setAction(null)}
+                            isExpanded={expandedCard === restaurant.id}
+                            onToggleExpanded={(expanded) => setExpandedCard(expanded ? restaurant.id : null)}
                         />
                         );
                     })}
@@ -253,7 +271,8 @@ export default function Swiper({ groupId }) {
                 
                 <button onClick={() => triggerAction('reject')}
                     aria-label="Reject" 
-                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-red-600 dark:text-red-400 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 hover:bg-red-50/60 dark:hover:bg-red-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-95 active:-translate-y-0.5 active:shadow-inner">
+                    disabled={expandedCard !== null}
+                    className={`group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium shadow-sm transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-95 active:-translate-y-0.5 active:shadow-inner ${expandedCard ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-red-600 dark:text-red-400 hover:-translate-y-0.5 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 hover:bg-red-50/60 dark:hover:bg-red-950/20 focus-visible:ring-red-400/60'}`}>
                     
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -263,7 +282,8 @@ export default function Swiper({ groupId }) {
 
                 <button onClick={() => triggerAction('skip')}
                     aria-label="Skip"
-                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600 hover:bg-gray-50/60 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner">
+                    disabled={expandedCard !== null}
+                    className={`group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium shadow-sm transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner ${expandedCard ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600 hover:bg-gray-50/60 dark:hover:bg-white/5 focus-visible:ring-slate-400/60'}`}>
                     
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="9" />
@@ -274,7 +294,8 @@ export default function Swiper({ groupId }) {
 
                 <button onClick={() => triggerAction('accept')}
                     aria-label="Accept"
-                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-green-600 dark:text-green-400 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50/60 dark:hover:bg-green-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner">
+                    disabled={expandedCard !== null}
+                    className={`group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium shadow-sm transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner ${expandedCard ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-green-600 dark:text-green-400 hover:-translate-y-0.5 hover:shadow-md hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50/60 dark:hover:bg-green-950/20 focus-visible:ring-green-400/60'}`}>
                     
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -314,12 +335,24 @@ export default function Swiper({ groupId }) {
     */
 }
 
-function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignoreItem, action, onActionConsumed }) {
+function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignoreItem, action, onActionConsumed, isExpanded, onToggleExpanded }) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
     const rotate = useTransform(x, [-200, 200], [-15, 15]);
     const likeOpacity = useTransform(x, [0, 200, vw], [0, 1, 0]);
     const dislikeOpacity = useTransform(x, [-vw, -200, 0], [0, 1, 0]);
+
+    // Image navigation state
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const images = restaurant.images || [restaurant.hero_img_url || restaurant.square_img_url];
+
+    const nextImage = () => {
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = () => {
+        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
 
     //Þetta function lætur cardsin fljúga út úr skjánum þegar þau eru swiped
     const handleDragEnd = (_, info) => {
@@ -362,10 +395,17 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
 
 
     //myndir með error handling, ef hero image er ekki til, þá nota ég square image
-    const [imageSrc, setImageSrc] = useState(restaurant.hero_img_url || restaurant.square_img_url);
+    const [imageSrc, setImageSrc] = useState(images[currentImageIndex]);
     const handleImageError = () => {
-        setImageSrc(restaurant.square_img_url);
+        if (restaurant.square_img_url && imageSrc !== restaurant.square_img_url) {
+            setImageSrc(restaurant.square_img_url);
+        }
     };
+
+    // Update image source when currentImageIndex changes
+    useEffect(() => {
+        setImageSrc(images[currentImageIndex]);
+    }, [currentImageIndex, images]);
 
     // Triggerinn fyrir cardið næst í röðinni
     const targetScale = 1 - stackIndex * 0.02;
@@ -437,44 +477,177 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     y,
                     rotate,
                     width: '100%',
-                    height: '100%',
+                    height: isExpanded ? 'auto' : '100%',
+                    minHeight: isExpanded ? '500px' : '100%',
                     borderRadius: '16px',
                     //backgroundColor: '#fff',
                     overflow: 'hidden',
                     //boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     position: 'absolute',
-                    cursor: isTop ? 'grab' : 'auto',
+                    cursor: isTop && !isExpanded ? 'grab' : 'auto',
                     scale: 1 - stackIndex * 0.02,
                     translateY: stackIndex * 10,
                     zIndex: isTop ? 100 : 10 - stackIndex,
                 }}
-                drag={isTop ? true : false}
+                animate={isExpanded ? { scale: 1.05, y: -20 } : { scale: 1 - stackIndex * 0.02, y: stackIndex * 10 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                drag={isTop && !isExpanded ? true : false}
                 dragConstraints={false}
                 dragElastic={0.2}
                 dragMomentum={false}
-                onDragEnd={isTop ? handleDragEnd : undefined}
-                whileTap={{ cursor: isTop ? 'grabbing' : 'auto' }}
-                whileDrag={{
+                onDragEnd={isTop && !isExpanded ? handleDragEnd : undefined}
+                whileTap={{ cursor: isTop && !isExpanded ? 'grabbing' : 'auto' }}
+                whileDrag={isTop && !isExpanded ? {
                     scale: 1.05,
                     boxShadow: "var(--drag-shadow)"
-                }}
+                } : {}}
             >
-                <Image
-                    src={imageSrc}
-                    alt={restaurant.name}
-                    width={300}
-                    height={400}
-                    className="w-full h-72 object-cover"
-                    draggable={false}
-                    onError={handleImageError}
-                />
-                <div className="p-3">
+                {/* Image container with navigation */}
+                <div className="relative w-full h-72">
+                    <Image
+                        src={imageSrc}
+                        alt={restaurant.name}
+                        width={300}
+                        height={400}
+                        className="w-full h-full object-cover"
+                        draggable={false}
+                        onError={handleImageError}
+                    />
+                    
+                    {/* Image navigation buttons */}
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                onClick={prevImage}
+                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all"
+                                disabled={!isTop}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={nextImage}
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all"
+                                disabled={!isTop}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                            
+                            {/* Image indicators */}
+                            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                                {images.map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className={`w-2 h-2 rounded-full ${
+                                            index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Expand button */}
+                    {isTop && (
+                        <button
+                            onClick={() => onToggleExpanded(!isExpanded)}
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {isExpanded ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                )}
+                            </svg>
+                        </button>
+                    )}
+                </div>
+
+                {/* Card content */}
+                <div className={`p-3 ${isExpanded ? 'h-auto' : ''}`}>
                     <h3 className="text-lg font-semibold">
                         {restaurant.name}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         {restaurant.parent_city} • {restaurant.avg_rating ?? 'N/A'} ({restaurant.review_count ?? 0})
                     </p>
+                    
+                    {/* Cuisines */}
+                    {restaurant.cuisines && restaurant.cuisines.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                            {restaurant.cuisines.map((cuisine, index) => (
+                                <span
+                                    key={index}
+                                    className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full"
+                                >
+                                    {cuisine}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {/* Price tag */}
+                    {restaurant.price_tag && (
+                        <p className="text-sm font-medium text-green-600 dark:text-green-400 mt-1">
+                            {restaurant.price_tag}
+                        </p>
+                    )}
+
+                    {/* Expanded content */}
+                    {isExpanded && (
+                        <div className="mt-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                            {/* Status */}
+                            {restaurant.status && (
+                                <div>
+                                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Status</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{restaurant.status}</p>
+                                </div>
+                            )}
+
+                            {/* Menu availability */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Menu</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {restaurant.has_menu ? (
+                                        restaurant.menu_url ? (
+                                            <a href={restaurant.menu_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                                View Menu
+                                            </a>
+                                        ) : (
+                                            "Menu available"
+                                        )
+                                    ) : (
+                                        "No menu available"
+                                    )}
+                                </p>
+                            </div>
+
+                            {/* Reviews */}
+                            {restaurant.review_snippets && restaurant.review_snippets.length > 0 && (
+                                <div>
+                                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Recent Reviews</h4>
+                                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                                        {restaurant.review_snippets.slice(0, 3).map((review, index) => (
+                                            <div key={index} className="text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    {[...Array(5)].map((_, starIndex) => (
+                                                        <span key={starIndex} className={`text-xs ${starIndex < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                                            ★
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <p className="text-gray-700 dark:text-gray-300">{review.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
         </motion.div>
 
