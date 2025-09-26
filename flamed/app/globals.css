@@ -1,3 +1,7 @@
+/* learning resources for CSS animations:*/
+/* Animate.css*/
+/* Tailwind.css animations*/
+
 @import "tailwindcss";
 
 :root {
@@ -81,6 +85,7 @@ a:focus-visible {
 .sun-icon {
   animation: rotate 2s linear infinite;
 }
+
  /* Subtle ping animation for interactive elements */
 @keyframes subtlePing {
   0% {

@@ -5,7 +5,9 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 //error handling
 if (!url || !anonKey) {
-  console.warn('Supabase env vars are missing: NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  console.error('Supabase configuration error: Missing environment variables. Please check your .env.local file.');
+  console.error('Required variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  throw new Error('Supabase environment variables are not configured properly');
 }
 
 //skila client

@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 
 export default function ChooseGame() {
   const router = useRouter();
-
+  // list of available game option used ai to generate game ideas can add or delete if you want
   const games = [
     {
       id: 1,

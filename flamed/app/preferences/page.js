@@ -4,55 +4,79 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 
+// main preferences page component
 export default function Preferences() {
+  // state for storing users preferences
   const [preferences, setPreferences] = useState({
-    cuisine: [],
+    coordinates: { lat: 64.1265, lng: -21.8174 }, // Default to Reykjavik
+    kidFriendly: false,
+    category: [],
+    allergies: [],
+    distance: 5,
+    rating: 0,
     priceRange: [],
-    dietaryRestrictions: [],
-    distance: 5, // in kilometers
+    travelMode: 'driving' // driving or walking
   });
   
   const router = useRouter();
 
-  const cuisineOptions = [
-    { name: 'Italian', emoji: '🍝' },
-    { name: 'Mexican', emoji: '🌮' },
-    { name: 'Chinese', emoji: '🥡' },
-    { name: 'Indian', emoji: '🍛' },
-    { name: 'Japanese', emoji: '🍣' },
-    { name: 'American', emoji: '🍔' },
-    { name: 'Mediterranean', emoji: '🥙' },
-    { name: 'Thai', emoji: '🍜' },
-    { name: 'Vietnamese', emoji: '🍲' },
-    { name: 'French', emoji: '🥐' }
-  ];
-
-  const priceOptions = [
-    { symbol: '$', emoji: '💲' },
-    { symbol: '$$', emoji: '💵' },
-    { symbol: '$$$', emoji: '💰' },
-    { symbol: '$$$$', emoji: '🪙' }
-  ];
-
-  const dietaryOptions = [
+  // category options for Iceland restaurants
+  const categoryOptions = [
+    { name: 'Traditional Icelandic', emoji: '❄️' },
+    { name: 'Seafood', emoji: '🐟' },
+    { name: 'Nordic', emoji: '🏔️' },
+    { name: 'Buffet', emoji: '🍽️' },
+    { name: 'Fast Food', emoji: '🍟' },
+    { name: 'Fine Dining', emoji: '🍷' },
+    { name: 'Cafe', emoji: '☕' },
+    { name: 'Street Food', emoji: '🌭' },
     { name: 'Vegetarian', emoji: '🥦' },
-    { name: 'Vegan', emoji: '🌱' },
-    { name: 'Gluten-Free', emoji: '🌾' },
-    { name: 'Dairy-Free', emoji: '🥛' },
-    { name: 'Keto', emoji: '🥑' },
-    { name: 'Paleo', emoji: '🍖' }
+    { name: 'International', emoji: '🌎' }
   ];
 
-  const handleCuisineToggle = (cuisine) => {
+  // allergy options
+  const allergyOptions = [
+    { name: 'Gluten', emoji: '🌾' },
+    { name: 'Dairy', emoji: '🥛' },
+    { name: 'Nuts', emoji: '🥜' },
+    { name: 'Shellfish', emoji: '🦐' },
+    { name: 'Eggs', emoji: '🥚' },
+    { name: 'Soy', emoji: '🥢' }
+  ];
+
+  // price options
+  const priceOptions = [
+    { symbol: '$', emoji: '💲', description: 'Budget' },
+    { symbol: '$$', emoji: '💵', description: 'Moderate' },
+    { symbol: '$$$', emoji: '💰', description: 'Expensive' }
+  ];
+
+  // rating options
+  const ratingOptions = [1, 2, 3, 4, 5];
+
+  // toggle category selection
+  const handleCategoryToggle = (category) => {
     setPreferences(prev => {
-      if (prev.cuisine.includes(cuisine)) {
-        return { ...prev, cuisine: prev.cuisine.filter(c => c !== cuisine) };
+      if (prev.category.includes(category)) {
+        return { ...prev, category: prev.category.filter(c => c !== category) };
       } else {
-        return { ...prev, cuisine: [...prev.cuisine, cuisine] };
+        return { ...prev, category: [...prev.category, category] };
       }
     });
   };
 
+  // toggle allergy selection
+  const handleAllergyToggle = (allergy) => {
+    setPreferences(prev => {
+      if (prev.allergies.includes(allergy)) {
+        return { ...prev, allergies: prev.allergies.filter(a => a !== allergy) };
+      } else {
+        return { ...prev, allergies: [...prev.allergies, allergy] };
+      }
+    });
+  };
+
+  // toggle price selection
   const handlePriceToggle = (price) => {
     setPreferences(prev => {
       if (prev.priceRange.includes(price)) {
@@ -63,25 +87,54 @@ export default function Preferences() {
     });
   };
 
-  const handleDietaryToggle = (diet) => {
-    setPreferences(prev => {
-      if (prev.dietaryRestrictions.includes(diet)) {
-        return { ...prev, dietaryRestrictions: prev.dietaryRestrictions.filter(d => d !== diet) };
-      } else {
-        return { ...prev, dietaryRestrictions: [...prev.dietaryRestrictions, diet] };
-      }
-    });
-  };
-
+  // handle distance slider change
   const handleDistanceChange = (e) => {
     setPreferences(prev => ({ ...prev, distance: parseInt(e.target.value) }));
   };
 
+  // handle rating selection
+  const handleRatingChange = (rating) => {
+    setPreferences(prev => ({ ...prev, rating }));
+  };
+
+  // handle kid friendly toggle
+  const handleKidFriendlyToggle = () => {
+    setPreferences(prev => ({ ...prev, kidFriendly: !prev.kidFriendly }));
+  };
+
+  // handle travel mode change
+  const handleTravelModeChange = (mode) => {
+    setPreferences(prev => ({ ...prev, travelMode: mode }));
+  };
+
+  // get current location coordinates
+  const handleGetCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setPreferences(prev => ({
+            ...prev,
+            coordinates: {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            }
+          }));
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('Unable to get your location. Using default Reykjavik coordinates.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Save preferences to localStorage
+    // save to local storage
     localStorage.setItem('restaurantPreferences', JSON.stringify(preferences));
-    // Redirect to /swipe page
+    // go to swiping page when done
     router.push('/swiper');
   };
 
@@ -90,43 +143,131 @@ export default function Preferences() {
       {/* navbar at the top */}
       <Navbar />
 
+      {/* main preferences card */}
       <div className="max-w-md mx-auto rounded-xl shadow-md overflow-hidden p-6 mt-12" style={{ 
         backgroundColor: 'var(--nav-item-bg)',
         boxShadow: '0 4px 6px var(--nav-shadow)'
       }}>
         <h1 className="text-2xl font-bold text-center mb-6" style={{ color: 'var(--foreground)' }}>
-          Restaurant Preferences
+          Preferences
         </h1>
         <p className="text-center mb-8" style={{ color: 'var(--muted)' }}>
-          Set your preferences to help us find the perfect restaurants for you!
+          Set your preferences to find perfect restaurants!
         </p>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Cuisine Preferences */}
+          {/* Coordinates/Location */}
           <div>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Preferred Cuisines</h2>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+              Location 
+            </h2>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={handleGetCurrentLocation}
+                className="w-full py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: 'var(--nav-item-hover)',
+                  color: 'var(--foreground)'
+                }}
+              >
+                <span>📍 Use My Current Location</span>
+              </button>
+              <div className="text-xs text-center" style={{ color: 'var(--muted)' }}>
+                Current: {preferences.coordinates.lat.toFixed(4)}, {preferences.coordinates.lng.toFixed(4)}
+              </div>
+            </div>
+          </div>
+
+          {/* Travel Mode */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Travel Mode</h2>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleTravelModeChange('driving')}
+                className={`flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-1 ${
+                  preferences.travelMode === 'driving' ? '' : ''
+                }`}
+                style={{
+                  backgroundColor: preferences.travelMode === 'driving' 
+                    ? 'var(--accent)' 
+                    : 'var(--nav-item-hover)',
+                  color: preferences.travelMode === 'driving' 
+                    ? 'var(--nav-text)' 
+                    : 'var(--foreground)'
+                }}
+              >
+                <span>🚗</span>
+                <span>Driving</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTravelModeChange('walking')}
+                className={`flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-1 ${
+                  preferences.travelMode === 'walking' ? '' : ''
+                }`}
+                style={{
+                  backgroundColor: preferences.travelMode === 'walking' 
+                    ? 'var(--accent)' 
+                    : 'var(--nav-item-hover)',
+                  color: preferences.travelMode === 'walking' 
+                    ? 'var(--nav-text)' 
+                    : 'var(--foreground)'
+                }}
+              >
+                <span>🚶</span>
+                <span>Walking</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Distance */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+              Maximum {preferences.travelMode === 'walking' ? 'Walking' : 'Driving'} Distance: {preferences.distance} km
+            </h2>
+            <input
+              type="range"
+              min="1"
+              max={preferences.travelMode === 'walking' ? '10' : '50'}
+              value={preferences.distance}
+              onChange={handleDistanceChange}
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+              style={{ 
+                backgroundColor: 'var(--nav-item-hover)',
+                accentColor: 'var(--accent)'
+              }}
+            />
+            <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--muted)' }}>
+              <span>1 km</span>
+              <span>{preferences.travelMode === 'walking' ? '10' : '50'} km</span>
+            </div>
+          </div>
+
+          {/* Rating */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Minimum Rating</h2>
             <div className="flex flex-wrap gap-2">
-              {cuisineOptions.map(cuisine => (
+              {ratingOptions.map(rating => (
                 <button
-                  key={cuisine.name}
+                  key={rating}
                   type="button"
-                  onClick={() => handleCuisineToggle(cuisine.name)}
+                  onClick={() => handleRatingChange(rating)}
                   className={`px-3 py-2 rounded-full text-sm transition-colors flex items-center gap-1 ${
-                    preferences.cuisine.includes(cuisine.name)
-                      ? ''
-                      : ''
+                    preferences.rating >= rating ? '' : ''
                   }`}
                   style={{
-                    backgroundColor: preferences.cuisine.includes(cuisine.name) 
+                    backgroundColor: preferences.rating >= rating 
                       ? 'var(--accent)' 
                       : 'var(--nav-item-hover)',
-                    color: preferences.cuisine.includes(cuisine.name) 
+                    color: preferences.rating >= rating 
                       ? 'var(--nav-text)' 
                       : 'var(--foreground)'
                   }}
                 >
-                  <span>{cuisine.emoji}</span>
-                  <span>{cuisine.name}</span>
+                  <span>⭐</span>
+                  <span>{rating}+</span>
                 </button>
               ))}
             </div>
@@ -142,9 +283,7 @@ export default function Preferences() {
                   type="button"
                   onClick={() => handlePriceToggle(price.symbol)}
                   className={`px-3 py-2 rounded-full text-sm transition-colors flex items-center gap-1 ${
-                    preferences.priceRange.includes(price.symbol)
-                      ? ''
-                      : ''
+                    preferences.priceRange.includes(price.symbol) ? '' : ''
                   }`}
                   style={{
                     backgroundColor: preferences.priceRange.includes(price.symbol) 
@@ -162,70 +301,95 @@ export default function Preferences() {
             </div>
           </div>
 
-          {/* Dietary Restrictions */}
+          {/* Category */}
           <div>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Dietary Restrictions</h2>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Restaurant Categories</h2>
             <div className="flex flex-wrap gap-2">
-              {dietaryOptions.map(diet => (
+              {categoryOptions.map(category => (
                 <button
-                  key={diet.name}
+                  key={category.name}
                   type="button"
-                  onClick={() => handleDietaryToggle(diet.name)}
+                  onClick={() => handleCategoryToggle(category.name)}
                   className={`px-3 py-2 rounded-full text-sm transition-colors flex items-center gap-1 ${
-                    preferences.dietaryRestrictions.includes(diet.name)
-                      ? ''
-                      : ''
+                    preferences.category.includes(category.name) ? '' : ''
                   }`}
                   style={{
-                    backgroundColor: preferences.dietaryRestrictions.includes(diet.name) 
+                    backgroundColor: preferences.category.includes(category.name) 
                       ? 'var(--accent)' 
                       : 'var(--nav-item-hover)',
-                    color: preferences.dietaryRestrictions.includes(diet.name) 
+                    color: preferences.category.includes(category.name) 
                       ? 'var(--nav-text)' 
                       : 'var(--foreground)'
                   }}
                 >
-                  <span>{diet.emoji}</span>
-                  <span>{diet.name}</span>
+                  <span>{category.emoji}</span>
+                  <span>{category.name}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Distance  */}
+          {/* Kid Friendly */}
           <div>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-              Maximum Distance: {preferences.distance} km
-            </h2>
-            <input
-              type="range"
-              min="1"
-              max="30"
-              value={preferences.distance}
-              onChange={handleDistanceChange}
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-              style={{ 
-                backgroundColor: 'var(--nav-item-hover)',
-                accentColor: 'var(--accent)'
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Kid Friendly</h2>
+            <button
+              type="button"
+              onClick={handleKidFriendlyToggle}
+              className={`w-full py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                preferences.kidFriendly ? '' : ''
+              }`}
+              style={{
+                backgroundColor: preferences.kidFriendly 
+                  ? 'var(--accent)' 
+                  : 'var(--nav-item-hover)',
+                color: preferences.kidFriendly 
+                  ? 'var(--nav-text)' 
+                  : 'var(--foreground)'
               }}
-            />
-            <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--muted)' }}>
-              <span>1 km</span>
-              <span>30 km</span>
+            >
+              <span>{preferences.kidFriendly ? '✅' : '❌'}</span>
+              <span>{preferences.kidFriendly ? 'Kid Friendly Restaurants' : 'Any Restaurant'}</span>
+            </button>
+          </div>
+
+          {/* Allergies */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Allergies</h2>
+            <div className="flex flex-wrap gap-2">
+              {allergyOptions.map(allergy => (
+                <button
+                  key={allergy.name}
+                  type="button"
+                  onClick={() => handleAllergyToggle(allergy.name)}
+                  className={`px-3 py-2 rounded-full text-sm transition-colors flex items-center gap-1 ${
+                    preferences.allergies.includes(allergy.name) ? '' : ''
+                  }`}
+                  style={{
+                    backgroundColor: preferences.allergies.includes(allergy.name) 
+                      ? 'var(--accent)' 
+                      : 'var(--nav-item-hover)',
+                    color: preferences.allergies.includes(allergy.name) 
+                      ? 'var(--nav-text)' 
+                      : 'var(--foreground)'
+                  }}
+                >
+                  <span>{allergy.emoji}</span>
+                  <span>{allergy.name}</span>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 rounded-lg font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2 "
+            className="w-full py-3 rounded-lg font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2"
             style={{
               backgroundColor: 'var(--accent)',
               color: 'var(--nav-text)'
             }}
           >
-            <span>Done - Start Swiping!</span>
-            <span>👉</span>
+            <span>Start swiping!</span>
           </button>
         </form>
       </div>

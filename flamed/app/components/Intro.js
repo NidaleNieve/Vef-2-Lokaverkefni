@@ -12,7 +12,7 @@ export default function Intro() {
   const [showFoodIcons, setShowFoodIcons] = useState(false);
   const router = useRouter();
 
-  // Animated food icons that float around
+  // animated food icons that float around
   const FoodIcon = ({ icon: Icon, style }) => (
     <div 
       className="absolute animate-float" 
