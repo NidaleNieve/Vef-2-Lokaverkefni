@@ -21,30 +21,9 @@ export default function RootLayout({ children }) {
       <body className="flex flex-col min-h-screen antialiased">
         <AppProvider>
           <ConditionalNavbar />
-          <main className="flex-grow">{children}</main>
+          <div className="flex-grow">{children}</div>
         </AppProvider>
       
-        {/* Dev link for development */}
-        <a
-          href="/dev"
-          style={{
-            position: "fixed",
-            top: "1rem",
-            right: "1rem",
-            zIndex: 1000,
-            background: "#fff",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            padding: "0.5rem 1rem",
-            fontWeight: 500,
-            textDecoration: "none",
-            color: "#222",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            transition: "background 0.2s"
-          }}
-        >
-          Dev
-        </a>
       </body>
     </html>
   );
