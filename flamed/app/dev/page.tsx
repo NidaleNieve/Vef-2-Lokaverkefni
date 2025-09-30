@@ -243,6 +243,10 @@ export default function Dev() {
             Go to &apos;Update password&apos; page
           </Link>
         </div>
+
+        <div className="pt-2">
+          <Link className="underline" href="/forgot-password">Forgot password?</Link>
+        </div>
       </div>
 
       {/* Groups & Invites */}
