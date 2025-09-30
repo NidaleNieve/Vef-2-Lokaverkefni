@@ -28,6 +28,32 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     const [sessionId, setSessionId] = useState(null);
     const [roundLoading, setRoundLoading] = useState(false);
     const [roundError, setRoundError] = useState('');
+
+    // preference summaries, 
+    const hostSummary = useMemo(() => {
+        const summary = []
+        if (hostPreferences?.requireKidFriendly) summary.push('Kid friendly required')
+        if (hostPreferences?.maxRadius) summary.push(`Radius ≤ ${hostPreferences.maxRadius} km`)
+        if (Array.isArray(hostPreferences?.blockedCategories) && hostPreferences.blockedCategories.length > 0) {
+            summary.push(`Blocked categories: ${hostPreferences.blockedCategories.join(', ')}`)
+        }
+        return summary
+    }, [hostPreferences])
+
+    const playerSummary = useMemo(() => {
+        const summary = []
+        if (playerPreferences?.radius) summary.push(`Radius ≤ ${playerPreferences.radius} km`)
+        if (playerPreferences?.rating) summary.push(`Min rating ${playerPreferences.rating}+`)
+        if (playerPreferences?.price) summary.push(`Price up to ${playerPreferences.price}`)
+        if (playerPreferences?.kidFriendly) summary.push('Prefers kid friendly venues')
+        if (Array.isArray(playerPreferences?.categories) && playerPreferences.categories.length > 0) {
+            summary.push(`Categories: ${playerPreferences.categories.join(', ')}`)
+        }
+        if (playerPreferences?.allergies) summary.push(`Allergies noted: ${playerPreferences.allergies}`)
+        return summary
+    }, [playerPreferences])
+
+    
     //Fæ session id
     useEffect(() => {
         //error handling ef ekki í group
@@ -165,32 +191,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     }
 
     const visibleCards = restaurants.slice(current, current + 3);
-
-    // prefernce summaries, 
-    const hostSummary = useMemo(() => {
-        const summary = []
-        if (hostPreferences?.requireKidFriendly) summary.push('Kid friendly required')
-        if (hostPreferences?.maxRadius) summary.push(`Radius ≤ ${hostPreferences.maxRadius} km`)
-        if (Array.isArray(hostPreferences?.blockedCategories) && hostPreferences.blockedCategories.length > 0) {
-            summary.push(`Blocked categories: ${hostPreferences.blockedCategories.join(', ')}`)
-        }
-        return summary
-    }, [hostPreferences])
-
-    const playerSummary = useMemo(() => {
-        const summary = []
-        if (playerPreferences?.radius) summary.push(`Radius ≤ ${playerPreferences.radius} km`)
-        if (playerPreferences?.rating) summary.push(`Min rating ${playerPreferences.rating}+`)
-        if (playerPreferences?.price) summary.push(`Price up to ${playerPreferences.price}`)
-        if (playerPreferences?.kidFriendly) summary.push('Prefers kid friendly venues')
-        if (Array.isArray(playerPreferences?.categories) && playerPreferences.categories.length > 0) {
-            summary.push(`Categories: ${playerPreferences.categories.join(', ')}`)
-        }
-        if (playerPreferences?.allergies) summary.push(`Allergies noted: ${playerPreferences.allergies}`)
-        return summary
-    }, [playerPreferences])
-
-
 
     //top level function sem triggerar action útfrá tökkum á rétta cardið
     const triggerAction = (type) => {
