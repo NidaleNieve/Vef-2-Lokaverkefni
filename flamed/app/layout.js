@@ -1,11 +1,14 @@
-// app/layout.js
 import './globals.css';
 import { Inter, Roboto } from 'next/font/google';
 import { AppProvider } from './context/AppContext';
 import ConditionalNavbar from './components/ConditionalNavbar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const roboto = Roboto({ subsets: ['latin'], variable: '--font-mono' });
+const roboto = Roboto({ 
+  subsets: ['latin'], 
+  variable: '--font-mono',
+  weight: ['400', '700']
+});
 
 export const metadata = {
   title: 'Swipe App',
@@ -18,8 +21,9 @@ export default function RootLayout({ children }) {
       <body className="flex flex-col min-h-screen antialiased">
         <AppProvider>
           <ConditionalNavbar />
-          <main className="flex-grow">{children}</main>
+          <div className="flex-grow">{children}</div>
         </AppProvider>
+      
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react'; // using lucide-react for icons
 
 export default function DarkModeToggle({ className = "", iconSize = 20 }) {
   const [darkMode, setDarkMode] = useState(false);
