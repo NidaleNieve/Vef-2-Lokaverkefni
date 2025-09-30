@@ -2,11 +2,28 @@
 
 import { useEffect, useState } from 'react'
 import Swiper from './swiper'
+import PreferencesPanel from './preferences-panel'
+
 
 //þetta er temp skjal sem renderar allt á swipe síðunni. Það leyfir manni að starta leik og að swipa
 export default function HomeClient() {
   const [groupInput, setGroupInput] = useState('')
   const [groupId, setGroupId] = useState('')
+  
+  // Prefences states
+  const [hostPrefs, setHostPrefs] = useState({
+    requireKidFriendly: false,
+    maxRadius: '',
+    blockedCategories: [],
+  })
+  const [playerPrefs, setPlayerPrefs] = useState({
+    radius: '',
+    rating: '',
+    price: '',
+    kidFriendly: false,
+    allergies: '',
+    categories: [],
+  })
 
   //sækir groupId úr local storage, qol feature
   useEffect(() => {
@@ -68,7 +85,20 @@ export default function HomeClient() {
           Create Game
         </button>
       </div>
-      <Swiper groupId={groupId || undefined} />
+
+      {/* Preference Panel */}
+      <PreferencesPanel
+        hostPrefs={hostPrefs}
+        setHostPrefs={setHostPrefs}
+        playerPrefs={playerPrefs}
+        setPlayerPrefs={setPlayerPrefs}
+      />
+
+      <Swiper
+        groupId={groupId || undefined}
+        hostPreferences={hostPrefs}
+        playerPreferences={playerPrefs}
+      />
     </div>
   )
 }

@@ -17,7 +17,7 @@ const vw = typeof window !== 'undefined' ? window.innerWidth : 1000;
 const vh = typeof window !== 'undefined' ? window.innerHeight : 1000;
 
 //Main functioninið, sem renderar veitingastaðina
-export default function Swiper({ groupId }) {
+export default function Swiper({ groupId, hostPreferences = {}, playerPreferences = {} }) {
     /*Fæ session id, sem er random uuid
     const [sessionId] = useState(() =>
         typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
@@ -166,6 +166,32 @@ export default function Swiper({ groupId }) {
 
     const visibleCards = restaurants.slice(current, current + 3);
 
+    // prefernce summaries, 
+    const hostSummary = useMemo(() => {
+        const summary = []
+        if (hostPreferences?.requireKidFriendly) summary.push('Kid friendly required')
+        if (hostPreferences?.maxRadius) summary.push(`Radius ≤ ${hostPreferences.maxRadius} km`)
+        if (Array.isArray(hostPreferences?.blockedCategories) && hostPreferences.blockedCategories.length > 0) {
+            summary.push(`Blocked categories: ${hostPreferences.blockedCategories.join(', ')}`)
+        }
+        return summary
+    }, [hostPreferences])
+
+    const playerSummary = useMemo(() => {
+        const summary = []
+        if (playerPreferences?.radius) summary.push(`Radius ≤ ${playerPreferences.radius} km`)
+        if (playerPreferences?.rating) summary.push(`Min rating ${playerPreferences.rating}+`)
+        if (playerPreferences?.price) summary.push(`Price up to ${playerPreferences.price}`)
+        if (playerPreferences?.kidFriendly) summary.push('Prefers kid friendly venues')
+        if (Array.isArray(playerPreferences?.categories) && playerPreferences.categories.length > 0) {
+            summary.push(`Categories: ${playerPreferences.categories.join(', ')}`)
+        }
+        if (playerPreferences?.allergies) summary.push(`Allergies noted: ${playerPreferences.allergies}`)
+        return summary
+    }, [playerPreferences])
+
+
+
     //top level function sem triggerar action útfrá tökkum á rétta cardið
     const triggerAction = (type) => {
         if (uiLocked) return; //Þetta er lásinn fyrir takkana
@@ -177,6 +203,38 @@ export default function Swiper({ groupId }) {
 
     return (
         <div className="min-h-[28rem] flex flex-col items-center justify-center">
+
+            {/* Preference Summaries */}
+            {(hostSummary.length > 0 || playerSummary.length > 0) && (
+                <div className="mb-6 w-full max-w-sm rounded-lg border border-gray-200 bg-white/80 p-3 text-xs text-gray-600 shadow-sm dark:border-gray-700 dark:bg-black/70 dark:text-gray-300">
+                {hostSummary.length > 0 && (
+                    <div className="mb-3">
+                    <p className="font-semibold text-gray-700 dark:text-gray-200">Host constraints</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                        {hostSummary.map((item, idx) => (
+                        <li key={`host-${idx}`}>{item}</li>
+                        ))}
+                    </ul>
+                    </div>
+                )}
+                <div>
+                    <p className="font-semibold text-gray-700 dark:text-gray-200">Your preferences</p>
+                    {playerSummary.length > 0 ? (
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                        {playerSummary.map((item, idx) => (
+                        <li key={`player-${idx}`}>{item}</li>
+                        ))}
+                    </ul>
+                    ) : (
+                    <p className="mt-1 text-gray-500 dark:text-gray-400">Using default settings.</p>
+                    )}
+                </div>
+                <p className="mt-3 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    Filters will activate once the Supabase RPC endpoint is wired up.
+                </p>
+                </div>
+            )}
+
             <div className="relative w-72 h-96">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}
                 <AnimatePresence initial={false} mode="popLayout">

@@ -13,12 +13,14 @@ export default async function Home() {
     </main>
   );
 
+  /*
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-xl">
         <h1 className="text-4xl font-bold mb-6">Restaurants</h1>
-        <Swiper /> {/* Færði allt supabase fetching í swiper */}
+        <Swiper /> { Færði allt supabase fetching í swiper }
       </div>
     </main>
   );
+*/
 }
