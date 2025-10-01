@@ -24,7 +24,6 @@ export default function Intro() {
       <Icon size={24} style={{ color: 'var(--accent)' }} />
     </div>
   );
-
   useEffect(() => {
     // Show floating food icons after initial load
     const timer = setTimeout(() => {
@@ -34,7 +33,7 @@ export default function Intro() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Added: Restore lastGroupId into input (from home-client.jsx pattern)
+  //sækir groupId úr local storage, qol feature
   useEffect(() => {
     const last = localStorage.getItem('lastGroupId') || '';
     if (last) {
@@ -45,7 +44,7 @@ export default function Intro() {
     }
   }, []);
 
-  // Added: Persist groupId (from home-client.jsx pattern)
+  //geymir groupId í localstorage þegar það breytist
   useEffect(() => {
     if (groupId) localStorage.setItem('lastGroupId', groupId);
   }, [groupId]);
@@ -61,15 +60,36 @@ export default function Intro() {
     setIsHost(false);
     setReadyToSwipe(false);
     localStorage.setItem('lastGroupId', id);
-    // TODO: Later navigate to the swipe/results page once they are split out.
   };
+
+  //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
+  async function startRound() {
+    //ef að groupID er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik
+    if (!groupId.trim()) return
+    const res = await fetch(`/api/groups/${groupId.trim()}/round`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+    })
+    //error handling
+    const j = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      alert(j?.error || `Failed to start round (${res.status})`)
+      return
+    }
+    //geymi groupId
+    const gid = groupId.trim()
+    setGroupId(gid)
+    setIsHost(true)
+    setReadyToSwipe(false)
+  }
 
   const handleCircleClick = () => {
     setIsClicked(true);
     setTimeout(() => setIsClicked(false), 500);
 
     // Changed: no code generation or navigation; just join via input
-    joinGroup();
+    startRound();
   };
 
   const handleCodeSubmit = (e) => {
@@ -198,6 +218,7 @@ export default function Intro() {
             />
             <button 
               type="submit"
+              onClick={joinGroup}
               className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: 'var(--accent)',
@@ -208,19 +229,6 @@ export default function Intro() {
             </button>
           </div>
         </form>
-
-        {/* Added: temporary button that does the same as JOIN */}
-        <button
-          type="button"
-          onClick={joinGroup}
-          className="mt-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
-          style={{
-            backgroundColor: 'var(--accent)',
-            color: 'var(--nav-text)'
-          }}
-        >
-          Temp Join
-        </button>
       </div>
 
       <footer className="mt-8 text-center text-sm animate-fade-in" style={{ color: 'var(--muted)' }}>
