@@ -1,22 +1,33 @@
+/* learning resources for CSS animations:*/
+/* Animate.css*/
+/* Tailwind.css animations*/
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light Theme Colors */
+  --background: #FFDFEF;
+  --foreground: #1e293b;
+  --nav-bg: #AA60C8;
+  --nav-text: #374151;
+  --nav-item-bg: rgba(255, 255, 255, 0.5);
+  --nav-item-hover: rgba(255, 184, 224, 0.3);
+  --nav-shadow: rgba(79, 70, 229, 0.15);
+  --accent: #D69ADE;
+  --muted: #A0AEC0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  /* Dark Theme Colors */
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --nav-bg: #1e1b4b;
+  --nav-text: #e0e7ff;
+  --nav-item-bg: rgba(224, 231, 255, 0.08);
+  --nav-item-hover: rgba(224, 231, 255, 0.16);
+  --nav-shadow: rgba(30, 27, 75, 0.4);
+  --accent: #818cf8;
+  --muted: #94a3b8;
 }
 
 html, body {
@@ -26,5 +37,179 @@ html, body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  line-height: 1.6;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+a, button {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Animation for dark mode toggle */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sun-icon {
+  animation: rotate 2s linear infinite;
+}
+
+ /* Subtle ping animation for interactive elements */
+@keyframes subtlePing {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75%, 100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-subtle-ping {
+  animation: subtlePing 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+        
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Fade In Animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+/* Animation Keyframes Intro*/
+@keyframes colorShift {
+  0% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(30deg); }
+  100% { filter: hue-rotate(0deg); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(5deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInGrow {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceSide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-5px); }
+}
+
+@keyframes pulseShrink {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes sparkle1 {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0) rotate(360deg); }
+}
+
+@keyframes sparkle2 {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(-180deg); }
+  100% { opacity: 0; transform: scale(0) rotate(-360deg); }
+}
+
+/* Animation Classes */
+.animate-color-shift {
+  animation: colorShift 3s infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.animate-fade-in-up-delayed {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.animate-fade-in-grow {
+  animation: fadeInGrow 0.5s ease-out;
+}
+
+.animate-bounce-side {
+  animation: bounceSide 2s infinite;
+}
+
+.animate-pulse-shrink {
+  animation: pulseShrink 0.5s ease-in-out;
+}
+
+.animate-text-pulse {
+  animation: textPulse 2s infinite;
+}
+
+.animate-sparkle-1 {
+  animation: sparkle1 1.5s ease-out;
+}
+
+.animate-sparkle-2 {
+  animation: sparkle2 1.5s ease-out 0.3s;
 }
