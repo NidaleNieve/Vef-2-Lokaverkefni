@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CongratulationCard from "./CongratulationCard";
 
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
@@ -97,9 +98,8 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         .map(([id, pct]) => ({ id, name: idToName.get(Number(id)) || String(id), pct }))
     : [];
 
-  //Temp html
   return (
-    <div className="bg-white rounded-lg p-6 dark:bg-black 
+    <div className="bg-[var(--background)] text-[var(--foreground)] rounded-lg p-6 
                     shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)]">
       <h2 className="text-2xl font-bold mb-4">Results</h2>
 
@@ -110,7 +110,9 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         {groupId && sessionId ? (
           <>
             <button
-              className="border rounded px-3 py-2"
+              className="bg-[var(--nav-item-bg)] text-[var(--nav-text)] border border-[var(--accent)] rounded px-3 py-2 
+                         hover:bg-[var(--nav-item-hover)] transition-colors duration-200
+                         disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={submitMyPicks}
               disabled={submitting || submitted}
               title="Send your picks to the server for this round"
@@ -119,7 +121,9 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
             </button>
 
             <button
-              className="border rounded px-3 py-2"
+              className="bg-[var(--nav-item-bg)] text-[var(--nav-text)] border border-[var(--accent)] rounded px-3 py-2 
+                         hover:bg-[var(--nav-item-hover)] transition-colors duration-200
+                         disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={refreshGroupResult}
               disabled={fetching}
               title="Fetch aggregated picks for this round"
@@ -128,13 +132,17 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
             </button>
           </>
         ) : (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[var(--muted)]">
             Not in a group/round. Submit/aggregate disabled.
           </p>
         )}
 
         {onRestart && (
-          <button className="border rounded px-3 py-2" onClick={onRestart}>
+          <button 
+            className="bg-[var(--nav-item-bg)] text-[var(--nav-text)] border border-[var(--accent)] rounded px-3 py-2 
+                       hover:bg-[var(--nav-item-hover)] transition-colors duration-200"
+            onClick={onRestart}
+          >
             Start over
           </button>
         )}
@@ -142,20 +150,32 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
 
       {agg && (
         <div className="mb-6">
+          {/* show congratulation card if there are consensus picks */}
+          <CongratulationCard 
+            restaurantNames={consensusNames} 
+            isVisible={consensusNames.length > 0} 
+          />
+          
           <h3 className="font-semibold mb-2">Group aggregation</h3>
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-[var(--muted)] mb-2">
             Submitters: {agg.submitters} • Messages considered: {agg.messages_considered}
           </p>
 
           {consensusNames.length > 0 ? (
             <div className="mb-3">
-              <p className="font-semibold">Consensus pick(s):</p>
-              <ul className="list-disc ml-5">
-                {consensusNames.map((n, i) => <li key={i}>{n}</li>)}
+              <p className="font-semibold">
+                Consensus pick(s):</p>
+              <ul className="list-disc ml-5 mt-2">
+                {consensusNames.map((n, i) => (
+                  <li key={i}>
+                    {n}
+                  </li>
+                ))}
               </ul>
             </div>
           ) : (
-            <p className="mb-3">No unanimous pick yet.</p>
+            <p className="mb-3 text-[var(--muted)]">
+              No unanimous pick yet.</p>
           )}
 
           {topPicks.length > 0 && (
@@ -173,52 +193,23 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         </div>
       )}
 
-      <div>
+      <div className="mb-4">
         <h3 className="font-semibold mb-2">Accepted:</h3>
-        <ul>
+        <ul className="space-y-1">
           {accepted.map(r => (
-            <li key={r.id}>{r.name}</li>
+            <li key={r.id} className="text-[var(--foreground)]">{r.name}</li>
           ))}
         </ul>
       </div>
-      <div className="mt-4">
+      
+      <div>
         <h3 className="font-semibold mb-2">Rejected:</h3>
-        <ul>
+        <ul className="space-y-1">
           {rejected.map(r => (
-            <li key={r.id}>{r.name}</li>
+            <li key={r.id} className="text-[var(--foreground)]">{r.name}</li>
           ))}
         </ul>
       </div>
     </div>
   );
 }
-
-/*
-export default function Results({ restaurants, acceptedIds, rejectedIds, onRestart }) {
-  const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
-  const rejected = restaurants.filter(r => rejectedIds.includes(r.id));
-
-  return (
-    <div className="bg-white rounded-lg p-6 dark:bg-black 
-                    shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)]">
-      <h2 className="text-2xl font-bold mb-4">Results</h2>
-      <div>
-        <h3 className="font-semibold mb-2">Accepted:</h3>
-        <ul>
-          {accepted.map(r => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="mt-4">
-        <h3 className="font-semibold mb-2">Rejected:</h3>
-        <ul>
-          {rejected.map(r => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-  */
