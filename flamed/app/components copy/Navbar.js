@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Home, User, MessageSquare, Users, Menu, X } from 'lucide-react';
-import DarkModeToggle from './DarkModeToggle';
-import DarkModeToggleWithLabel from './DarkModeToggleWithLabel';
+import DarkModeToggle from '../../components/home-components/DarkModeToggle';
+import DarkModeToggleWithLabel from '../../components/home-components/DarkModeToggleWithLabel';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);

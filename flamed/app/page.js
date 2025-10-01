@@ -3,7 +3,7 @@ import path from "path";
 import { promises as fs } from "fs";
 import Image from "next/image";
 import HomeClient from "../components/home-client";
-import Intro from "../components/intro2";
+import Intro from "../components/intro";
 
 
 export default async function Home() {

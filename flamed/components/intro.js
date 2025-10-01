@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import DarkModeToggle from './components copy/DarkModeToggle';
+import DarkModeToggle from './home-components/DarkModeToggle';
 
 export default function Intro() {
   const [generatedCode, setGeneratedCode] = useState(null);
@@ -10,7 +9,11 @@ export default function Intro() {
   const [isHovered, setIsHovered] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [showFoodIcons, setShowFoodIcons] = useState(false);
-  const router = useRouter();
+
+  // Added from home-client.jsx logic (state)
+  const [groupId, setGroupId] = useState('');
+  const [isHost, setIsHost] = useState(false);
+  const [readyToSwipe, setReadyToSwipe] = useState(false);
 
   // animated food icons that float around
   const FoodIcon = ({ icon: Icon, style }) => (
@@ -31,31 +34,48 @@ export default function Intro() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Added: Restore lastGroupId into input (from home-client.jsx pattern)
+  useEffect(() => {
+    const last = localStorage.getItem('lastGroupId') || '';
+    if (last) {
+      setCodeInput(last);
+      setGroupId(last);
+      setIsHost(false);
+      setReadyToSwipe(false);
+    }
+  }, []);
+
+  // Added: Persist groupId (from home-client.jsx pattern)
+  useEffect(() => {
+    if (groupId) localStorage.setItem('lastGroupId', groupId);
+  }, [groupId]);
+
+  // Added: join logic (replaces code generation + redirect)
+  const joinGroup = () => {
+    const id = codeInput.trim();
+    if (!id) {
+      alert('Enter a group id to join');
+      return;
+    }
+    setGroupId(id);
+    setIsHost(false);
+    setReadyToSwipe(false);
+    localStorage.setItem('lastGroupId', id);
+    // TODO: Later navigate to the swipe/results page once they are split out.
+  };
+
   const handleCircleClick = () => {
     setIsClicked(true);
     setTimeout(() => setIsClicked(false), 500);
-    
-    setGeneratedCode('GENERATING...');
-    
-    setTimeout(() => {
-      const code = Math.random().toString(36).substr(2, 8).toUpperCase();
-      setGeneratedCode(code);
-      
-      // Redirect to preferences with the generated code
-      router.push(`/preferences?code=${code}`);
-    }, 2000);
+
+    // Changed: no code generation or navigation; just join via input
+    joinGroup();
   };
 
   const handleCodeSubmit = (e) => {
     e.preventDefault();
-    if (codeInput.trim()) {
-      if (codeInput.length >= 4) {
-        // Redirect to preferences with the entered code
-        router.push(`/preferences?code=${codeInput.toUpperCase()}`);
-      } else {
-        alert('Please enter a valid code (at least 4 characters)');
-      }
-    }
+    // Changed: no redirect to /preferences; just join via input
+    joinGroup();
   };
 
   return (
@@ -188,6 +208,19 @@ export default function Intro() {
             </button>
           </div>
         </form>
+
+        {/* Added: temporary button that does the same as JOIN */}
+        <button
+          type="button"
+          onClick={joinGroup}
+          className="mt-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+          style={{
+            backgroundColor: 'var(--accent)',
+            color: 'var(--nav-text)'
+          }}
+        >
+          Temp Join
+        </button>
       </div>
 
       <footer className="mt-8 text-center text-sm animate-fade-in" style={{ color: 'var(--muted)' }}>
