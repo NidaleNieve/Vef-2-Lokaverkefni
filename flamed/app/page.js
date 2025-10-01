@@ -3,13 +3,16 @@ import path from "path";
 import { promises as fs } from "fs";
 import Image from "next/image";
 import HomeClient from "../components/home-client";
+import Intro from "../components/intro2";
+
 
 export default async function Home() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <HomeClient />
+      {/* <HomeClient /> */}
+      <Intro />
     </main>
   );
 

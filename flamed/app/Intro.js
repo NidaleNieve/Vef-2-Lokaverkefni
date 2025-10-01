@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import DarkModeToggle from './DarkModeToggle';
+import DarkModeToggle from './components copy/DarkModeToggle';
 
 export default function Intro() {
   const [generatedCode, setGeneratedCode] = useState(null);
