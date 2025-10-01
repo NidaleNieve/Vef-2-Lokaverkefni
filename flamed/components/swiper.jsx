@@ -17,7 +17,7 @@ const vw = typeof window !== 'undefined' ? window.innerWidth : 1000;
 const vh = typeof window !== 'undefined' ? window.innerHeight : 1000;
 
 //Main functioninið, sem renderar veitingastaðina
-export default function Swiper({ groupId, hostPreferences = {}, playerPreferences = {} }) {
+export default function Swiper({ groupId, hostPreferences = {}, playerPreferences = {}, onFinished }) {
     /*Fæ session id, sem er random uuid
     const [sessionId] = useState(() =>
         typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
@@ -215,6 +215,13 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         setCurrent((prev) => prev + 1);
     };
 
+    // Notify parent when finished (optional separate results page)
+    useEffect(() => {
+        if (typeof onFinished === 'function' && restaurants.length > 0 && current >= restaurants.length) {
+            onFinished();
+        }
+    }, [current, restaurants.length, onFinished]);
+
     //byrti loading eða error ef í group ef round er ekki byrjað
     if (groupId && roundLoading) {
         return <div className="text-gray-600">Loading game…</div>;
@@ -230,6 +237,9 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
 
     //ef að allir veitingastaðirnir eru búnir, þá sýnir results component úr results skjalinu
     if (current >= restaurants.length) {
+        if (typeof onFinished === 'function') {
+            return <div className="text-gray-600">Finishing…</div>;
+        }
         return (
             <Results
                 restaurants={restaurants}

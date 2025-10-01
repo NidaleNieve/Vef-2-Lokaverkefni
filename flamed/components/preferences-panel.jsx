@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react'
 const CATEGORY_OPTIONS = ['Indian', 'Buffet', 'Fast Food', 'Traditional']
 const PRICE_OPTIONS = ['$', '$$', '$$$', '$$$$']
 const DEFAULT_MAX_RADIUS = 50
+const ALLERGY_OPTIONS = ['Peanuts', 'Shellfish', 'Gluten', 'Dairy', 'Eggs', 'Soy']
 
 export default function PreferencesPanel({
   hostPrefs,
@@ -263,18 +264,56 @@ export default function PreferencesPanel({
             <span>Kid friendly only</span>
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span>Allergy notes</span>
-            <textarea
-              rows={2}
-              value={playerPrefs.allergies}
-              onChange={e =>
-                setPlayerPrefs(prev => ({ ...prev, allergies: e.target.value }))
-              }
-              className="rounded border border-gray-300 bg-white/80 p-2 text-sm dark:border-gray-700 dark:bg-black/60"
-              placeholder="e.g. peanuts, shellfish"
-            />
-          </label>
+          <div>
+            <p className="font-medium">Allergies</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {ALLERGY_OPTIONS.map(opt => {
+                const current = (playerPrefs.allergies || '')
+                  .split(',')
+                  .map(s => s.trim())
+                  .filter(Boolean)
+                const selected = current.includes(opt)
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      const arr = new Set(current)
+                      if (selected) arr.delete(opt)
+                      else arr.add(opt)
+                      const next = Array.from(arr).join(', ')
+                      setPlayerPrefs(prev => ({ ...prev, allergies: next }))
+                    }}
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      selected
+                        ? 'border-blue-500 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="text"
+                className="flex-1 rounded border border-gray-300 bg-white/80 p-1 text-sm dark:border-gray-700 dark:bg-black/60"
+                placeholder="Other (comma-separated)"
+                value={playerPrefs.allergies}
+                onChange={e => setPlayerPrefs(prev => ({ ...prev, allergies: e.target.value }))}
+              />
+              {playerPrefs.allergies && (
+                <button
+                  type="button"
+                  onClick={() => setPlayerPrefs(prev => ({ ...prev, allergies: '' }))}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
 
           <div>
             <p className="font-medium">Categories</p>
