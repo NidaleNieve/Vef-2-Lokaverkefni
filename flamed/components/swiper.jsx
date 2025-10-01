@@ -53,7 +53,7 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         return summary
     }, [playerPreferences])
 
-    
+
     //Fæ session id
     useEffect(() => {
         //error handling ef ekki í group
@@ -102,6 +102,58 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     useEffect(() => {
         setUiLocked(false);
     }, [current]);
+
+        /*
+        Example: Fetch via Supabase RPC with filters (to enable when backend is ready)
+
+        useEffect(() => {
+            async function fetchRestaurants() {
+                setLoading(true)
+                setError(null)
+                try {
+                    const filters = {
+                        // host constraints
+                        require_kid_friendly: !!hostPreferences?.requireKidFriendly,
+                        max_radius_km: hostPreferences?.maxRadius ? Number(hostPreferences.maxRadius) : null,
+                        blocked_categories: Array.isArray(hostPreferences?.blockedCategories) ? hostPreferences.blockedCategories : [],
+
+                        // player preferences
+                        radius_km: playerPreferences?.radius ? Number(playerPreferences.radius) : null,
+                        min_rating: playerPreferences?.rating ? Number(playerPreferences.rating) : null,
+                        price_ceiling: playerPreferences?.price || null, // '$' | '$$' | '$$$' | '$$$$'
+                        kid_friendly: !!playerPreferences?.kidFriendly,
+                        allergies: playerPreferences?.allergies || '',
+                        categories: Array.isArray(playerPreferences?.categories) ? playerPreferences.categories : [],
+                    }
+
+                    // Option A: call Supabase RPC directly (browser client)
+                    // const { data, error } = await supabase.rpc('get_random_restaurants', {
+                    //   p_limit: 30,
+                    //   p_filters: filters,
+                    // })
+                    // if (error) throw error
+                    // setRestaurants(data ?? [])
+
+                    // Option B: via API route that proxies to RPC
+                    // const res = await fetch('/api/restaurants/search', {
+                    //   method: 'POST',
+                    //   headers: { 'content-type': 'application/json' },
+                    //   body: JSON.stringify({ fn: 'get_random_restaurants', args: { p_limit: 30, p_filters: filters } }),
+                    //   credentials: 'include',
+                    // })
+                    // const j = await res.json()
+                    // if (!res.ok) throw new Error(j?.error || `Failed (${res.status})`)
+                    // setRestaurants(Array.isArray(j.items) ? j.items : [])
+                } catch (e) {
+                    setError(e.message || 'Failed to fetch restaurants')
+                    setRestaurants([])
+                } finally {
+                    setLoading(false)
+                }
+            }
+            // fetchRestaurants()
+        }, [hostPreferences, playerPreferences])
+        */
 
     //function sem fetchar veitingastaðina frá supabase og byrtir loading screen
     useEffect(() => {

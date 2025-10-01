@@ -9,6 +9,7 @@ export default function PreferencesPanel({
   setHostPrefs,
   playerPrefs,
   setPlayerPrefs,
+  isHost = false,
 }) {
   useEffect(() => {
     if (hostPrefs.requireKidFriendly && !playerPrefs.kidFriendly) {
@@ -71,13 +72,14 @@ export default function PreferencesPanel({
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">Host controls (optional)</h2>
           <span className="text-xs uppercase tracking-wide text-slate-400">
-            Only for creators
+            {isHost ? 'Only for creators' : 'View only'}
           </span>
         </div>
         <div className="space-y-3">
-          <label className="flex items-center gap-2">
+          <label className={`flex items-center gap-2 ${!isHost ? 'opacity-60 cursor-not-allowed' : ''}`}>
             <input
               type="checkbox"
+              disabled={!isHost}
               checked={hostPrefs.requireKidFriendly}
               onChange={e =>
                 setHostPrefs(prev => ({
@@ -90,13 +92,14 @@ export default function PreferencesPanel({
           </label>
 
           <div>
-            <label className="flex items-center justify-between gap-3">
+            <label className={`flex items-center justify-between gap-3 ${!isHost ? 'opacity-60' : ''}`}>
               <span>Maximum radius (km)</span>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   min="1"
                   max={DEFAULT_MAX_RADIUS}
+                  disabled={!isHost}
                   value={hostPrefs.maxRadius}
                   onChange={e => {
                     const raw = e.target.value
@@ -113,7 +116,7 @@ export default function PreferencesPanel({
                   className="w-20 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
                   placeholder="Any"
                 />
-                {hostPrefs.maxRadius && (
+                {hostPrefs.maxRadius && isHost && (
                   <button
                     type="button"
                     onClick={() =>
@@ -140,7 +143,8 @@ export default function PreferencesPanel({
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => toggleHostCategory(cat)}
+                    onClick={() => isHost && toggleHostCategory(cat)}
+                    disabled={!isHost}
                     className={`rounded-full border px-3 py-1 text-xs transition ${
                       blocked
                         ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'

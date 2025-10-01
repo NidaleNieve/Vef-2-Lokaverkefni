@@ -9,6 +9,8 @@ import PreferencesPanel from './preferences-panel'
 export default function HomeClient() {
   const [groupInput, setGroupInput] = useState('')
   const [groupId, setGroupId] = useState('')
+  const [isHost, setIsHost] = useState(false) // gate host-only controls
+  const [readyToSwipe, setReadyToSwipe] = useState(false) // require confirm before swiping
   
   // Prefences states
   const [hostPrefs, setHostPrefs] = useState({
@@ -31,6 +33,8 @@ export default function HomeClient() {
     if (last) {
       setGroupInput(last)
       setGroupId(last)
+      setIsHost(false)
+      setReadyToSwipe(false)
     }
   }, [])
 
@@ -55,7 +59,10 @@ export default function HomeClient() {
       return
     }
     //geymi groupId
-    setGroupId(groupInput.trim())
+    const gid = groupInput.trim()
+    setGroupId(gid)
+    setIsHost(true)
+    setReadyToSwipe(false)
   }
 
   //temp html
@@ -72,7 +79,11 @@ export default function HomeClient() {
         />
         <button
           className="border rounded px-3 py-2"
-          onClick={() => setGroupId(groupInput.trim())}
+          onClick={() => {
+            setGroupId(groupInput.trim())
+            setIsHost(false)
+            setReadyToSwipe(false)
+          }}
           disabled={!groupInput.trim()}
         >
           Join
@@ -92,13 +103,30 @@ export default function HomeClient() {
         setHostPrefs={setHostPrefs}
         playerPrefs={playerPrefs}
         setPlayerPrefs={setPlayerPrefs}
+        isHost={isHost}
       />
-
-      <Swiper
-        groupId={groupId || undefined}
-        hostPreferences={hostPrefs}
-        playerPreferences={playerPrefs}
-      />
+      {/* Require explicit confirmation before showing Swiper */}
+      {!readyToSwipe ? (
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Set your preferences, then start swiping.
+          </p>
+          <button
+            className="border rounded px-3 py-2"
+            onClick={() => setReadyToSwipe(true)}
+            disabled={!groupId}
+            title={groupId ? 'Start swiping' : 'Join or create a group first'}
+          >
+            Start swiping
+          </button>
+        </div>
+      ) : (
+        <Swiper
+          groupId={groupId || undefined}
+          hostPreferences={hostPrefs}
+          playerPreferences={playerPrefs}
+        />
+      )}
     </div>
   )
 }
