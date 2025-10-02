@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Home, User, MessageSquare, Users, Menu, X } from 'lucide-react';
-import DarkModeToggle from '../../components/home-components/DarkModeToggle';
-import DarkModeToggleWithLabel from '../../components/home-components/DarkModeToggleWithLabel';
+import DarkModeToggle from './DarkModeToggle';
+import DarkModeToggleWithLabel from './DarkModeToggleWithLabel';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function Navbar() {
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <img src="/logo.png" alt="Gastroswipe" className="w-8 h-8 mr-2" onError={() => setLogoError(true)}/>
+            <Image src="/logo_720.png" width={50} height={50} className="w-10 h-10 mr-2"/>
             Gastroswipe
           </h1>
           

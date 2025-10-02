@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "../components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,8 +25,10 @@ export default function RootLayout({ children }) {
         className="antialiased"
         style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif" }}
       >
+        <Navbar />
         {children}
 
+        {/*Old developer buttons}
         <a
           href="/"
           style={{
@@ -66,7 +69,7 @@ export default function RootLayout({ children }) {
         >
           Dev
         </a>
-
+        */}
       </body>
     </html>
   );

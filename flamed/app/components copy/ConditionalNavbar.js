@@ -1,7 +1,7 @@
 // app/components/ConditionalNavbar.js
 'use client';
 import { useApp } from '../context/AppContext';
-import Navbar from './Navbar';
+import Navbar from '../../components/Navbar';
 
 export default function ConditionalNavbar() {
   const { hasSession } = useApp();

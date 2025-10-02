@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
-import DarkModeToggle from './home-components/DarkModeToggle';
+import DarkModeToggle from '../../components/DarkModeToggle';
 
 export default function Intro() {
   const [generatedCode, setGeneratedCode] = useState(null);
@@ -49,7 +49,7 @@ export default function Intro() {
     if (groupId) localStorage.setItem('lastGroupId', groupId);
   }, [groupId]);
 
-  // Added: join logic (replaces code generation + redirect)
+  //join logic sem joinar leik
   const joinGroup = () => {
     const id = codeInput.trim();
     if (!id) {
@@ -64,7 +64,7 @@ export default function Intro() {
 
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
   async function startRound() {
-    //ef að groupID er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik
+    //ef að groupId er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik
     if (!groupId.trim()) return
     const res = await fetch(`/api/groups/${groupId.trim()}/round`, {
       method: 'POST',
@@ -99,7 +99,7 @@ export default function Intro() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 relative overflow-hidden" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div className="min-h-screen flex flex-col items-center p-4 relative overflow-x-hidden" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
       {/* Animated background elements */}
       {showFoodIcons && (
         <>
@@ -109,12 +109,7 @@ export default function Intro() {
           <FoodIcon icon={Sparkles} style={{ bottom: '30%', right: '10%', animationDelay: '1.5s', animationDuration: '14s' }} />
         </>
       )}
-      
-      {/* Dark Mode Toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <DarkModeToggle />
-      </div>
-
+     
       {/* Welcome Message */}
       <div className="text-center mb-6 mt-8 animate-fade-in-up">
         <h1 className="text-4xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
