@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Swiper from './swiper'
-import PreferencesPanel from './preferences-panel'
+import PreferencesPanel from './old-preferences-panel'
 
 
 //þetta er temp skjal sem renderar allt á swipe síðunni. Það leyfir manni að starta leik og að swipa

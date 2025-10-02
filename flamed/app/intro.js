@@ -60,7 +60,7 @@ export default function Intro() {
     setIsHost(false);
     setReadyToSwipe(false);
     localStorage.setItem('lastGroupId', id);
-    router.push(`/preferences/personal?groupId=${encodeURIComponent(id)}`);
+    router.push(`/game/preferences?groupId=${encodeURIComponent(id)}`);
   };
 
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
@@ -83,20 +83,19 @@ export default function Intro() {
     setGroupId(gid)
     setIsHost(true)
     setReadyToSwipe(false)
-    router.push(`/host/options?groupId=${encodeURIComponent(id)}`);
+    router.push(`/game/host?groupId=${encodeURIComponent(id)}`);
   }
 
   const handleCircleClick = () => {
     setIsClicked(true);
     setTimeout(() => setIsClicked(false), 500);
 
-    // Changed: no code generation or navigation; just join via input
     startRound();
   };
 
   const handleCodeSubmit = (e) => {
     e.preventDefault();
-    // Changed: no redirect to /preferences; just join via input
+
     joinGroup();
   };
 
