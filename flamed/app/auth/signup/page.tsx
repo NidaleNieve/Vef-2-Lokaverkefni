@@ -1,78 +1,110 @@
-// app/auth/signup/page.tsx
+
+// this is the signup page for the app
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 
+
+// main signup component
 export default function SignupPage() {
+  // email input
   const [email, setEmail] = useState('')
+  // password input
   const [password, setPassword] = useState('')
+  // full name input
   const [fullName, setFullName] = useState('')
+  // loading spinner
   const [loading, setLoading] = useState(false)
+  // result message
   const [result, setResult] = useState<any>(null)
+  // show or hide password
   const [showPassword, setShowPassword] = useState(false)
 
+
+  // this function runs when the form is submitted
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setResult(null)
+    e.preventDefault() // stop page from reloading
+    setLoading(true) // show loading spinner
+    setResult(null) // clear old result
     try {
+      // send email, password, and full name to api
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password, full_name: fullName })
       })
+      // get json response
       const json = await res.json()
       setResult(json)
     } catch (err: any) {
-      setResult({ ok: false, error: err?.message || 'Request failed' })
+      // show error if request fails
+      setResult({ ok: false, error: err?.message || 'request failed' })
     } finally {
-      setLoading(false)
+      setLoading(false) // hide loading spinner
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      {/* main container for the form */}
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* card with shadow and border */}
+        <div className="rounded-2xl shadow-xl overflow-hidden border" style={{ 
+          background: 'var(--background)',
+          borderColor: 'var(--accent)',
+          opacity: 0.8
+        }}>
           <div className="px-8 py-6">
+            {/* title and subtitle */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-              <p className="text-gray-600">Sign up to get started with our service</p>
+              <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>create account</h1>
+              <p style={{ color: 'var(--muted)' }}>sign up to get started with our service</p>
             </div>
-            
+            {/* form starts here */}
             <form onSubmit={onSubmit} className="space-y-5">
+              {/* full name input */}
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
+                <label htmlFor="fullName" className="block text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
+                  full name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-5 w-5" style={{ color: 'var(--muted)' }} />
                   </div>
                   <input
                     id="fullName"
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-gray-900"
+                    className="block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition placeholder-gray-500"
+                    style={{ 
+                      borderColor: 'var(--muted)',
+                      backgroundColor: 'var(--nav-item-bg)',
+                      color: 'var(--foreground)'
+                    }}
                     type="text"
-                    placeholder="Your full name"
+                    placeholder="your full name"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              
+              {/* email input */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
+                <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
+                  email address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                    <Mail className="h-5 w-5" style={{ color: 'var(--muted)' }} />
                   </div>
                   <input
                     id="email"
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-gray-900"
+                    className="block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition placeholder-gray-500"
+                    style={{ 
+                      borderColor: 'var(--muted)',
+                      backgroundColor: 'var(--nav-item-bg)',
+                      color: 'var(--foreground)'
+                    }}
                     type="email"
                     placeholder="you@example.com"
                     value={email}
@@ -81,90 +113,113 @@ export default function SignupPage() {
                   />
                 </div>
               </div>
-              
+              {/* password input */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
+                <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
+                  password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <Lock className="h-5 w-5" style={{ color: 'var(--muted)' }} />
                   </div>
                   <input
                     id="password"
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-gray-900"
+                    className="block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition placeholder-gray-500"
+                    style={{ 
+                      borderColor: 'var(--muted)',
+                      backgroundColor: 'var(--nav-item-bg)',
+                      color: 'var(--foreground)'
+                    }}
                     type={showPassword ? "text" : "password"}
-                    placeholder="Create a strong password"
+                    placeholder="create a strong password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
                   />
+                  {/* show/hide password button */}
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <EyeOff className="h-5 w-5" style={{ color: 'var(--muted)' }} />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <Eye className="h-5 w-5" style={{ color: 'var(--muted)' }} />
                     )}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Use at least 8 characters with a mix of letters, numbers & symbols
+                <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>
+                  use at least 8 characters with a mix of letters, numbers & symbols
                 </p>
               </div>
-              
+              {/* terms and privacy checkbox */}
               <div className="flex items-center text-sm">
                 <input
                   id="terms"
                   name="terms"
                   type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 rounded border focus:ring-2"
+                  style={{ 
+                    backgroundColor: 'var(--nav-item-bg)',
+                    borderColor: 'var(--muted)',
+                    color: 'var(--accent)'
+                  }}
                   required
                 />
-                <label htmlFor="terms" className="ml-2 block text-gray-700">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-indigo-600 hover:text-indigo-500">
-                    Terms of Service
+                <label htmlFor="terms" className="ml-2 block" style={{ color: 'var(--foreground)' }}>
+                  i agree to the{' '}
+                  <Link href="/terms" className="transition-colors" style={{ color: 'var(--accent)' }}>
+                    terms of service
                   </Link>{' '}
                   and{' '}
-                  <Link href="/privacy" className="text-indigo-600 hover:text-indigo-500">
-                    Privacy Policy
+                  <Link href="/privacy" className="transition-colors" style={{ color: 'var(--accent)' }}>
+                    privacy policy
                   </Link>
                 </label>
               </div>
-              
+              {/* sign up button */}
               <button
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white transition disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2"
+                style={{ 
+                  backgroundColor: 'var(--accent)'
+                }}
               >
                 {loading ? (
                   <span className="flex items-center">
+                    {/* loading spinner */}
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating account...
+                    creating account...
                   </span>
                 ) : (
-                  'Sign up'
+                  'sign up'
                 )}
               </button>
             </form>
-            
+            {/* already have account link */}
             <div className="mt-6 text-center text-sm">
-              <span className="text-gray-600">Already have an account?</span>{' '}
-              <Link className="font-medium text-indigo-600 hover:text-indigo-500" href="/auth/signin">
-                Sign in
+              <span style={{ color: 'var(--muted)' }}>already have an account?</span>{' '}
+              <Link 
+                className="font-medium transition-colors" 
+                style={{ color: 'var(--accent)' }}
+                href="/auth/signin"
+              >
+                sign in
               </Link>
             </div>
           </div>
-          
+          {/* result message for success or error */}
           {result && (
-            <div className={`px-8 py-4 ${result.ok ? 'bg-green-50' : 'bg-red-50'} transition-all duration-300`}>
-              <div className={`flex items-start ${result.ok ? 'text-green-800' : 'text-red-800'}`}>
+            <div className={`px-8 py-4 transition-all duration-300 ${
+              result.ok ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'
+            }`}>
+              <div className={`flex items-start ${
+                result.ok ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
+              }`}>
                 <div className="flex-shrink-0 mt-0.5">
                   {result.ok ? (
                     <CheckCircle className="h-5 w-5" />
