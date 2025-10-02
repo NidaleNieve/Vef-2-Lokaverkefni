@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
-import DarkModeToggle from '../../components/DarkModeToggle';
+import DarkModeToggle from '../components/DarkModeToggle';
 
 export default function Intro() {
   const [generatedCode, setGeneratedCode] = useState(null);
@@ -60,6 +60,7 @@ export default function Intro() {
     setIsHost(false);
     setReadyToSwipe(false);
     localStorage.setItem('lastGroupId', id);
+    router.push(`/preferences/personal?groupId=${encodeURIComponent(id)}`);
   };
 
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
@@ -82,6 +83,7 @@ export default function Intro() {
     setGroupId(gid)
     setIsHost(true)
     setReadyToSwipe(false)
+    router.push(`/host/options?groupId=${encodeURIComponent(id)}`);
   }
 
   const handleCircleClick = () => {
@@ -178,24 +180,6 @@ export default function Intro() {
           </div>
         </div>
 
-        {/* Generated Code Display with enhanced animation */}
-        {generatedCode && (
-          <div className="border rounded-2xl p-6 text-center animate-fade-in-grow" 
-               style={{ backgroundColor: 'var(--nav-item-bg)', borderColor: 'var(--accent)', color: 'var(--foreground)' }}>
-            <h3 className="font-semibold mb-2" style={{ color: 'var(--accent)' }}>
-              {generatedCode === 'GENERATING...' ? 'Generating Code...' : 'Your Circle Code:'}
-            </h3>
-            <p className="text-2xl font-bold font-mono animate-text-pulse" style={{ color: 'var(--accent)' }}>
-              {generatedCode}
-            </p>
-            {generatedCode !== 'GENERATING...' && (
-              <p className="text-sm mt-2" style={{ color: 'var(--muted)' }}>
-                Share this code with your friends!
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Code Input Form with animation */}
         <form onSubmit={handleCodeSubmit} className="w-full max-w-md animate-fade-in-up-delayed">
           <div className="flex gap-3">
@@ -227,7 +211,7 @@ export default function Intro() {
       </div>
 
       <footer className="mt-8 text-center text-sm animate-fade-in" style={{ color: 'var(--muted)' }}>
-        <p>Click • Connect • Create</p>
+        <p>Daníel Snær Rodríguez, Hörður Pálsson, Kiara Mindy Biscarra Quiamco</p>
       </footer>
 
     </div>
