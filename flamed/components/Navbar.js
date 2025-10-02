@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Home, User, MessageSquare, Users, Menu, X } from 'lucide-react';
 import DarkModeToggle from './DarkModeToggle';
 import DarkModeToggleWithLabel from './DarkModeToggleWithLabel';
@@ -30,15 +31,13 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="relative flex items-center">
-          <h1 
-            className="text-2xl font-bold transition-all duration-300 hover:scale-105 cursor-pointer flex items-center"
+          <Link href="/" className="text-2xl font-bold transition-all duration-300 hover:scale-105 cursor-pointer flex items-center"
             style={{ color: "var(--nav-text)" }}
             onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-          >
+            onMouseLeave={() => setShowTooltip(false)}>
             <Image src="/logo_720.png" width={50} height={50} className="w-10 h-10 mr-2"/>
             Gastroswipe
-          </h1>
+          </Link>
           
           {/* Did You Know Tooltip */}
           <div 
@@ -67,7 +66,7 @@ export default function Navbar() {
           <ul className="hidden md:flex items-center space-x-2">
             <li>
               <a 
-                href="#" 
+                href="/dev" 
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
                 style={{ 
                   color: "var(--nav-text)",
@@ -82,7 +81,7 @@ export default function Navbar() {
             </li>
             <li>
               <a 
-                href="#" 
+                href="/dev" 
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
                 style={{ 
                   color: "var(--nav-text)",
@@ -97,7 +96,7 @@ export default function Navbar() {
             </li>
             <li>
               <a 
-                href="#" 
+                href="/dev" 
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
                 style={{ 
                   color: "var(--nav-text)",
@@ -118,7 +117,7 @@ export default function Navbar() {
           {/* Mobile Navigation - Profile link outside hamburger */}
           <div className="md:hidden flex items-center">
             <a 
-              href="#" 
+              href="/dev" 
               className="px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 mr-4 group"
               style={{ 
                 color: "var(--nav-text)",
@@ -153,7 +152,7 @@ export default function Navbar() {
           {['Chat', 'Groups'].map((item, index) => (
             <li key={item}>
               <a 
-                href="#" 
+                href="/dev" 
                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group"
                 style={{ 
                   color: "var(--nav-text)",
