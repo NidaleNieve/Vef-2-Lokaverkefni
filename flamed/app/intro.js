@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
 import DarkModeToggle from '../components/DarkModeToggle';
+import { useRouter } from 'next/navigation';
 
 export default function Intro() {
+  const router = useRouter();
   const [generatedCode, setGeneratedCode] = useState(null);
   const [isClicked, setIsClicked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -66,8 +68,9 @@ export default function Intro() {
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
   async function startRound() {
     //ef að groupId er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik
-    if (!groupId.trim()) return
-    const res = await fetch(`/api/groups/${groupId.trim()}/round`, {
+    let id = groupId.trim()
+    if (!id) return
+    const res = await fetch(`/api/groups/${id}/round`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       credentials: 'include',

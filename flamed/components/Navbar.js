@@ -35,7 +35,7 @@ export default function Navbar() {
             style={{ color: "var(--nav-text)" }}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}>
-            <Image src="/logo_720.png" width={50} height={50} className="w-10 h-10 mr-2"/>
+            <Image alt="Logo" src="/logo_720.png" width={50} height={50} className="w-10 h-10 mr-2"/>
             Gastroswipe
           </Link>
           
