@@ -26,6 +26,7 @@ export default function RootLayout({ children }) {
         style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif" }}
       >
         <Navbar />
+        <div style={{ height: "64px" }} />
         {children}
 
         {/*Old developer buttons}

@@ -1,4 +1,3 @@
-// ...existing code...
 import { useEffect, useMemo } from 'react'
 
 const CATEGORY_OPTIONS = ['Indian', 'Buffet', 'Fast Food', 'Traditional']
@@ -11,9 +10,16 @@ export default function PreferencesPanel({
   playerPrefs,
   setPlayerPrefs,
   isHost = false,
-  mode = 'both', // ADDED: 'host' | 'personal' | 'both'
+  mode = 'both',
 }) {
-// ...existing code...
+    const toggleHostCategory = (cat) => {
+        setHostPrefs((prev) => {
+        const newBlocked = prev.blockedCategories.includes(cat)
+            ? prev.blockedCategories.filter((c) => c !== cat)
+            : [...prev.blockedCategories, cat];
+        return { ...prev, blockedCategories: newBlocked };
+        });
+    };
 
   return (
     <div className="mb-6 space-y-4 text-sm">
