@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Home, User, MessageSquare, Users, Menu, X } from 'lucide-react';
 import DarkModeToggle from './DarkModeToggle';
-import DarkModeToggleWithLabel from './DarkModeToggleWithLabel';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -168,12 +167,6 @@ export default function Navbar() {
               </a>
             </li>
           ))}
-          <li className="px-4 py-3 flex justify-center">
-            <DarkModeToggleWithLabel 
-              onClick={() => setOpen(false)}
-              iconSize={18}
-            />
-          </li>
         </ul>
       </div>
     </nav>

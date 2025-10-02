@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react"; //bætti við useRef, forwardRef, useImperativeHandle til þess að geta notað takkana sem swipe
 import { supabase } from "../../lib/supabaseClient";
-import Results from "../components/Result";
-import Navbar from '../components/Navbar';
+import Navbar from '../components copy/Navbar';
 
 //Next image renderer fyrir myndir
 import Image from "next/image";
