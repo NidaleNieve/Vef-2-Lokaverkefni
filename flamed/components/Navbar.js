@@ -64,8 +64,8 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <ul className="hidden md:flex items-center space-x-2">
             <li>
-              <a 
-                href="/dev" 
+              <Link 
+                href="/profile" 
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
                 style={{ 
                   color: "var(--nav-text)",
@@ -76,10 +76,10 @@ export default function Navbar() {
               >
                 <User size={18} className="group-hover:scale-110 transition-transform" />
                 Profile
-              </a>
+              </Link>
             </li>
             <li>
-              <a 
+              <Link 
                 href="/dev" 
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
                 style={{ 
@@ -91,10 +91,10 @@ export default function Navbar() {
               >
                 <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
                 Chat
-              </a>
+              </Link>
             </li>
             <li>
-              <a 
+              <Link 
                 href="/dev" 
                 className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
                 style={{ 
@@ -106,7 +106,7 @@ export default function Navbar() {
               >
                 <Users size={18} className="group-hover:scale-110 transition-transform" />
                 Groups
-              </a>
+              </Link>
             </li>
             <li className="pl-2">
               <DarkModeToggle iconSize={20} />
@@ -115,8 +115,8 @@ export default function Navbar() {
 
           {/* Mobile Navigation - Profile link outside hamburger */}
           <div className="md:hidden flex items-center">
-            <a 
-              href="/dev" 
+            <Link 
+              href="/profile" 
               className="px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 mr-4 group"
               style={{ 
                 color: "var(--nav-text)",
@@ -126,7 +126,7 @@ export default function Navbar() {
               onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
             >
               <User size={20} className="group-hover:scale-110 transition-transform" />
-            </a>
+            </Link>
             
             <button
               className="relative w-8 h-8 focus:outline-none flex items-center justify-center transition-transform hover:scale-110"
@@ -150,7 +150,7 @@ export default function Navbar() {
         <ul className="container mx-auto px-4 py-4 flex flex-col space-y-4">
           {['Chat', 'Groups'].map((item, index) => (
             <li key={item}>
-              <a 
+              <Link 
                 href="/dev" 
                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group"
                 style={{ 
@@ -164,7 +164,7 @@ export default function Navbar() {
                 {index === 0 && <MessageSquare size={20} className="group-hover:scale-110 transition-transform" />}
                 {index === 1 && <Users size={20} className="group-hover:scale-110 transition-transform" />}
                 {item}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
