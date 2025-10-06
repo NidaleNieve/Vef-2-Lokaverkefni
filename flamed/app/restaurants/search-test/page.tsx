@@ -37,6 +37,12 @@ export default function SearchTestPage() {
   const [cuisinesAll, setCuisinesAll] = useState<string[]>([]) // ALL-of
   const [priceTags, setPriceTags] = useState<string[]>([])     // $, $$ - $$$, $$$$, (Unknown)
 
+  // Radius/location filtering
+  const [useRadius, setUseRadius] = useState(false)
+  const [radiusKm, setRadiusKm] = useState(10)
+  const [lat, setLat] = useState<number | null>(null)
+  const [lng, setLng] = useState<number | null>(null)
+
   // ----- results state -----
   const [items, setItems] = useState<Restaurant[]>([])
   const [count, setCount] = useState<number | null>(null)
@@ -85,6 +91,13 @@ export default function SearchTestPage() {
     if (cuisinesAny.length) filters.cuisines_any = cuisinesAny
     if (cuisinesAll.length) filters.cuisines_all = cuisinesAll
     if (priceTags.length)   filters.price_tags   = priceTags
+
+    // Add radius filtering if enabled
+    if (useRadius && lat != null && lng != null && radiusKm > 0) {
+      filters.center_lat = lat
+      filters.center_lng = lng
+      filters.radius_km  = radiusKm
+    }
 
     const body = { filters, limit, offset }
     setLastRequest(body)
@@ -148,16 +161,60 @@ export default function SearchTestPage() {
           <input className="border p-2 w-full" value={city} onChange={e=>setCity(e.target.value)} placeholder="Reykjavik" />
         </div>
 
-        {/* Active / Random */}
-        <div className="flex items-center gap-4">
-          <label className="inline-flex items-center gap-2">
-            <input type="checkbox" checked={activeOnly} onChange={e=>setActiveOnly(e.target.checked)} />
-            Active only
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input type="checkbox" checked={random} onChange={e=>setRandom(e.target.checked)} />
-            Randomize results
-          </label>
+        {/* Active / Random / Radius */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={activeOnly} onChange={e=>setActiveOnly(e.target.checked)} />
+              Active only
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={random} onChange={e=>setRandom(e.target.checked)} />
+              Randomize results
+            </label>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={useRadius} onChange={e=>setUseRadius(e.target.checked)} />
+              Filter by distance
+            </label>
+            {useRadius && (
+              <div className="flex gap-2 items-center">
+                <button 
+                  type="button" 
+                  className="border px-3 py-2 text-sm" 
+                  onClick={() => {
+                    navigator.geolocation.getCurrentPosition(
+                      p => { 
+                        setLat(p.coords.latitude); 
+                        setLng(p.coords.longitude);
+                        console.log('Location acquired:', { lat: p.coords.latitude, lng: p.coords.longitude });
+                      },
+                      e => alert('Location error: ' + e.message),
+                      { enableHighAccuracy: true, timeout: 8000 }
+                    )
+                  }}
+                >
+                  Use my location
+                </button>
+                <input 
+                  className="border p-2 w-24" 
+                  type="number" 
+                  min={1} 
+                  max={200}
+                  value={radiusKm} 
+                  onChange={e=>setRadiusKm(Number(e.target.value))} 
+                />
+                <span className="text-sm">km</span>
+                {lat && lng && (
+                  <span className="text-xs text-gray-600">
+                    📍 {lat.toFixed(4)}, {lng.toFixed(4)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Cuisines (ANY) */}
@@ -235,6 +292,7 @@ export default function SearchTestPage() {
               setMinRating(''); setMaxRating('')
               setCity(''); setActiveOnly(false); setRandom(false)
               setCuisinesAny([]); setCuisinesAll([]); setPriceTags([])
+              setUseRadius(false); setRadiusKm(10); setLat(null); setLng(null)
               setLimit(12); setOffset(0)
             }}
             disabled={loading}

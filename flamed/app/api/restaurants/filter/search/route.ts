@@ -2,110 +2,82 @@
 import { NextResponse } from 'next/server'
 import { serverClient } from '@/utils/supabase/server'
 
-type Filters = {
-  min_rating?: number | null
-  max_rating?: number | null
-  city?: string | null
-  cuisines_any?: string[] | null     // match ANY cuisine
-  cuisines_all?: string[] | null     // require ALL cuisines
-  price_tags?: string[] | null       // e.g. ['$', '$$']
-  active_only?: boolean | null
-  name_ilike?: string | null
-  random?: boolean | null
-}
-
-const clamp = (n:number, lo:number, hi:number)=>Math.min(hi, Math.max(lo, n))
-
 export async function POST(req: Request) {
-  try {
-    const { filters = {}, limit = 50, offset = 0 } = await req.json().catch(() => ({}))
-    const supa = await serverClient()
+  const supa = await serverClient()
 
-    const lim = clamp(Number(limit) || 50, 1, 100)
-    const off = Math.max(0, Number(offset) || 0)
-    const f: Filters = {
-      min_rating: filters.min_rating ?? null,
-      max_rating: filters.max_rating ?? null,
-      city: filters.city?.trim() || null,
-      cuisines_any: Array.isArray(filters.cuisines_any) ? filters.cuisines_any : null,
-      cuisines_all: Array.isArray(filters.cuisines_all) ? filters.cuisines_all : null,
-      price_tags: Array.isArray(filters.price_tags) ? filters.price_tags : null,
-      active_only: filters.active_only ?? true,
-      name_ilike: filters.name_ilike?.trim() || null,
-      random: !!filters.random,
-    }
+  // inbound body
+  const { filters = {}, limit = 12, offset = 0 } = await req.json().catch(() => ({}))
 
-    // clamp ratings to [0,5]
-    if (f.min_rating != null) f.min_rating = clamp(+f.min_rating || 0, 0, 5)
-    if (f.max_rating != null) f.max_rating = clamp(+f.max_rating || 5, 0, 5)
-    if (f.min_rating != null && f.max_rating != null && f.min_rating > f.max_rating) {
-      const t = f.min_rating; f.min_rating = f.max_rating; f.max_rating = t
-    }
+  // unpack common filters
+  const {
+    min_rating = null,
+    max_rating = null,
+    city = null,
+    price_tags = null,          // e.g. ['$', '$$ - $$$']
+    active_only = true,
+    random = false,
 
-    // Debug logging
-    console.log('🔍 Search filters:', JSON.stringify(f, null, 2))
+    // NEW (radius)
+    center_lat = null,
+    center_lng = null,
+    radius_km = null,
+  } = filters || {}
 
-    let q = supa
-      .from('restaurants')
-      .select('id,name,avg_rating,review_count,price_tag,parent_city,cuisines,is_active', { count: 'exact' })
+  const hasRadius =
+    typeof center_lat === 'number' &&
+    typeof center_lng === 'number' &&
+    typeof radius_km === 'number' &&
+    radius_km > 0
 
-    if (f.active_only) q = q.eq('is_active', true)
-    if (f.min_rating != null) q = q.gte('avg_rating', f.min_rating)
-    if (f.max_rating != null) q = q.lte('avg_rating', f.max_rating)
-    if (f.min_rating != null || f.max_rating != null) q = q.not('avg_rating', 'is', null)
-
-    if (f.city) q = q.ilike('parent_city', f.city) // or `%${f.city}%` if you want contains
-
-    // Cuisine filtering - PostgREST array operations
-    if (f.cuisines_any?.length) {
-      // For "any" cuisine matching, use overlaps (array && array)
-      // Alternative approach: use cs (contains) with individual OR conditions
-      console.log('🍽️ Filtering by cuisines_any:', f.cuisines_any)
-      q = q.overlaps('cuisines', f.cuisines_any)
-    }
-    if (f.cuisines_all?.length) {
-      // For "all" cuisines required, use contains (array @> array)  
-      console.log('🍽️ Filtering by cuisines_all:', f.cuisines_all)
-      q = q.contains('cuisines', f.cuisines_all)
-    }
-
-    if (f.price_tags?.length) q = q.in('price_tag', f.price_tags)
-
-    if (f.name_ilike) q = q.ilike('name', `%${f.name_ilike}%`)
-
-    if (!f.random) {
-      q = q
-        .order('avg_rating', { ascending: false, nullsFirst: false })
-        .order('review_count', { ascending: false, nullsFirst: false })
-        .order('name', { ascending: true })
-    }
-
-    const poolSize = f.random ? Math.min(lim * 4, 400) : lim
-    q = q.range(off, off + poolSize - 1)
-
-    const { data, error, count } = await q
-    console.log('🎯 Query result:', { 
-      itemCount: data?.length, 
-      totalCount: count, 
-      error: error?.message,
-      sampleItem: data?.[0] 
+  // If radius filters are present, use the PostGIS RPC
+  if (hasRadius) {
+    const { data, error } = await supa.rpc('search_restaurants_by_radius', {
+      p_lat: center_lat,
+      p_lng: center_lng,
+      p_radius_km: radius_km,
+      p_min_rating: min_rating,
+      p_max_rating: max_rating,
+      p_city: city,
+      p_price_tags: price_tags,
+      p_active_only: active_only,
+      p_random: random,
+      p_limit: limit,
+      p_offset: offset,
     })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-    let items = data ?? []
-    if (f.random) {
-      for (let i = items.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[items[i], items[j]] = [items[j], items[i]]
-      }
-      items = items.slice(0, lim)
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
-
-    return NextResponse.json(
-      { items, count, limit: lim, offset: off, filters: f },
-      { headers: { 'Cache-Control': 'no-store' } }
-    )
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
+    // RPC already orders & limits; returning count would cost extra, so null it
+    return NextResponse.json({ items: data ?? [], count: null })
   }
+
+  // -------- Fallback: your existing non-radius filter path ----------
+  // Keep whatever you already had; a minimal version is included as reference:
+
+  let q = supa
+    .from('restaurants')
+    .select('id,name,avg_rating,review_count,price_tag,parent_city,is_active', { count: 'exact' })
+
+  if (active_only) q = q.or('is_active.is.null,is_active.eq.true') // treat null as active
+  if (min_rating !== null) q = q.gte('avg_rating', min_rating)
+  if (max_rating !== null) q = q.lte('avg_rating', max_rating)
+  if (city) q = q.ilike('parent_city', `%${city}%`)
+  if (Array.isArray(price_tags) && price_tags.length) q = q.in('price_tag', price_tags)
+
+  if (random) {
+    // NOTE: random() on big tables can be heavy; it's fine for testing
+    q = q.order('id', { ascending: true }) // required before .order('random')
+      // @ts-ignore – PostgREST supports `order=random()` syntax via query param; supabase-js uses `order('random')`
+      .order('random()') 
+  } else {
+    q = q.order('avg_rating', { ascending: false }).order('review_count', { ascending: false })
+  }
+
+  q = q.range(offset, offset + limit - 1)
+
+  const { data, error, count } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  return NextResponse.json({ items: data ?? [], count: count ?? null })
 }
