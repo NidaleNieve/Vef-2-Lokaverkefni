@@ -23,6 +23,19 @@ export default function Dev() {
   const [content, setContent] = useState<string>('')
   const [userId, setUserId] = useState<string | null>(null)
   const [newGroupName, setNewGroupName] = useState('Renamed Group')
+  
+  // Geo-upsert testing
+  const [restaurantId, setRestaurantId] = useState('')
+  const [restaurantName, setRestaurantName] = useState('Café Loki')
+  const [restaurantCity, setRestaurantCity] = useState('Reykjavik')
+  const [forceGeocode, setForceGeocode] = useState(false)
+  
+  // Batch geocoding state
+  const [batchLimit, setBatchLimit] = useState(50)
+  const [batchMaxAge, setBatchMaxAge] = useState(30)
+  const [batchConcurrency, setBatchConcurrency] = useState(2)
+  const [batchForce, setBatchForce] = useState(false)
+  const [batchDelayMs, setBatchDelayMs] = useState(120)
 
   const [groups, setGroups] = useState<MyGroup[]>([])
   const [log, setLog] = useState<string[]>([])
@@ -41,6 +54,85 @@ export default function Dev() {
     const payload = { status: r.status, ...body }
     logit(payload)
     return { r, body: payload }
+  }
+
+  // Geo-upsert function for restaurant geocoding
+  async function upsertGeo(restaurant: { id: string; name: string; parent_city: string }) {
+    const res = await fetch('/api/admin/geo-upsert', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',              // required so the route can see your session
+      body: JSON.stringify({
+        restaurant_id: restaurant.id,
+        name: restaurant.name,
+        city: restaurant.parent_city,
+        force: forceGeocode, // bypass freshness check if enabled
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`)
+    return json as { 
+      data: { 
+        lat: number; 
+        lng: number; 
+        place_id?: string; 
+        formatted_address?: string;
+        restaurant_id: string;
+        restaurant_name: string;
+        accuracy?: string;
+        skipped?: boolean;
+        reason?: string;
+      }; 
+      message: string 
+    }
+  }
+
+  // Batch geocoding function for admin
+  async function runBatchGeocode() {
+    const res = await fetch('/api/admin/geo-batch', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        limit: batchLimit,
+        maxAgeDays: batchMaxAge,
+        concurrency: batchConcurrency,
+        force: batchForce,
+        delayMs: batchDelayMs
+      }),
+    })
+    
+    let body: any = {}
+    try { 
+      body = await res.json() 
+    } catch (parseError) {
+      console.error('Failed to parse response JSON:', parseError)
+      body = { error: 'Failed to parse response' }
+    }
+    
+    // Enhanced logging for debugging
+    console.log('BATCH RESP =>', { 
+      status: res.status, 
+      where: body.where, 
+      details: body.details, 
+      full: body 
+    })
+    
+    // Also log to the UI
+    logit({ 
+      batchGeocode: { 
+        status: res.status, 
+        where: body.where, 
+        details: body.details, 
+        success: res.ok,
+        data: body.data,
+        message: body.message,
+        error: body.error
+      } 
+    })
+    
+    if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`)
+    return body
   }
 
   async function verifyMembership(gid: string) {
@@ -302,6 +394,207 @@ export default function Dev() {
                   }}>
             List messages
           </button>
+        </div>
+      </div>
+
+      {/* Geo-upsert Testing */}
+      <div className="space-y-2 border rounded p-4">
+        <h3 className="font-semibold">🗺️ Restaurant Geocoding (Admin)</h3>
+        
+        <div className="grid gap-2 md:grid-cols-3">
+          <input 
+            className="border p-2" 
+            placeholder="Restaurant ID" 
+            value={restaurantId} 
+            onChange={e => setRestaurantId(e.target.value)} 
+          />
+          <input 
+            className="border p-2" 
+            placeholder="Restaurant Name" 
+            value={restaurantName} 
+            onChange={e => setRestaurantName(e.target.value)} 
+          />
+          <input 
+            className="border p-2" 
+            placeholder="City" 
+            value={restaurantCity} 
+            onChange={e => setRestaurantCity(e.target.value)} 
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              checked={forceGeocode} 
+              onChange={e => setForceGeocode(e.target.checked)} 
+            />
+            Force geocode (bypass freshness check)
+          </label>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <button 
+            className="border px-3 py-2 bg-blue-50 hover:bg-blue-100" 
+            disabled={!restaurantId || !restaurantName || !restaurantCity}
+            onClick={async () => {
+              try {
+                if (!restaurantId || !restaurantName || !restaurantCity) {
+                  logit({ error: 'Restaurant ID, name, and city are required' })
+                  return
+                }
+                
+                const result = await upsertGeo({
+                  id: restaurantId.trim(),
+                  name: restaurantName.trim(),
+                  parent_city: restaurantCity.trim()
+                })
+                
+                logit({ 
+                  geoUpsert: 'SUCCESS', 
+                  data: result.data,
+                  message: result.message 
+                })
+              } catch (error: any) {
+                logit({ geoUpsert: 'ERROR', error: error.message })
+              }
+            }}
+          >
+            Geocode Restaurant
+          </button>
+
+          <button 
+            className="border px-3 py-2" 
+            onClick={async () => {
+              await fetchJSON('/api/restaurants/meta/cuisines')
+            }}
+          >
+            Test Cuisines API
+          </button>
+
+          <button 
+            className="border px-3 py-2" 
+            onClick={async () => {
+              await fetchJSON('/api/restaurants?limit=5')
+            }}
+          >
+            Test Restaurants API
+          </button>
+        </div>
+
+        <div className="text-xs text-gray-600">
+          <p><strong>Note:</strong> Geocoding requires admin privileges and Google Maps API key.</p>
+          <p>Get a restaurant ID from the restaurants API or database to test geocoding.</p>
+        </div>
+      </div>
+
+      {/* Batch Geocoding Testing */}
+      <div className="space-y-2 border rounded p-4 bg-yellow-50">
+        <h3 className="font-semibold">🔄 Batch Geocoding (Admin)</h3>
+        
+        <div className="grid gap-2 md:grid-cols-3">
+          <div>
+            <label className="block text-sm font-medium">Limit</label>
+            <input 
+              type="number" 
+              className="border p-2 w-full" 
+              placeholder="50" 
+              min="1" 
+              max="1000"
+              value={batchLimit} 
+              onChange={e => setBatchLimit(Number(e.target.value))} 
+            />
+            <p className="text-xs text-gray-600">Max restaurants to process (1-1000)</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium">Max Age (days)</label>
+            <input 
+              type="number" 
+              className="border p-2 w-full" 
+              placeholder="30" 
+              min="0"
+              value={batchMaxAge} 
+              onChange={e => setBatchMaxAge(Number(e.target.value))} 
+            />
+            <p className="text-xs text-gray-600">Only geocode if older than this</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium">Concurrency</label>
+            <input 
+              type="number" 
+              className="border p-2 w-full" 
+              placeholder="2" 
+              min="1" 
+              max="10"
+              value={batchConcurrency} 
+              onChange={e => setBatchConcurrency(Number(e.target.value))} 
+            />
+            <p className="text-xs text-gray-600">Parallel workers (1-10)</p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 md:grid-cols-2">
+          <div className="flex items-center gap-2">
+            <label className="inline-flex items-center gap-2">
+              <input 
+                type="checkbox" 
+                checked={batchForce} 
+                onChange={e => setBatchForce(e.target.checked)} 
+              />
+              Force mode (ignore age check)
+            </label>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium">Delay (ms)</label>
+            <input 
+              type="number" 
+              className="border p-2 w-full" 
+              placeholder="120" 
+              min="50" 
+              max="5000"
+              value={batchDelayMs} 
+              onChange={e => setBatchDelayMs(Number(e.target.value))} 
+            />
+            <p className="text-xs text-gray-600">Delay between requests (50-5000ms)</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button 
+            className="border px-4 py-2 bg-yellow-100 hover:bg-yellow-200 font-medium" 
+            onClick={async () => {
+              try {
+                logit({ batchGeocode: 'STARTING', params: {
+                  limit: batchLimit,
+                  maxAgeDays: batchMaxAge,
+                  concurrency: batchConcurrency,
+                  force: batchForce,
+                  delayMs: batchDelayMs
+                }})
+                
+                const result = await runBatchGeocode()
+                
+                logit({ 
+                  batchGeocode: 'SUCCESS', 
+                  data: result.data,
+                  message: result.message 
+                })
+              } catch (error: any) {
+                logit({ batchGeocode: 'ERROR', error: error.message })
+              }
+            }}
+          >
+            Run Batch Geocoding
+          </button>
+        </div>
+
+        <div className="text-xs text-gray-600 bg-yellow-100 p-2 rounded">
+          <p><strong>⚠️ Warning:</strong> This will process multiple restaurants and make many Google API calls.</p>
+          <p>Use small limits for testing. Monitor API usage and costs.</p>
+          <p>The process uses rate limiting to be respectful to Google Maps API.</p>
         </div>
       </div>
 
