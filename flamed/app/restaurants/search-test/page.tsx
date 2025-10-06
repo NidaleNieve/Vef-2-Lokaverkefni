@@ -17,6 +17,13 @@ type Restaurant = {
 type CuisineOption = { cuisine: string; count: number }
 type PriceTagOption = { price_tag: string; count: number }
 
+type ETAResult = {
+  id: string | null
+  distance_text: string | null
+  duration_text: string | null
+  duration_in_traffic_text: string | null
+}
+
 // Change this if your route is different:
 const SEARCH_API = '/api/restaurants/filter/search' // or '/api/restaurants/filter/search'
 
@@ -50,6 +57,13 @@ export default function SearchTestPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // ----- ETA state -----
+  const [travelMode, setTravelMode] = useState<'walking'|'driving'>('walking')
+  const [useTraffic, setUseTraffic] = useState(true)
+  const [etas, setEtas] = useState<Record<string, {text:string, dist?:string}>>({})
+  const [etaLoading, setEtaLoading] = useState(false)
+  const [etaError, setEtaError] = useState<string | null>(null)
+
   // Load dropdown options (cuisines + prices)
   useEffect(() => {
     let alive = true
@@ -71,6 +85,47 @@ export default function SearchTestPage() {
     })()
     return () => { alive = false }
   }, [])
+
+  // call Distance Matrix for visible items (batch to ≤25)
+  async function fetchETAsFor(items: any[], user: {lat:number; lng:number}) {
+    // pick items that have coords
+    const withCoords = items
+      .map(r => {
+        const lat = r.lat ?? r.geo?.lat
+        const lng = r.lng ?? r.geo?.lng
+        return lat != null && lng != null ? { id: r.id, lat, lng } : null
+      })
+      .filter(Boolean) as {id:string,lat:number,lng:number}[]
+
+    // distance matrix allows up to 25 destinations per call
+    const chunk = (arr:any[], n:number) => Array.from({length: Math.ceil(arr.length/n)}, (_,i)=>arr.slice(i*n, (i+1)*n))
+    const batches = chunk(withCoords, 25)
+
+    const out: Record<string, {text:string, dist?:string}> = {}
+    for (const batch of batches) {
+      const res = await fetch('/api/distance', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          origin: user,
+          destinations: batch,
+          mode: travelMode,
+          useTraffic: travelMode === 'driving' ? useTraffic : false,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) continue
+      json.results.forEach((r: any) => {
+        if (!r.id) return
+        const text = travelMode === 'driving'
+          ? (r.duration_in_traffic_text || r.duration_text || null)
+          : (r.duration_text || null)
+        out[r.id] = { text: text || '—', dist: r.distance_text || undefined }
+      })
+    }
+    setEtas(out)
+  }
 
   // Helpers to toggle selections
   const toggleFrom = (arr: string[], val: string, setter: (next: string[]) => void) => {
@@ -112,7 +167,9 @@ export default function SearchTestPage() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`)
-      setItems(json.items || [])
+      
+      const restaurants = json.items || []
+      setItems(restaurants)
       setCount(json.count ?? null)
     } catch (e: any) {
       setError(e.message || 'Request failed')
@@ -122,6 +179,24 @@ export default function SearchTestPage() {
       setLoading(false)
     }
   }
+
+  // Trigger ETAs after search (and when mode changes)
+  useEffect(() => {
+    if (!items.length) { setEtas({}); return }
+    if (lat == null || lng == null) return
+    // optional: only fetch for first N to limit cost
+    const visible = items.slice(0, 25)
+    setEtaLoading(true)
+    setEtaError(null)
+    fetchETAsFor(visible, { lat, lng })
+      .then(() => setEtaLoading(false))
+      .catch(e => {
+        setEtaError(e.message || 'ETA fetch failed')
+        setEtaLoading(false)
+      })
+    // re-run when mode/traffic toggles change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, lat, lng, travelMode, useTraffic])
 
   // convenience: initial load once
   useEffect(() => {
@@ -215,6 +290,33 @@ export default function SearchTestPage() {
               </div>
             )}
           </div>
+          
+          {/* Travel Mode Controls */}
+          {(lat != null && lng != null) && (
+            <div className="flex items-center gap-3">
+              <label className="inline-flex items-center gap-1">
+                <span className="text-sm">Mode:</span>
+                <select
+                  className="border p-1"
+                  value={travelMode}
+                  onChange={e => setTravelMode(e.target.value as 'walking'|'driving')}
+                >
+                  <option value="walking">Walking</option>
+                  <option value="driving">Driving</option>
+                </select>
+              </label>
+              {travelMode === 'driving' && (
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={useTraffic}
+                    onChange={e=>setUseTraffic(e.target.checked)}
+                  />
+                  <span className="text-sm">Live traffic</span>
+                </label>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Cuisines (ANY) */}
@@ -306,22 +408,32 @@ export default function SearchTestPage() {
       <div className="text-sm opacity-70">
         {error ? <span className="text-red-600">Error: {error}</span> : null}
         {!error && <span>Returned <b>{items.length}</b>{count !== null ? <> of <b>{count}</b></> : null} item(s).</span>}
+        {etaLoading && <span className="block">{travelMode === 'driving' ? '�' : '�🚶'} Calculating {travelMode} times...</span>}
+        {etaError && <span className="block text-red-600">ETA Error: {etaError}</span>}
+        {Object.keys(etas).length > 0 && !etaLoading && (
+          <span className="block">{travelMode === 'driving' ? '🚗' : '🚶'} {travelMode} times calculated for {Object.keys(etas).length} restaurant(s)</span>
+        )}
       </div>
 
       {/* Results */}
       <ul className="space-y-2">
-        {items.map(r => (
-          <li key={r.id} className="border rounded p-3">
-            <div className="font-medium">{r.name}</div>
-            <div className="text-sm opacity-80">
-              {r.parent_city ? `${r.parent_city} · ` : ''}
-              {r.price_tag ? `${r.price_tag} · ` : ''}
-              {r.avg_rating != null ? `⭐ ${r.avg_rating} (${r.review_count ?? 0})` : 'Unrated'}
-              {r.cuisines?.length ? <> · {r.cuisines.join(', ')}</> : null}
-              {r.is_active === false ? ' · (inactive)' : null}
-            </div>
-          </li>
-        ))}
+        {items.map(r => {
+          return (
+            <li key={r.id} className="border rounded p-3">
+              <div className="font-medium">
+                {r.name}
+                {etas[r.id]?.text ? <> · {etas[r.id].text}{etas[r.id].dist ? ` (${etas[r.id].dist})` : ''}</> : null}
+              </div>
+              <div className="text-sm opacity-80">
+                {r.parent_city ? `${r.parent_city} · ` : ''}
+                {r.price_tag ? `${r.price_tag} · ` : ''}
+                {r.avg_rating != null ? `⭐ ${r.avg_rating} (${r.review_count ?? 0})` : 'Unrated'}
+                {r.cuisines?.length ? <> · {r.cuisines.join(', ')}</> : null}
+                {r.is_active === false ? ' · (inactive)' : null}
+              </div>
+            </li>
+          )
+        })}
       </ul>
 
       {/* Debug: last request + raw items */}

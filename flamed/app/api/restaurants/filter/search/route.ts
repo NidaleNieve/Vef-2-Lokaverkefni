@@ -57,7 +57,10 @@ export async function POST(req: Request) {
 
   let q = supa
     .from('restaurants')
-    .select('id,name,avg_rating,review_count,price_tag,parent_city,is_active', { count: 'exact' })
+    .select(`
+      id,name,avg_rating,review_count,price_tag,parent_city,is_active,
+      geo:restaurant_geo(lat,lng,formatted_address)
+    `, { count: 'exact' })
 
   if (active_only) q = q.or('is_active.is.null,is_active.eq.true') // treat null as active
   if (min_rating !== null) q = q.gte('avg_rating', min_rating)
