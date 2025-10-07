@@ -102,12 +102,20 @@ export default function PreferencesPanel({
   const isBlocked = (cat) => hostPrefs.blockedCategories.includes(cat)
 
   return (
-    <div className="mb-6 space-y-4 text-sm">
+
+    <div className="mb-6 space-y-6 text-sm animate-fade-in">
       {(mode === 'host' || mode === 'both') && (
-        <section className="rounded-lg border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-black/60">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Host controls (optional)</h2>
-            <span className="text-xs uppercase tracking-wide text-slate-400">
+        <section className="animate-fade-in-up rounded-xl p-6 transition-all duration-300 hover:shadow-lg" style={{
+          backgroundColor: 'var(--nav-item-bg)',
+          border: '1px solid var(--nav-shadow)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div className="mb-4 flex items-center justify-between animate-fade-in-up">
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Host controls (optional)</h2>
+            <span className="text-xs uppercase tracking-wide px-2 py-1 rounded-full" style={{ 
+              color: 'var(--muted)', 
+              backgroundColor: 'var(--nav-item-hover)'
+            }}>
               {isHost ? 'Only for creators' : 'View only'}
             </span>
           </div>
@@ -133,14 +141,24 @@ export default function PreferencesPanel({
                         const n = Math.max(0, Math.min(5, Number(raw)))
                         setPlayerPrefs(prev => ({ ...prev, rating: String(n) }))
                       }}
-                      className="w-24 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                      className="w-24 rounded-lg p-2 text-right text-sm transition-all duration-200 focus:scale-105 focus:outline-none focus:ring-2"
+                      style={{
+                        backgroundColor: 'var(--background)',
+                        border: '1px solid var(--nav-shadow)',
+                        color: 'var(--foreground)',
+                        '--tw-ring-color': 'var(--accent)'
+                      }}
                       placeholder="Any"
                     />
                     {playerPrefs.rating && (
                       <button
                         type="button"
                         onClick={() => setPlayerPrefs(prev => ({ ...prev, rating: '' }))}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs px-2 py-1 rounded-md transition-all duration-200 hover:scale-105"
+                        style={{
+                          color: 'var(--accent)',
+                          backgroundColor: 'var(--nav-item-hover)'
+                        }}
                       >
                         Clear
                       </button>
@@ -187,7 +205,13 @@ export default function PreferencesPanel({
                       )
                       setHostPrefs(prev => ({ ...prev, maxRadius: String(numeric) }))
                     }}
-                    className="w-20 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                    className="w-20 rounded-lg p-2 text-right text-sm transition-all duration-200 focus:scale-105 focus:outline-none focus:ring-2 disabled:opacity-60"
+                    style={{
+                      backgroundColor: 'var(--background)',
+                      border: '1px solid var(--nav-shadow)',
+                      color: 'var(--foreground)',
+                      '--tw-ring-color': 'var(--accent)'
+                    }}
                     placeholder="Any"
                   />
                   {hostPrefs.maxRadius && isHost && (
@@ -208,9 +232,9 @@ export default function PreferencesPanel({
               </p>
             </div>
 
-            <div>
-              <p className="font-medium">Blocked categories</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+            <div className="animate-fade-in-up-delayed">
+              <p className="font-medium mb-3" style={{ color: 'var(--foreground)' }}>Blocked categories</p>
+              <div className="flex flex-wrap gap-2">
                 {Object.keys(cuisineGroups).map(group => {
                   const label = group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()
                   const blockedTop = hostPrefs.blockedCategories.includes(group)
@@ -220,11 +244,13 @@ export default function PreferencesPanel({
                       type="button"
                       onClick={() => isHost && toggleHostTopLevel(group)}
                       disabled={!isHost}
-                      className={`rounded-full border px-3 py-1 text-xs transition ${
-                        blockedTop
-                          ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
-                      }`}
+                      className="rounded-full px-3 py-2 text-xs font-medium transition-all duration-200 hover:scale-105 disabled:opacity-60"
+                      style={{
+                        backgroundColor: blockedTop ? '#fecaca' : 'var(--nav-item-bg)',
+                        border: `1px solid ${blockedTop ? '#f87171' : 'var(--nav-shadow)'}`,
+                        color: blockedTop ? '#dc2626' : 'var(--foreground)',
+                        boxShadow: blockedTop ? '0 2px 8px rgba(248, 113, 113, 0.3)' : 'none'
+                      }}
                     >
                       {blockedTop ? 'Blocked: ' : ''}{label}
                     </button>
@@ -245,8 +271,22 @@ export default function PreferencesPanel({
                         key={p}
                         type="button"
                         disabled={!isHost}
-                        onClick={() => isHost && setHostPrefs(prev => ({ ...prev, maxPrice: prev.maxPrice === p ? undefined : p }))}
-                        className={`rounded border px-2 py-1 text-xs ${selected ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                        onClick={() => {
+                          if (isHost) {
+                            setHostPrefs(prev => ({ ...prev, maxPrice: prev.maxPrice === p ? undefined : p }))
+                            // Add animation feedback
+                            const btn = document.activeElement
+                            btn?.classList.add('animate-pulse-shrink')
+                            setTimeout(() => btn?.classList.remove('animate-pulse-shrink'), 500)
+                          }
+                        }}
+                        className="rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-60"
+                        style={{
+                          backgroundColor: selected ? 'var(--accent)' : 'var(--nav-item-bg)',
+                          border: `1px solid ${selected ? 'var(--accent)' : 'var(--nav-shadow)'}`,
+                          color: selected ? 'var(--nav-text)' : 'var(--foreground)',
+                          boxShadow: selected ? '0 2px 8px rgba(170, 96, 200, 0.3)' : 'none'
+                        }}
                       >
                         {p}
                       </button>
@@ -270,15 +310,26 @@ export default function PreferencesPanel({
       )}
 
       {(mode === 'personal' || mode === 'both') && (
-        <section className="rounded-lg border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-black/60">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Personal preferences</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wide text-slate-400">Optional</span>
+        <section className="animate-fade-in-up-delayed rounded-xl p-6 transition-all duration-300 hover:shadow-lg" style={{
+          backgroundColor: 'var(--nav-item-bg)',
+          border: '1px solid var(--nav-shadow)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div className="mb-4 flex items-center justify-between animate-fade-in-up">
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Personal preferences</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-xs uppercase tracking-wide px-2 py-1 rounded-full" style={{ 
+                color: 'var(--muted)', 
+                backgroundColor: 'var(--nav-item-hover)'
+              }}>Optional</span>
               <button
                 type="button"
                 onClick={onResetPlayer}
-                className="text-xs underline opacity-80 hover:opacity-100"
+                className="text-xs px-3 py-1 rounded-md transition-all duration-200 hover:scale-105"
+                style={{
+                  color: 'var(--accent)',
+                  backgroundColor: 'var(--nav-item-hover)'
+                }}
                 title="Reset preferences"
               >
                 Reset

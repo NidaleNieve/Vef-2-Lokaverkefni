@@ -85,8 +85,21 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <div className="mb-4 text-sm" style={{ color: 'var(--muted)' }}>
+    <div className="max-w-xl mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="text-center animate-fade-in-up">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
+          Your Preferences
+        </h1>
+        <p className="text-sm px-4 py-2 rounded-full inline-block" style={{ 
+          color: 'var(--muted)',
+          backgroundColor: 'var(--nav-item-hover)'
+        }}>
+          Step 3 of 3: Set groups personal preferences
+        </p>
+      </div>
+
+      <div className="mb-4 text-sm text-center" style={{ color: 'var(--muted)' }}>
         Group: <span className="font-mono">{groupId || '(none)'}</span>
       </div>
 
@@ -108,6 +121,17 @@ export default function PreferencesPage() {
         >
           Start Swiping!
         </button>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="flex justify-center animate-fade-in-up-delayed">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-8 h-1 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-8 h-1 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+        </div>
       </div>
     </div>
   );
