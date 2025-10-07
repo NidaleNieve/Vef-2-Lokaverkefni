@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PreferencesPanel from '../../../components/preferences-panel';
 
 export default function PreferencesPage() {
   const search = useSearchParams();
   const spGroupId = search.get('groupId') || '';
+  const router = useRouter();
   const [groupId, setGroupId] = useState(spGroupId || '');
 
   const [hostPrefs, setHostPrefs] = useState({
@@ -79,7 +80,8 @@ export default function PreferencesPage() {
     // Note: the panel maintains categories; we simply ensure non-empty by leaving it as-is if user hasn't interacted.
     localStorage.setItem('lastGroupId', groupId);
     localStorage.setItem(`playerPrefs:${groupId}`, JSON.stringify(playerPrefs));
-    alert('Preferences saved. Swiping flow will be wired later.');
+    // Redirect to swiping page that is already set up
+    router.push(`/groups/${encodeURIComponent(groupId)}/swipe`);
   };
 
   return (
@@ -104,7 +106,7 @@ export default function PreferencesPage() {
           className="px-4 py-2 rounded-lg font-semibold"
           style={{ backgroundColor: 'var(--accent)', color: 'var(--nav-text)' }}
         >
-          Save
+          Start Swiping!
         </button>
       </div>
     </div>
