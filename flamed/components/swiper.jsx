@@ -286,9 +286,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                     <p className="mt-1 text-gray-500 dark:text-gray-400">Using default settings.</p>
                     )}
                 </div>
-                <p className="mt-3 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                    Filters will activate once the Supabase RPC endpoint is wired up.
-                </p>
                 </div>
             )}
 

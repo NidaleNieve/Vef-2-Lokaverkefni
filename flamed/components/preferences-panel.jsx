@@ -51,8 +51,27 @@ export default function PreferencesPanel({
   mode = 'both',
 }) {
   const [cuisineGroups, setCuisineGroups] = useState(STATIC_CUISINE_GROUPS)
-  // Allow expanding multiple categories at once
-  const [expandedGroups, setExpandedGroups] = useState(new Set())
+  // Allow expanding multiple categories at once with ordering (most recently clicked first)
+  const [expandedGroups, setExpandedGroups] = useState([])
+  // Track if user explicitly picked any subcategory for a group
+  const [touchedGroups, setTouchedGroups] = useState({})
+  // Track groups where all subcategories were auto-selected implicitly
+  const [implicitAllGroups, setImplicitAllGroups] = useState({})
+
+  // Reset player preferences and local UI state
+  const onResetPlayer = () => {
+    setPlayerPrefs({
+      radius: '',
+      rating: '',
+      price: [],
+      kidFriendly: false,
+      allergies: '',
+      categories: [],
+    })
+    setExpandedGroups([])
+    setTouchedGroups({})
+    setImplicitAllGroups({})
+  }
 
   // Fetch all cuisines from server and merge into static groups placing new ones into Misc
   useEffect(() => {
@@ -93,6 +112,44 @@ export default function PreferencesPanel({
             </span>
           </div>
           <div className="space-y-3">
+            {/* Player: Minimum rating (hidden for host) */}
+            {!isHost && (
+              <div>
+                <label className="flex items-center justify-between gap-3">
+                  <span>Minimum rating</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.5"
+                      value={playerPrefs.rating}
+                      onChange={e => {
+                        const raw = e.target.value
+                        if (raw === '') {
+                          setPlayerPrefs(prev => ({ ...prev, rating: '' }))
+                          return
+                        }
+                        const n = Math.max(0, Math.min(5, Number(raw)))
+                        setPlayerPrefs(prev => ({ ...prev, rating: String(n) }))
+                      }}
+                      className="w-24 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                      placeholder="Any"
+                    />
+                    {playerPrefs.rating && (
+                      <button
+                        type="button"
+                        onClick={() => setPlayerPrefs(prev => ({ ...prev, rating: '' }))}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </label>
+                <p className="mt-1 text-xs text-gray-500">Only show restaurants rated at or above this value.</p>
+              </div>
+            )}
             <label className={`flex items-center gap-2 ${!isHost ? 'opacity-60 cursor-not-allowed' : ''}`}>
               <input
                 type="checkbox"
@@ -216,9 +273,17 @@ export default function PreferencesPanel({
         <section className="rounded-lg border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-black/60">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-base font-semibold">Personal preferences</h2>
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Optional
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-slate-400">Optional</span>
+              <button
+                type="button"
+                onClick={onResetPlayer}
+                className="text-xs underline opacity-80 hover:opacity-100"
+                title="Reset preferences"
+              >
+                Reset
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {/** Removed duplicate first Radius and Price UI; constrained versions below remain **/}
@@ -229,7 +294,7 @@ export default function PreferencesPanel({
                 {Object.keys(cuisineGroups).map(group => {
                   const label = group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()
                   const blocked = hostPrefs.blockedCategories.includes(group)
-                  const isExpanded = expandedGroups.has(group)
+                  const isExpanded = Array.isArray(expandedGroups) && expandedGroups.includes(group)
                   return (
                     <button
                       key={group}
@@ -237,20 +302,31 @@ export default function PreferencesPanel({
                       disabled={blocked}
                       onClick={() => {
                         if (blocked) return
-                        // Auto-select all subcats for any OTHER expanded group with none selected
-                        const otherExpanded = Array.from(expandedGroups).filter(g => g !== group)
-                        let newCats = new Set(Array.isArray(playerPrefs.categories) ? playerPrefs.categories : [])
+                        // Auto-select all subcats for any OTHER expanded group with none selected and untouched
+                        const otherExpanded = (Array.isArray(expandedGroups) ? expandedGroups : []).filter(g => g !== group)
+                        const newCats = new Set(Array.isArray(playerPrefs.categories) ? playerPrefs.categories : [])
+                        const newImplicit = { ...implicitAllGroups }
                         for (const g of otherExpanded) {
                           const subs = cuisineGroups[g] || []
                           const hasAny = subs.some(s => newCats.has(s))
-                          if (!hasAny) subs.forEach(s => newCats.add(s))
+                          const touched = !!touchedGroups[g]
+                          if (!touched && !hasAny) {
+                            subs.forEach(s => newCats.add(s))
+                            newImplicit[g] = true
+                          }
                         }
+                        setImplicitAllGroups(newImplicit)
                         setPlayerPrefs(prev => ({ ...prev, categories: Array.from(newCats) }))
-                        // Toggle expansion of clicked group
+                        // Toggle expansion of clicked group; keep newest on top
                         setExpandedGroups(prev => {
-                          const n = new Set(prev)
-                          if (n.has(group)) n.delete(group); else n.add(group)
-                          return n
+                          const arr = Array.isArray(prev) ? prev.slice() : []
+                          const idx = arr.indexOf(group)
+                          if (idx >= 0) {
+                            arr.splice(idx, 1)
+                            return arr
+                          } else {
+                            return [group, ...arr]
+                          }
                         })
                       }}
                       className={`rounded-full border px-3 py-1 text-xs ${
@@ -267,34 +343,44 @@ export default function PreferencesPanel({
                 })}
               </div>
 
-              {/* Render subcategories for all expanded groups */}
-              {Array.from(expandedGroups).length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {Array.from(expandedGroups).map(group => (
-                    <div key={group} className="flex flex-wrap gap-2">
-                      {(cuisineGroups[group] || []).map(cat => {
-                        const chosen = Array.isArray(playerPrefs.categories) && playerPrefs.categories.includes(cat)
-                        return (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => {
-                              const set = new Set(Array.isArray(playerPrefs.categories) ? playerPrefs.categories : [])
-                              chosen ? set.delete(cat) : set.add(cat)
-                              setPlayerPrefs(prev => ({ ...prev, categories: Array.from(set) }))
-                            }}
-                            className={`rounded-full border px-3 py-1 text-xs transition ${
-                              chosen
-                                ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
-                                : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
-                            }`}
-                          >
-                            {cat}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
+              {/* Render subcategories for all expanded groups; most recently clicked first */}
+              {Array.isArray(expandedGroups) && expandedGroups.length > 0 && (
+                <div className="mt-3 space-y-3">
+                  {expandedGroups.map(group => {
+                    // If all subcategories were auto-selected implicitly and user hasn't touched this group,
+                    // hide the overwhelming list; keep them selected in the background.
+                    if (implicitAllGroups[group] && !touchedGroups[group]) {
+                      return null
+                    }
+                    return (
+                      <div key={group} className="flex flex-wrap gap-2 mb-3">
+                        {(cuisineGroups[group] || []).map(cat => {
+                          const chosen = Array.isArray(playerPrefs.categories) && playerPrefs.categories.includes(cat)
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                setTouchedGroups(prev => ({ ...prev, [group]: true }))
+                                const set = new Set(Array.isArray(playerPrefs.categories) ? playerPrefs.categories : [])
+                                chosen ? set.delete(cat) : set.add(cat)
+                                // User is explicitly picking; not implicit all anymore
+                                setImplicitAllGroups(prev => ({ ...prev, [group]: false }))
+                                setPlayerPrefs(prev => ({ ...prev, categories: Array.from(set) }))
+                              }}
+                              className={`rounded-full border px-3 py-1 text-xs transition ${
+                                chosen
+                                  ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
+                                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
+                              }`}
+                            >
+                              {cat}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
               <p className="mt-1 text-xs text-gray-500">Host-blocked cuisines are disabled here.</p>
