@@ -45,6 +45,29 @@ export default function PreferencesPage() {
         setPlayerPrefs(JSON.parse(savedPlayer));
       } catch {}
     }
+    // Best-effort: fetch latest host preferences from group chat
+    (async () => {
+      try {
+        const res = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' })
+        const j = await res.json().catch(() => ({}))
+        if (res.ok && Array.isArray(j?.items)) {
+          for (const m of j.items) {
+            try {
+              const c = JSON.parse(m.content || '{}')
+              if (c && c.type === 'host_prefs' && c.prefs) {
+                setHostPrefs(prev => ({
+                  ...prev,
+                  requireKidFriendly: !!c.prefs.requireKidFriendly,
+                  maxRadius: c.prefs.maxRadius ?? '',
+                  blockedCategories: Array.isArray(c.prefs.blockedCategories) ? c.prefs.blockedCategories : [],
+                }))
+                break
+              }
+            } catch {}
+          }
+        }
+      } catch {}
+    })()
   }, [groupId]);
 
   const handleSave = () => {

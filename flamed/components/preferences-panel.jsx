@@ -1,8 +1,46 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-const CATEGORY_OPTIONS = ['Indian', 'Buffet', 'Fast Food', 'Traditional']
 const PRICE_OPTIONS = ['$', '$$', '$$$', '$$$$']
 const DEFAULT_MAX_RADIUS = 50
+
+// Static cuisine categories (top-level -> sub-cuisines)
+const STATIC_CUISINE_GROUPS = {
+  European: [
+    'French','Italian','Spanish','Mediterranean','Central European','Eastern European','German','Polish','British','Irish','Scandinavian','Danish','Basque','Campania','Neapolitan','Southern-Italian'
+  ],
+  Asian: [
+    'Chinese','Japanese','Japanese Fusion','Thai','Korean','Vietnamese','Indian','Indonesian','Nepali','Pakistani','Szechuan','Tibetan'
+  ],
+  American: [
+    'American','South American','Argentinean','Latin'
+  ],
+  MiddleEastern: [
+    'Arabic','Turkish','Lebanese','Moroccan'
+  ],
+  FastFood: [
+    'Fast Food','Pizza','Street Food','Deli','Soups'
+  ],
+  Seafood: ['Seafood'],
+  GrillBarbecue: ['Grill','Barbecue','Steakhouse'],
+  CafeBar: ['Cafe','Bar','Wine Bar','Brew Pub','Beer restaurants','Pub','Gastropub','Dining bars'],
+  FusionContemporary: ['Fusion','Contemporary','International','Healthy'],
+  Japanese_Sushi: ['Sushi'],
+  Misc: [],
+}
+
+// Utility to merge server cuisines into static groups (uncategorized -> Misc)
+function mergeCuisinesFromServer(staticGroups, serverList) {
+  const lowerSet = new Set(
+    Object.values(staticGroups).flat().map(s => s.toLowerCase())
+  )
+  const misc = new Set(staticGroups.Misc || [])
+  for (const name of serverList || []) {
+    const n = String(name || '').trim()
+    if (!n) continue
+    if (!lowerSet.has(n.toLowerCase())) misc.add(n)
+  }
+  return { ...staticGroups, Misc: Array.from(misc).sort() }
+}
 
 export default function PreferencesPanel({
   hostPrefs,
@@ -12,14 +50,37 @@ export default function PreferencesPanel({
   isHost = false,
   mode = 'both',
 }) {
-    const toggleHostCategory = (cat) => {
-        setHostPrefs((prev) => {
-        const newBlocked = prev.blockedCategories.includes(cat)
-            ? prev.blockedCategories.filter((c) => c !== cat)
-            : [...prev.blockedCategories, cat];
-        return { ...prev, blockedCategories: newBlocked };
-        });
-    };
+  const [cuisineGroups, setCuisineGroups] = useState(STATIC_CUISINE_GROUPS)
+  const [topCuisine, setTopCuisine] = useState('')
+  const [availableSubCuisines, setAvailableSubCuisines] = useState([])
+
+  // Fetch all cuisines from server and merge into static groups placing new ones into Misc
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/restaurants/meta/cuisines', { cache: 'no-store' })
+        const j = await res.json().catch(() => ({}))
+        if (res.ok && Array.isArray(j?.items)) {
+          const merged = mergeCuisinesFromServer(STATIC_CUISINE_GROUPS, j.items)
+          if (!cancelled) setCuisineGroups(merged)
+        }
+      } catch {}
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  const toggleHostCategory = (cat) => {
+    setHostPrefs((prev) => {
+      const newBlocked = prev.blockedCategories.includes(cat)
+        ? prev.blockedCategories.filter((c) => c !== cat)
+        : [...prev.blockedCategories, cat]
+      return { ...prev, blockedCategories: newBlocked }
+    })
+  }
+
+  // Host blocks should disable in player panel
+  const isBlocked = (cat) => hostPrefs.blockedCategories.includes(cat)
 
   return (
     <div className="mb-6 space-y-4 text-sm">
@@ -93,29 +154,41 @@ export default function PreferencesPanel({
             <div>
               <p className="font-medium">Blocked categories</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {CATEGORY_OPTIONS.map(cat => {
-                  const blocked = hostPrefs.blockedCategories.includes(cat)
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => isHost && toggleHostCategory(cat)}
-                      disabled={!isHost}
-                      className={`rounded-full border px-3 py-1 text-xs transition ${
-                        blocked
-                          ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
-                      }`}
-                    >
-                      {blocked ? 'Blocked: ' : ''}
-                      {cat}
-                    </button>
-                  )
-                })}
+                {Object.keys(cuisineGroups).map(group => (
+                  <button
+                    key={group}
+                    type="button"
+                    onClick={() => setTopCuisine(group)}
+                    className={`rounded-full border px-3 py-1 text-xs ${topCuisine === group ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                  >
+                    {group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()}
+                  </button>
+                ))}
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Blocked categories appear disabled for other players.
-              </p>
+              {topCuisine && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(cuisineGroups[topCuisine] || []).map(cat => {
+                    const blocked = hostPrefs.blockedCategories.includes(cat)
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => isHost && toggleHostCategory(cat)}
+                        disabled={!isHost}
+                        className={`rounded-full border px-3 py-1 text-xs transition ${
+                          blocked
+                            ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
+                        }`}
+                      >
+                        {blocked ? 'Blocked: ' : ''}
+                        {cat}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <p className="mt-1 text-xs text-gray-500">Blocked categories appear disabled for other players.</p>
             </div>
           </div>
         </section>
@@ -130,7 +203,100 @@ export default function PreferencesPanel({
             </span>
           </div>
           <div className="space-y-3">
-            {/* ...existing personal controls unchanged... */}
+            <div>
+              <label className="flex items-center justify-between gap-3">
+                <span>Radius (km)</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max={DEFAULT_MAX_RADIUS}
+                    value={playerPrefs.radius}
+                    onChange={e => setPlayerPrefs(prev => ({ ...prev, radius: e.target.value }))}
+                    className="w-20 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                    placeholder="Any"
+                  />
+                  {playerPrefs.radius && (
+                    <button
+                      type="button"
+                      onClick={() => setPlayerPrefs(prev => ({ ...prev, radius: '' }))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            <div>
+              <label className="flex items-center justify-between gap-3">
+                <span>Price</span>
+                <div className="flex items-center gap-2">
+                  {PRICE_OPTIONS.map(p => (
+                    <label key={p} className="inline-flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={Array.isArray(playerPrefs.price) ? playerPrefs.price.includes(p) : false}
+                        onChange={e => {
+                          const list = new Set(Array.isArray(playerPrefs.price) ? playerPrefs.price : [])
+                          e.target.checked ? list.add(p) : list.delete(p)
+                          setPlayerPrefs(prev => ({ ...prev, price: Array.from(list) }))
+                        }}
+                      />
+                      <span>{p}</span>
+                    </label>
+                  ))}
+                </div>
+              </label>
+            </div>
+
+            <div>
+              <p className="font-medium">Cuisine preferences</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {Object.keys(cuisineGroups).map(group => (
+                  <button
+                    key={group}
+                    type="button"
+                    onClick={() => setTopCuisine(group)}
+                    className={`rounded-full border px-3 py-1 text-xs ${topCuisine === group ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                  >
+                    {group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()}
+                  </button>
+                ))}
+              </div>
+              {topCuisine && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(cuisineGroups[topCuisine] || []).map(cat => {
+                    const chosen = Array.isArray(playerPrefs.categories) && playerPrefs.categories.includes(cat)
+                    const blocked = isBlocked(cat)
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          if (blocked) return
+                          const set = new Set(Array.isArray(playerPrefs.categories) ? playerPrefs.categories : [])
+                          chosen ? set.delete(cat) : set.add(cat)
+                          setPlayerPrefs(prev => ({ ...prev, categories: Array.from(set) }))
+                        }}
+                        disabled={blocked}
+                        className={`rounded-full border px-3 py-1 text-xs transition ${
+                          blocked
+                            ? 'opacity-50 cursor-not-allowed border-gray-300'
+                            : chosen
+                              ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <p className="mt-1 text-xs text-gray-500">Host-blocked cuisines are disabled here.</p>
+            </div>
           </div>
           <p className="mt-3 text-xs italic text-gray-400">
             Filtering will hook into Supabase RPC once the backend is ready.
