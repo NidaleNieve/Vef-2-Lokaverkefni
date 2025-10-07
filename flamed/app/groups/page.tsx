@@ -2,7 +2,7 @@
 // this is the main groups page where users can see all their groups
 // it loads groups from supabase and shows them in a list
 // each group card links to the chat room for that group
-'use client' // this tells nextjs to run this on the client side not server
+'use client' 
 import { useEffect, useState } from 'react' 
 import Link from 'next/link' 
 import { supabaseBrowser } from '@/utils/supabase/browser' 
@@ -13,8 +13,8 @@ type MyGroup = {
   group_id: string // unique id for each group
   group_name: string // the name of the group
   role: string // if you're admin or just a member
-  joined_at?: string // when you joined (optional)
-  group_created_at?: string // when group was made (optional)
+  joined_at?: string // when you joined 
+  group_created_at?: string // when group was made 
 }
 
 export default function GroupsPage() {
@@ -85,16 +85,16 @@ export default function GroupsPage() {
         throw new Error(body?.error || `HTTP ${response.status}`)
       }
       
-      // success! clear the input and refresh the list
-      setNewGroupName('') // empty the text box
-      await loadMyGroups() // reload groups to show the new one
+      
+      setNewGroupName('') 
+      await loadMyGroups() 
       
     } catch (err) {
       // handle any errors that happened
       setError(err instanceof Error ? err.message : 'Failed to create group')
       console.error('Error creating group:', err) // log for debugging
     } finally {
-      setCreating(false) // re-enable the button
+      setCreating(false) 
     }
   }
 
@@ -117,17 +117,17 @@ export default function GroupsPage() {
         throw new Error(error.message)
       }
       
-      // success! exit rename mode and refresh the list
+      // exit rename mode and refresh the list
       setRenamingGroupId(null)
       setRenameValue('')
-      await loadMyGroups() // reload groups to show the new name
+      await loadMyGroups() 
       
     } catch (err) {
       // handle any errors that happened
       setError(err instanceof Error ? err.message : 'Failed to rename group')
       console.error('Error renaming group:', err) // log for debugging
     } finally {
-      setRenaming(false) // re-enable the button
+      setRenaming(false) 
     }
   }
 
@@ -154,14 +154,14 @@ export default function GroupsPage() {
   // helper to style the role badges (admin vs member)
   const getRoleColor = (role: string) => {
     const baseStyle = {
-      background: 'var(--nav-item-hover)', // use our custom css colors
+      background: 'var(--nav-item-hover)', 
       color: 'var(--foreground)',
-      opacity: role.toLowerCase() === 'admin' ? '0.9' : '0.7' // admins are more opaque
+      opacity: role.toLowerCase() === 'admin' ? '0.9' : '0.7' // admins more prominent
     }
     return baseStyle
   }
 
-  // show loading skeleton while fetching data
+  // show loading while fetching data
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6 mt-20">
@@ -255,11 +255,11 @@ export default function GroupsPage() {
               key={group.group_id} // unique key for react
               className="p-6 rounded-lg shadow-sm border transition-all duration-200 group hover:shadow-md"
               style={{ 
-                background: 'var(--nav-item-bg)', // custom background
-                borderColor: 'var(--muted)' // custom border
+                background: 'var(--nav-item-bg)', 
+                borderColor: 'var(--muted)' 
               }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'} // hover effect
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--muted)'} // unhover effect
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'} 
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--muted)'} 
             >
               {/* group card layout */}
               <div className="flex items-start justify-between">
@@ -324,7 +324,7 @@ export default function GroupsPage() {
                     <span className="px-2 py-1 rounded-full text-xs font-medium" style={getRoleColor(group.role)}>
                       {group.role}
                     </span>
-                    {/* when user joined (if we have that info) */}
+                    {/* when user joined */}
                     {group.joined_at && (
                       <span className="flex items-center gap-1">
                         <Clock size={14} />
