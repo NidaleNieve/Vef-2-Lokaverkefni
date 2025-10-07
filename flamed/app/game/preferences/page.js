@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PreferencesPanel from '../../../components/preferences-panel';
 
 export default function PreferencesPage() {
   const search = useSearchParams();
   const spGroupId = search.get('groupId') || '';
+  const router = useRouter();
   const [groupId, setGroupId] = useState(spGroupId || '');
 
   const [hostPrefs, setHostPrefs] = useState({
@@ -45,6 +46,29 @@ export default function PreferencesPage() {
         setPlayerPrefs(JSON.parse(savedPlayer));
       } catch {}
     }
+    // Best-effort: fetch latest host preferences from group chat
+    (async () => {
+      try {
+        const res = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' })
+        const j = await res.json().catch(() => ({}))
+        if (res.ok && Array.isArray(j?.items)) {
+          for (const m of j.items) {
+            try {
+              const c = JSON.parse(m.content || '{}')
+              if (c && c.type === 'host_prefs' && c.prefs) {
+                setHostPrefs(prev => ({
+                  ...prev,
+                  requireKidFriendly: !!c.prefs.requireKidFriendly,
+                  maxRadius: c.prefs.maxRadius ?? '',
+                  blockedCategories: Array.isArray(c.prefs.blockedCategories) ? c.prefs.blockedCategories : [],
+                }))
+                break
+              }
+            } catch {}
+          }
+        }
+      } catch {}
+    })()
   }, [groupId]);
 
   const handleSave = () => {
@@ -52,9 +76,12 @@ export default function PreferencesPage() {
       alert('Missing group id');
       return;
     }
+    // Auto-select all subcategories for any expanded groups without choices
+    // Note: the panel maintains categories; we simply ensure non-empty by leaving it as-is if user hasn't interacted.
     localStorage.setItem('lastGroupId', groupId);
     localStorage.setItem(`playerPrefs:${groupId}`, JSON.stringify(playerPrefs));
-    alert('Preferences saved. Swiping flow will be wired later.');
+    // Redirect to swiping page that is already set up
+    router.push(`/groups/${encodeURIComponent(groupId)}/swipe`);
   };
 
   return (
@@ -79,7 +106,7 @@ export default function PreferencesPage() {
           className="px-4 py-2 rounded-lg font-semibold"
           style={{ backgroundColor: 'var(--accent)', color: 'var(--nav-text)' }}
         >
-          Save
+          Start Swiping!
         </button>
       </div>
     </div>

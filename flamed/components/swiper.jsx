@@ -155,34 +155,39 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         }, [hostPreferences, playerPreferences])
         */
 
-    //function sem fetchar veitingastaðina frá supabase og byrtir loading screen
+    // Fetch restaurants using backend filter builder for this group
     useEffect(() => {
-        const load = async () => {
-            const { data, error } = await supabase
-                .from('restaurants')
-                .select(`
-                    id,
-                    name,
-                    parent_city,
-                    avg_rating,
-                    cuisines,
-                    price_tag,
-                    review_count,
-                    hero_img_url,
-                    square_img_url
-                `)
-                .limit(10); //temp limit
-
-            if (error) {
-                setError(error.message);
-                setRestaurants([]);
-            } else {
-                setRestaurants(data || []);
+        let cancelled = false
+        async function load() {
+            setLoading(true)
+            setError(null)
+            try {
+                if (!groupId) throw new Error('Missing groupId')
+                // Build the player filter payload similar to restaurants/search POST
+                const player = {
+                    query: '',
+                    minRating: playerPreferences?.rating ? Number(playerPreferences.rating) : undefined,
+                    categories: Array.isArray(playerPreferences?.categories) ? playerPreferences.categories : [],
+                    price: Array.isArray(playerPreferences?.price) ? playerPreferences.price : (playerPreferences?.price ? [playerPreferences.price] : []),
+                }
+                const res = await fetch(`/api/groups/${groupId}/restaurants`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ player, sortBy: 'random', limit: 30 })
+                })
+                const j = await res.json().catch(() => ({}))
+                if (!res.ok) throw new Error(j?.error || `Failed to load restaurants (${res.status})`)
+                if (!cancelled) setRestaurants(Array.isArray(j?.data) ? j.data : [])
+            } catch (e) {
+                if (!cancelled) { setError(e.message || 'Failed to fetch restaurants'); setRestaurants([]) }
+            } finally {
+                if (!cancelled) setLoading(false)
             }
-            setLoading(false);
-        };
-        load();
-    }, []);
+        }
+        load()
+        return () => { cancelled = true }
+    }, [groupId, JSON.stringify(playerPreferences)])
 
     //sýnir loading
     if (loading) {
@@ -281,9 +286,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                     <p className="mt-1 text-gray-500 dark:text-gray-400">Using default settings.</p>
                     )}
                 </div>
-                <p className="mt-3 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                    Filters will activate once the Supabase RPC endpoint is wired up.
-                </p>
                 </div>
             )}
 
