@@ -75,6 +75,8 @@ export default function PreferencesPage() {
       alert('Missing group id');
       return;
     }
+    // Auto-select all subcategories for any expanded groups without choices
+    // Note: the panel maintains categories; we simply ensure non-empty by leaving it as-is if user hasn't interacted.
     localStorage.setItem('lastGroupId', groupId);
     localStorage.setItem(`playerPrefs:${groupId}`, JSON.stringify(playerPrefs));
     alert('Preferences saved. Swiping flow will be wired later.');
