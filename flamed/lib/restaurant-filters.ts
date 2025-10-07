@@ -91,7 +91,7 @@ export class RestaurantFilterBuilder {
     this.supa = supabaseClient
     this.query = this.supa
       .from('restaurants')
-      .select('id,name,avg_rating,review_count,price_tag,parent_city,cuisines,is_active', { count: 'exact' })
+      .select('id,name,avg_rating,review_count,price_tag,parent_city,cuisines,is_active,hero_img_url,square_img_url', { count: 'exact' })
   }
 
   // Apply filters method by method
