@@ -6,9 +6,8 @@ import PreferencesPanel from '../../../components/preferences-panel';
 
 export default function HostPage() {
   const router = useRouter();
-  const search = useSearchParams();
-  const spGroupId = search.get('groupId') || '';
-  const [groupId, setGroupId] = useState(spGroupId || '');
+  // New flow: host picks prefs first, group is chosen in share step
+  const [groupId, setGroupId] = useState('');
   const [hostPrefs, setHostPrefs] = useState({
     requireKidFriendly: false,
     maxRadius: '',
@@ -24,36 +23,32 @@ export default function HostPage() {
   });
 
   useEffect(() => {
-    if (!spGroupId) {
-      const last = localStorage.getItem('lastGroupId') || '';
-      if (last) setGroupId(last);
-    }
-  }, [spGroupId]);
+    const last = localStorage.getItem('lastGroupId') || '';
+    if (last) setGroupId(last);
+  }, []);
 
   useEffect(() => {
-    if (!groupId) return;
-    const saved = localStorage.getItem(`hostPrefs:${groupId}`);
-    if (saved) {
-      try {
-        setHostPrefs(JSON.parse(saved));
-      } catch {}
+    // Load any pending host prefs saved earlier (before choosing group)
+    const savedPending = localStorage.getItem('hostPrefs:pending');
+    if (savedPending) {
+      try { setHostPrefs(JSON.parse(savedPending)); } catch {}
+    }
+    if (groupId) {
+      const saved = localStorage.getItem(`hostPrefs:${groupId}`);
+      if (saved) { try { setHostPrefs(JSON.parse(saved)); } catch {} }
     }
   }, [groupId]);
 
   const handleContinue = () => {
-    if (!groupId) {
-      alert('Missing group id');
-      return;
-    }
-    localStorage.setItem('lastGroupId', groupId);
-    localStorage.setItem(`hostPrefs:${groupId}`, JSON.stringify(hostPrefs));
-    router.push(`/game/preferences?groupId=${encodeURIComponent(groupId)}`);
+    // Save prefs for the upcoming share step; group will be selected there
+    localStorage.setItem('hostPrefs:pending', JSON.stringify(hostPrefs));
+    router.push('/game/host/share');
   };
 
   return (
     <div className="max-w-xl mx-auto p-4">
       <div className="mb-4 text-sm" style={{ color: 'var(--muted)' }}>
-        Group: <span className="font-mono">{groupId || '(none)'}</span>
+        You will pick a group on the next step.
       </div>
 
       <PreferencesPanel

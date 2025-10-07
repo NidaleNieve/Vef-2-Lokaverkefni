@@ -51,42 +51,40 @@ export default function Intro() {
     if (groupId) localStorage.setItem('lastGroupId', groupId);
   }, [groupId]);
 
-  //join logic sem joinar leik
-  const joinGroup = () => {
-    const id = codeInput.trim();
-    if (!id) {
-      alert('Enter a group id to join');
+  //join logic: use invite code -> redeem -> navigate to preferences for resulting group
+  const joinGroup = async () => {
+    const code = codeInput.trim();
+    if (!code) {
+      alert('Enter an invite code to join');
       return;
     }
-    setGroupId(id);
-    setIsHost(false);
-    setReadyToSwipe(false);
-    localStorage.setItem('lastGroupId', id);
-    router.push(`/game/preferences?groupId=${encodeURIComponent(id)}`);
+    try {
+      const res = await fetch('/api/groups/redeem', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code })
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || `Failed to redeem (${res.status})`);
+      const gid = j?.group_id;
+      if (!gid) throw new Error('Invalid response from server');
+      setGroupId(gid);
+      setIsHost(false);
+      setReadyToSwipe(false);
+      localStorage.setItem('lastGroupId', gid);
+      router.push(`/game/preferences?groupId=${encodeURIComponent(gid)}`);
+    } catch (err) {
+      alert(err?.message || 'Failed to join group');
+    }
   };
 
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
   async function startRound() {
-    //ef að groupId er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik
-    let id = groupId.trim()
-    if (!id) return
-    const res = await fetch(`/api/groups/${id}/round`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      credentials: 'include',
-    })
-    //error handling
-    const j = await res.json().catch(() => ({}))
-    if (!res.ok) {
-      alert(j?.error || `Failed to start round (${res.status})`)
-      return
-    }
-    //geymi groupId
-    const gid = groupId.trim()
-    setGroupId(gid)
-    setIsHost(true)
-    setReadyToSwipe(false)
-    router.push(`/game/host?groupId=${encodeURIComponent(id)}`);
+    // New flow: don't require group yet. Go pick host preferences first.
+    setIsHost(true);
+    setReadyToSwipe(false);
+    router.push('/game/host');
   }
 
   const handleCircleClick = () => {
@@ -96,10 +94,9 @@ export default function Intro() {
     startRound();
   };
 
-  const handleCodeSubmit = (e) => {
+  const handleCodeSubmit = async (e) => {
     e.preventDefault();
-
-    joinGroup();
+    await joinGroup();
   };
 
   return (
