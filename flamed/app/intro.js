@@ -35,6 +35,7 @@ export default function Intro() {
     return () => clearTimeout(timer);
   }, []);
 
+  /* Þurfum það ekki lengur útaf nýju invite codes
   //sækir groupId úr local storage, qol feature
   useEffect(() => {
     const last = localStorage.getItem('lastGroupId') || '';
@@ -45,6 +46,7 @@ export default function Intro() {
       setReadyToSwipe(false);
     }
   }, []);
+  */
 
   //geymir groupId í localstorage þegar það breytist
   useEffect(() => {
@@ -196,7 +198,6 @@ export default function Intro() {
             />
             <button 
               type="submit"
-              onClick={joinGroup}
               className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: 'var(--accent)',

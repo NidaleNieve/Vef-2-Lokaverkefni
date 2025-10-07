@@ -70,12 +70,12 @@ export default function PreferencesPanel({
     return () => { cancelled = true }
   }, [])
 
-  const toggleHostCategory = (cat) => {
-    setHostPrefs((prev) => {
-      const newBlocked = prev.blockedCategories.includes(cat)
-        ? prev.blockedCategories.filter((c) => c !== cat)
-        : [...prev.blockedCategories, cat]
-      return { ...prev, blockedCategories: newBlocked }
+  // Host only blocks TOP-LEVEL categories (group names). Store group keys in blockedCategories.
+  const toggleHostTopLevel = (groupKey) => {
+    setHostPrefs(prev => {
+      const list = new Set(prev.blockedCategories || [])
+      list.has(groupKey) ? list.delete(groupKey) : list.add(groupKey)
+      return { ...prev, blockedCategories: Array.from(list) }
     })
   }
 
@@ -154,41 +154,59 @@ export default function PreferencesPanel({
             <div>
               <p className="font-medium">Blocked categories</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {Object.keys(cuisineGroups).map(group => (
-                  <button
-                    key={group}
-                    type="button"
-                    onClick={() => setTopCuisine(group)}
-                    className={`rounded-full border px-3 py-1 text-xs ${topCuisine === group ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
-                  >
-                    {group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()}
-                  </button>
-                ))}
+                {Object.keys(cuisineGroups).map(group => {
+                  const label = group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()
+                  const blockedTop = hostPrefs.blockedCategories.includes(group)
+                  return (
+                    <button
+                      key={group}
+                      type="button"
+                      onClick={() => isHost && toggleHostTopLevel(group)}
+                      disabled={!isHost}
+                      className={`rounded-full border px-3 py-1 text-xs transition ${
+                        blockedTop
+                          ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
+                      }`}
+                    >
+                      {blockedTop ? 'Blocked: ' : ''}{label}
+                    </button>
+                  )
+                })}
               </div>
-              {topCuisine && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(cuisineGroups[topCuisine] || []).map(cat => {
-                    const blocked = hostPrefs.blockedCategories.includes(cat)
+              <p className="mt-1 text-xs text-gray-500">Host can only block entire top-level cuisine groups. Players will see all sub-cuisines under blocked groups disabled.</p>
+            </div>
+            {/* Host: Max price control */}
+            <div>
+              <label className={`flex items-center justify-between gap-3 ${!isHost ? 'opacity-60' : ''}`}>
+                <span>Maximum price</span>
+                <div className="flex items-center gap-2">
+                  {PRICE_OPTIONS.map(p => {
+                    const selected = hostPrefs.maxPrice === p
                     return (
                       <button
-                        key={cat}
+                        key={p}
                         type="button"
-                        onClick={() => isHost && toggleHostCategory(cat)}
                         disabled={!isHost}
-                        className={`rounded-full border px-3 py-1 text-xs transition ${
-                          blocked
-                            ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
-                        }`}
+                        onClick={() => isHost && setHostPrefs(prev => ({ ...prev, maxPrice: prev.maxPrice === p ? undefined : p }))}
+                        className={`rounded border px-2 py-1 text-xs ${selected ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
                       >
-                        {blocked ? 'Blocked: ' : ''}
-                        {cat}
+                        {p}
                       </button>
                     )
                   })}
+                  {hostPrefs.maxPrice && isHost && (
+                    <button
+                      type="button"
+                      onClick={() => setHostPrefs(prev => ({ ...prev, maxPrice: undefined }))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
-              )}
-              <p className="mt-1 text-xs text-gray-500">Blocked categories appear disabled for other players.</p>
+              </label>
+              <p className="mt-1 text-xs text-gray-500">Players can’t pick a price above this.</p>
             </div>
           </div>
         </section>
@@ -269,7 +287,8 @@ export default function PreferencesPanel({
                 <div className="mt-3 flex flex-wrap gap-2">
                   {(cuisineGroups[topCuisine] || []).map(cat => {
                     const chosen = Array.isArray(playerPrefs.categories) && playerPrefs.categories.includes(cat)
-                    const blocked = isBlocked(cat)
+                    // If host blocked the top-level group, then the sub-cuisines are blocked
+                    const blocked = hostPrefs.blockedCategories.includes(topCuisine)
                     return (
                       <button
                         key={cat}
@@ -296,6 +315,72 @@ export default function PreferencesPanel({
                 </div>
               )}
               <p className="mt-1 text-xs text-gray-500">Host-blocked cuisines are disabled here.</p>
+            </div>
+
+            {/* Player: Enforce host max constraints visually */}
+            <div>
+              <label className="flex items-center justify-between gap-3">
+                <span>Price</span>
+                <div className="flex items-center gap-2">
+                  {PRICE_OPTIONS.map(p => {
+                    // If host set a maxPrice, disable options above it
+                    const hostIdx = hostPrefs.maxPrice ? PRICE_OPTIONS.indexOf(hostPrefs.maxPrice) : PRICE_OPTIONS.length - 1
+                    const idx = PRICE_OPTIONS.indexOf(p)
+                    const disabled = idx > hostIdx
+                    const selected = Array.isArray(playerPrefs.price) ? playerPrefs.price.includes(p) : false
+                    return (
+                      <label key={p} className={`inline-flex items-center gap-1 ${disabled ? 'opacity-50' : ''}`}>
+                        <input
+                          type="checkbox"
+                          disabled={disabled}
+                          checked={selected}
+                          onChange={e => {
+                            const list = new Set(Array.isArray(playerPrefs.price) ? playerPrefs.price : [])
+                            if (e.target.checked) list.add(p); else list.delete(p)
+                            setPlayerPrefs(prev => ({ ...prev, price: Array.from(list) }))
+                          }}
+                        />
+                        <span>{p}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </label>
+            </div>
+
+            <div>
+              <label className="flex items-center justify-between gap-3">
+                <span>Radius (km)</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max={DEFAULT_MAX_RADIUS}
+                    value={playerPrefs.radius}
+                    onChange={e => {
+                      let v = e.target.value
+                      if (hostPrefs.maxRadius) {
+                        const hostMax = Number(hostPrefs.maxRadius) || DEFAULT_MAX_RADIUS
+                        const n = Math.min(Number(v || '0'), hostMax)
+                        v = String(n || '')
+                      }
+                      setPlayerPrefs(prev => ({ ...prev, radius: v }))
+                    }}
+                    className="w-20 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                    placeholder="Any"
+                  />
+                  {playerPrefs.radius && (
+                    <button
+                      type="button"
+                      onClick={() => setPlayerPrefs(prev => ({ ...prev, radius: '' }))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </label>
+              <p className="mt-1 text-xs text-gray-500">If host set a maximum radius, your input is capped to that value.</p>
             </div>
           </div>
           <p className="mt-3 text-xs italic text-gray-400">
