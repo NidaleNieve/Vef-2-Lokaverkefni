@@ -10,6 +10,14 @@ const AVATAR_SEEDS = [
   'Kevin', 'Aria', 'Jake', 'Lily'
 ]
 
+// predefined allergies and dietary restrictions
+const DIETARY_OPTIONS = [
+  { id: 'gluten-free', label: 'Gluten-Free', category: 'allergy' },
+  { id: 'dairy-free', label: 'Dairy-Free', category: 'allergy' },
+  { id: 'nut-free', label: 'Nut-Free', category: 'allergy' },
+  { id: 'shellfish-free', label: 'Shellfish-Free', category: 'allergy' }
+]
+
 // generate avatar URL from seed using Dicebear API
 const getAvatarUrl = (seed) => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
@@ -23,12 +31,12 @@ export default function ProfilePage() {
     email: 'john.doe@example.com',
     profilePicture: null,
     avatarSeed: 'John', // default avatar seed
-    joinDate: '2024-01-15'
+    joinDate: '2024-01-15' // random join date
   })
 
   // food preferences state
   const [preferences, setPreferences] = useState({
-    allergies: ''
+    selectedOptions: [] // array of selected dietary option IDs
   })
 
   // UI state
@@ -39,65 +47,80 @@ export default function ProfilePage() {
   const [signOutResult, setSignOutResult] = useState(null)
   const [showAvatarSelector, setShowAvatarSelector] = useState(false)
 
-  // Load avatar on page mount
+  // Load avatar and preferences on page mount
   useEffect(() => {
     loadUserAvatar()
+    loadUserPreferences()
   }, [])
 
-  // Load user avatar from backend
-  const loadUserAvatar = async () => {
+  // Load user preferences from localStorage
+  const loadUserPreferences = () => {
     try {
-      const response = await fetch('/api/user/avatar')
-      const data = await response.json()
-      
-      if (data.ok) {
-        setUserProfile(prev => ({
+      const savedPreferences = localStorage.getItem('userDietaryPreferences')
+      if (savedPreferences) {
+        const parsedPreferences = JSON.parse(savedPreferences)
+        setPreferences(prev => ({
           ...prev,
-          avatarSeed: data.avatar.avatarSeed
+          selectedOptions: parsedPreferences
         }))
       }
     } catch (error) {
-      console.error('Failed to load avatar:', error)
+      console.error('Failed to load preferences from localStorage:', error)
     }
   }
 
-  // Select avatar function - now connects to backend API
-  const selectAvatar = async (seed) => {
-    // Optimistic update - change UI immediately
+  // Toggle dietary option selection
+  const toggleDietaryOption = (optionId) => {
+    setPreferences(prev => {
+      const isSelected = prev.selectedOptions.includes(optionId)
+      const newSelection = isSelected 
+        ? prev.selectedOptions.filter(id => id !== optionId)
+        : [...prev.selectedOptions, optionId]
+      
+      return { ...prev, selectedOptions: newSelection }
+    })
+  }
+
+  // Load use avatar from local Storage
+  const loadUserAvatar = () => {
+    try {
+      const savedAvatarSeed = localStorage.getItem('userAvatarSeed')
+      if (savedAvatarSeed) {
+        setUserProfile(prev => ({
+          ...prev,
+          avatarSeed: savedAvatarSeed
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to load avatar from localStorage:', error)
+    }
+  }
+
+  // Select avatar function - saves to localStorage
+  const selectAvatar = (seed) => {
+    // Update UI immediately
     setUserProfile(prev => ({ ...prev, avatarSeed: seed }))
     setShowAvatarSelector(false)
     
-    // Save to backend
+    // Save to localStorage
     try {
-      const response = await fetch('/api/user/avatar', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatarSeed: seed })
-      })
-      
-      const data = await response.json()
-      if (data.ok) {
-        setSaveResult({ ok: true, message: 'Avatar saved successfully!' })
-      } else {
-        setSaveResult({ ok: false, error: 'Failed to save avatar' })
-      }
+      localStorage.setItem('userAvatarSeed', seed)
+      setSaveResult({ ok: true, message: 'Avatar saved successfully!' })
     } catch (error) {
       console.error('Avatar save error:', error)
-      setSaveResult({ ok: false, error: 'Network error' })
+      setSaveResult({ ok: false, error: 'Failed to save avatar locally' })
     }
     
     setTimeout(() => setSaveResult(null), 3000)
   }
 
   // save preferences
-  const savePreferences = async () => {
+  const savePreferences = () => {
     setLoading(true)
     setSaveResult(null)
     try {
-      // here would be an API call to save preferences
-      
-      // simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Save to localStorage for now
+      localStorage.setItem('userDietaryPreferences', JSON.stringify(preferences.selectedOptions))
       setSaveResult({ ok: true, message: 'Preferences saved successfully!' })
       setIsEditing(false)
     } catch (err) {
@@ -326,26 +349,91 @@ export default function ProfilePage() {
 
             {/* preferences form */}
             <div className="space-y-6">
-              {/* allergies */}
+              {/* dietary preferences and allergies */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--nav-text)' }}>
-                  Allergy Notes
+                <label className="block text-sm font-medium mb-4" style={{ color: 'var(--nav-text)' }}>
+                  Allergies & Dietary Restrictions
                 </label>
-                <textarea
-                  rows={4}
-                  value={preferences.allergies}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, allergies: e.target.value }))}
-                  disabled={!isEditing}
-                  placeholder="e.g., peanuts, shellfish, dairy, gluten-free, vegetarian, vegan..."
-                  className="w-full p-3 rounded-lg border transition-all resize-none"
-                  style={{ 
-                    background: isEditing ? 'var(--background)' : 'var(--nav-item-bg)',
-                    borderColor: 'var(--accent)',
-                    color: 'var(--nav-text)'
-                  }}
-                />
+                
+                {/* Display selected preferences when not editing */}
+                {!isEditing && (
+                  <div className="mb-4">
+                    {preferences.selectedOptions.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {preferences.selectedOptions.map(optionId => {
+                          const option = DIETARY_OPTIONS.find(opt => opt.id === optionId)
+                          return option ? (
+                            <span 
+                              key={optionId}
+                              className="px-3 py-1 rounded-full text-sm"
+                              style={{ 
+                                background: 'var(--accent)',
+                                color: 'white'
+                              }}
+                            >
+                              {option.label}
+                            </span>
+                          ) : null
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                        No allergies or restrictions selected
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Button grid for editing */}
+                {isEditing && (
+                  <div className="space-y-4">
+                    {/* Group by category */}
+                    {['allergy'].map(category => {
+                      const categoryOptions = DIETARY_OPTIONS.filter(opt => opt.category === category)
+                      const categoryTitles = {
+                        allergy: 'Allergies & Restrictions'
+                      }
+                      
+                      return (
+                        <div key={category}>
+                          <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--nav-text)' }}>
+                            {categoryTitles[category]}
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {categoryOptions.map(option => {
+                              const isSelected = preferences.selectedOptions.includes(option.id)
+                              return (
+                                <button
+                                  key={option.id}
+                                  onClick={() => toggleDietaryOption(option.id)}
+                                  className={`px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 border ${
+                                    isSelected 
+                                      ? 'ring-2 ring-blue-500' 
+                                      : 'hover:ring-1 hover:ring-gray-300'
+                                  }`}
+                                  style={{ 
+                                    background: isSelected ? 'var(--accent)' : 'var(--nav-item-bg)',
+                                    color: isSelected ? 'white' : 'var(--nav-text)',
+                                    borderColor: isSelected ? 'var(--accent)' : 'transparent'
+                                  }}
+                                >
+                                  {option.label}
+                                  {isSelected && <Check size={14} className="inline ml-1" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
                 <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
-                  Include any allergies, dietary restrictions, or special dietary needs
+                  {isEditing 
+                    ? 'Click to select/deselect your allergies and dietary restrictions'
+                    : 'Your selected allergies help us find suitable restaurants for you'
+                  }
                 </p>
               </div>
 
