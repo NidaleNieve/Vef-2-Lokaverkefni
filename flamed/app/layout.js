@@ -19,13 +19,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
       <body
         suppressHydrationWarning
         className="antialiased"
         style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif" }}
       >
         <Navbar />
+        <div style={{ height: "64px" }} />
         {children}
 
         {/*Old developer buttons}

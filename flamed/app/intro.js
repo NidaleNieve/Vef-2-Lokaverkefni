@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Plus, Sparkles, Users, Utensils } from 'lucide-react';
-import DarkModeToggle from '../../components/DarkModeToggle';
+import DarkModeToggle from '../components/DarkModeToggle';
+import { useRouter } from 'next/navigation';
 
 export default function Intro() {
+  const router = useRouter();
   const [generatedCode, setGeneratedCode] = useState(null);
   const [isClicked, setIsClicked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -60,13 +62,15 @@ export default function Intro() {
     setIsHost(false);
     setReadyToSwipe(false);
     localStorage.setItem('lastGroupId', id);
+    router.push(`/game/preferences?groupId=${encodeURIComponent(id)}`);
   };
 
   //Þetta function býr til nýjan leik útfrá groupId sem er sett inn. Keyrir þegar create game takkinn er ýttur
   async function startRound() {
     //ef að groupId er rétt, þá geri ég request á 'round' routið sem býr til nýjan leik
-    if (!groupId.trim()) return
-    const res = await fetch(`/api/groups/${groupId.trim()}/round`, {
+    let id = groupId.trim()
+    if (!id) return
+    const res = await fetch(`/api/groups/${id}/round`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       credentials: 'include',
@@ -82,19 +86,19 @@ export default function Intro() {
     setGroupId(gid)
     setIsHost(true)
     setReadyToSwipe(false)
+    router.push(`/game/host?groupId=${encodeURIComponent(id)}`);
   }
 
   const handleCircleClick = () => {
     setIsClicked(true);
     setTimeout(() => setIsClicked(false), 500);
 
-    // Changed: no code generation or navigation; just join via input
     startRound();
   };
 
   const handleCodeSubmit = (e) => {
     e.preventDefault();
-    // Changed: no redirect to /preferences; just join via input
+
     joinGroup();
   };
 
@@ -178,24 +182,6 @@ export default function Intro() {
           </div>
         </div>
 
-        {/* Generated Code Display with enhanced animation */}
-        {generatedCode && (
-          <div className="border rounded-2xl p-6 text-center animate-fade-in-grow" 
-               style={{ backgroundColor: 'var(--nav-item-bg)', borderColor: 'var(--accent)', color: 'var(--foreground)' }}>
-            <h3 className="font-semibold mb-2" style={{ color: 'var(--accent)' }}>
-              {generatedCode === 'GENERATING...' ? 'Generating Code...' : 'Your Circle Code:'}
-            </h3>
-            <p className="text-2xl font-bold font-mono animate-text-pulse" style={{ color: 'var(--accent)' }}>
-              {generatedCode}
-            </p>
-            {generatedCode !== 'GENERATING...' && (
-              <p className="text-sm mt-2" style={{ color: 'var(--muted)' }}>
-                Share this code with your friends!
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Code Input Form with animation */}
         <form onSubmit={handleCodeSubmit} className="w-full max-w-md animate-fade-in-up-delayed">
           <div className="flex gap-3">
@@ -227,7 +213,7 @@ export default function Intro() {
       </div>
 
       <footer className="mt-8 text-center text-sm animate-fade-in" style={{ color: 'var(--muted)' }}>
-        <p>Click • Connect • Create</p>
+        <p>Daníel Snær Rodríguez, Hörður Pálsson, Kiara Mindy Biscarra Quiamco</p>
       </footer>
 
     </div>
