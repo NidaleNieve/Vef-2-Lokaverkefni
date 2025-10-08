@@ -134,7 +134,7 @@ export default function Intro() {
               Click me!
             </div>
             <svg 
-              className={`w-8 h-8 transition-all duration-500 ${isHovered ? 'scale-110' : ''}`} 
+              className={`w-8 h-8 transition-transform duration-300 ease-out transform-gpu will-change-transform ${isHovered ? 'scale-110' : ''}`} 
               fill="none" 
               viewBox="0 0 24 24" 
               stroke="currentColor"
@@ -146,7 +146,7 @@ export default function Intro() {
           
           {/* Pulsing circle behind main circle */}
           <div 
-            className={`absolute inset-0 rounded-full opacity-20 ${
+            className={`absolute inset-0 rounded-full opacity-20 will-change-[opacity,transform] ${
               isHovered ? 'animate-ping' : ''
             }`}
             style={{ backgroundColor: 'var(--accent)' }}
@@ -154,7 +154,7 @@ export default function Intro() {
           
           {/* Clickable Circle with enhanced animations */}
           <div
-            className={`relative flex items-center justify-center w-[14rem] h-[14rem] md:w-[16.5rem] md:h-[16.5rem] rounded-full cursor-pointer shadow-lg transition-transform transition-colors transition-shadow duration-300 ease-out hover:scale-105 active:scale-95 ${
+            className={`group relative flex items-center justify-center w-50 h-50 md:w-66 md:h-66 rounded-full cursor-pointer shadow-lg transition-transform duration-300 ease-out transform-gpu will-change-transform hover:scale-105 active:scale-95 ${
               isClicked ? 'animate-pulse-shrink' : ''
             }`}
             style={{
@@ -165,7 +165,7 @@ export default function Intro() {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <Plus size={120} className="transition-transform duration-300 ease-out hover:rotate-90" />
+            <Plus size={120} className="transition-transform duration-300 ease-out transform-gpu will-change-transform group-hover:rotate-90" />
             
             {/* Sparkle effects on hover */}
             {isHovered && (
@@ -189,7 +189,7 @@ export default function Intro() {
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value)}
               placeholder="ENTER EXISTING CODE"
-              className="flex-1 px-4 py-3 border-2 rounded-xl font-mono font-semibold text-center focus:outline-none transition-all duration-300 focus:scale-105"
+              className="flex-1 px-4 py-3 border-2 rounded-xl font-mono font-semibold text-center focus:outline-none transition-colors duration-200"
               style={{
                 borderColor: 'var(--accent)',
                 backgroundColor: 'var(--background)',
@@ -198,7 +198,7 @@ export default function Intro() {
             />
             <button 
               type="submit"
-              className="px-6 py-3 rounded-xl font-semibold transition-transform transition-colors transition-shadow duration-300 ease-out hover:scale-105 active:scale-95"
+              className="px-6 py-3 rounded-xl font-semibold transition-transform duration-300 ease-out transform-gpu will-change-transform hover:scale-105 active:scale-95"
               style={{
                 backgroundColor: 'var(--accent)',
                 color: 'var(--nav-text)'

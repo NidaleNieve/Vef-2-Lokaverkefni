@@ -174,7 +174,7 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ player, sortBy: 'random', limit: 15 })
+                    body: JSON.stringify({ player, sortBy: 'random', limit: 30 })
                 })
                 const j = await res.json().catch(() => ({}))
                 if (!res.ok) throw new Error(j?.error || `Failed to load restaurants (${res.status})`)
