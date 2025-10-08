@@ -45,6 +45,7 @@ export default function Dev() {
     (async () => {
       const { data: { user } } = await supa.auth.getUser()
       setUserId(user?.id ?? null)
+      if (user?.email) setEmail(user.email) // prefill with session email
     })()
   }, [supa])
 
@@ -166,6 +167,17 @@ export default function Dev() {
   // After creating a group or redeeming an invite, refresh groups
   async function refreshGroupsIfPossible() {
     if (userId) await loadMyGroups()
+  }
+
+  // send password reset email
+  async function sendResetLink() {
+    const { data: { user } } = await supa.auth.getUser()
+    if (!user?.email) { logit({ resetPasswordForEmail: 'no session email' }); return }
+    const origin = window.location.origin
+    const { error } = await supa.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${origin}/auth/update-password`,
+    })
+    logit({ resetPasswordForEmail: error ? error.message : 'sent' })
   }
 
   return (
@@ -303,6 +315,29 @@ export default function Dev() {
             await fetchJSON('/api/auth/signout', { method:'POST' })
             setUserId(null); setGroupId('')
           }}>Sign out</button>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <button
+            className="border px-3 py-2"
+            onClick={sendResetLink}
+            disabled={!userId}
+            title="Sends a password reset email"
+          >
+            Send reset link (logged in)
+          </button>
+
+          <Link
+            href="/auth/update-password"
+            className="border px-3 py-2 rounded"
+            title="Page the email link will land on"
+          >
+            Go to &apos;Update password&apos; page
+          </Link>
+        </div>
+
+        <div className="pt-2">
+          <Link className="underline" href="/forgot-password">Forgot password? (Not logged in)</Link>
         </div>
       </div>
 
