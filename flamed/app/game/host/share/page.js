@@ -125,37 +125,44 @@ export default function HostSharePage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto p-4 space-y-4">
-      <h1 className="text-xl font-semibold">Create Invite and Share</h1>
+    <div className="max-w-2xl mx-auto p-4 space-y-4">
+      <div className="rounded-2xl p-5 shadow-sm border animate-fade-in" style={{ background: 'linear-gradient(135deg, var(--nav-bg) 0%, var(--nav-item-bg) 100%)', borderColor: 'var(--nav-shadow)' }}>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--nav-text)' }}>Invite your crew</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>Pick a group or create one, generate an invite, then start the round.</p>
+      </div>
 
-      {error && <div className="p-2 text-sm text-red-600 border border-red-300 rounded">{error}</div>}
+      {error && <div className="p-3 text-sm rounded border" style={{ background: 'var(--nav-item-hover)', borderColor: 'var(--accent)', color: 'var(--nav-text)' }}>{error}</div>}
 
-      <div className="space-y-2">
+      <div className="rounded-2xl p-4 shadow-sm border space-y-3" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
         <div className="flex gap-2 items-center">
-          <select className="border p-2 flex-1" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
+          <select className="flex-1 px-3 py-2 rounded-lg border" style={{ background: 'var(--background)', color: 'var(--foreground)', borderColor: 'var(--muted)' }} value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
             <option value="">Select a group</option>
             {groups.map(g => (
               <option key={g.id} value={g.id}>{g.name}</option>
             ))}
           </select>
-          <button className="border px-3 py-2" onClick={loadGroups}>Refresh</button>
+          <button className="px-3 py-2 rounded-lg nav-item" onClick={loadGroups}>Refresh</button>
         </div>
         <div className="flex gap-2 items-center">
-          <input className="border p-2 flex-1" placeholder="or create new group" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} />
-          <button className="border px-3 py-2" onClick={createGroup}>Create</button>
+          <input className="flex-1 px-3 py-2 rounded-lg border" style={{ background: 'var(--background)', color: 'var(--foreground)', borderColor: 'var(--muted)' }} placeholder="or create new group" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} />
+          <button className="px-3 py-2 rounded-lg" onClick={createGroup} style={{ background: 'var(--accent)', color: 'white' }}>Create</button>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <button className="border px-3 py-2" onClick={createInvite} disabled={!selectedGroupId}>Generate Invite Code</button>
-        {inviteCode && (
-          <div className="text-sm">Invite Code: <span className="font-mono">{inviteCode}</span></div>
-        )}
+      <div className="rounded-2xl p-4 shadow-sm border flex items-center justify-between" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
+        <div>
+          <div className="text-sm" style={{ color: 'var(--muted)' }}>Invite code</div>
+          <div className="mt-1 text-2xl font-mono tracking-widest" style={{ color: 'var(--foreground)' }}>{inviteCode || '———'}</div>
+        </div>
+        <div className="flex gap-2">
+          <button className="nav-item px-3 py-2 rounded-lg" onClick={createInvite} disabled={!selectedGroupId}>Generate</button>
+          <button className="nav-item px-3 py-2 rounded-lg" onClick={async ()=>{ if (inviteCode) { try { await navigator.clipboard.writeText(inviteCode) } catch {} }}} disabled={!inviteCode}>Copy</button>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <button className="border px-4 py-2" onClick={startRoundAndAnnounce} disabled={!selectedGroupId || starting}>
-          {starting ? 'Starting…' : 'Start Game and Announce'}
+      <div className="flex justify-end">
+        <button className="px-5 py-3 rounded-xl font-semibold shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-60" onClick={startRoundAndAnnounce} disabled={!selectedGroupId || starting} style={{ background: 'var(--accent)', color: 'white' }}>
+          {starting ? 'Starting…' : 'Start game'}
         </button>
       </div>
 

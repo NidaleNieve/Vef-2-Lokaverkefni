@@ -51,6 +51,42 @@ a, button {
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
+/* Reusable nav item and icon transitions */
+.nav-item {
+  background: var(--nav-item-bg);
+  color: var(--nav-text);
+  transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+.nav-item:hover {
+  background: var(--nav-item-hover);
+  box-shadow: 0 2px 8px var(--nav-shadow);
+}
+.nav-icon {
+  transition: transform 200ms ease;
+}
+.nav-icon:hover,
+.nav-item:hover .nav-icon {
+  transform: scale(1.05);
+}
+
+/* Game UI helpers */
+.glass-card {
+  background: var(--nav-item-bg);
+  backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
+  border: 1px solid var(--nav-shadow);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  background: var(--nav-item-hover);
+  color: var(--nav-text);
+  border: 1px solid var(--nav-shadow);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

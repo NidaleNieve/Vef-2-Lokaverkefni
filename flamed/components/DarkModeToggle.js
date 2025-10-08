@@ -28,19 +28,13 @@ export default function DarkModeToggle({ className = "", iconSize = 20 }) {
   return (
     <button
       onClick={toggleDarkMode}
-      className={`p-2 rounded-full transition-all duration-200 flex items-center justify-center group ${className}`}
-      style={{ 
-        background: "var(--nav-item-bg)",
-        color: "var(--nav-text)"
-      }}
-      onMouseEnter={(e) => e.target.style.background = "var(--nav-item-hover)"}
-      onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
+      className={`p-2 rounded-full transition-all duration-200 ease-out flex items-center justify-center group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] ${className}`}
       aria-label="Toggle dark mode"
     >
       {darkMode ? (
-        <Sun size={iconSize} className="group-hover:rotate-12 transition-transform" />
+        <Sun size={iconSize} className="transition-transform duration-200 ease-out group-hover:rotate-12" />
       ) : (
-        <Moon size={iconSize} className="group-hover:rotate-12 transition-transform" />
+        <Moon size={iconSize} className="transition-transform duration-200 ease-out group-hover:rotate-12" />
       )}
     </button>
   );
