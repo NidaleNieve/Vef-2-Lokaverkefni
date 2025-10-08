@@ -73,6 +73,16 @@ export default function PreferencesPanel({
     setImplicitAllGroups({})
   }
 
+  // Reset host preferences to defaults
+  const onResetHost = () => {
+    setHostPrefs({
+      requireKidFriendly: false,
+      maxRadius: '',
+      blockedCategories: [],
+      maxPrice: undefined,
+    })
+  }
+
   // Fetch all cuisines from server and merge into static groups placing new ones into Misc
   useEffect(() => {
     let cancelled = false
@@ -107,9 +117,22 @@ export default function PreferencesPanel({
   <section className="rounded-2xl p-4 shadow-sm border" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-base font-semibold">Host controls (optional)</h2>
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              {isHost ? 'Only for creators' : 'View only'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                {isHost ? 'Only for creators' : 'View only'}
+              </span>
+              {isHost && (
+                <button
+                  type="button"
+                  onClick={onResetHost}
+                  className="text-xs underline opacity-80 hover:opacity-100"
+                  style={{ color: 'var(--accent)' }}
+                  title="Reset host controls"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
           <div className="space-y-3">
             {/* Player: Minimum rating (hidden for host) */}

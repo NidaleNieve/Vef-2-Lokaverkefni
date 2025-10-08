@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Home, User, MessageSquare, Users, Menu, X } from 'lucide-react';
 import DarkModeToggle from './DarkModeToggle';
 import { useRouter, usePathname } from 'next/navigation';
+import { supabaseBrowser } from '@/utils/supabase/browser';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -12,6 +13,7 @@ export default function Navbar() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [isAuthed, setIsAuthed] = useState(null); // null = unknown, true/false known
   const router = useRouter();
   const pathname = usePathname();
 
@@ -43,6 +45,27 @@ export default function Navbar() {
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
+
+  // Check auth status and subscribe to changes
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (mounted) setIsAuthed(!!data?.user);
+      } catch {
+        if (mounted) setIsAuthed(false);
+      }
+    })();
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthed(!!session?.user);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription?.unsubscribe?.();
+    }
+  }, []);
 
   const handleLogoClick = (e) => {
     // If currently on a swipe page (in-game), go to home to start a new game
@@ -108,13 +131,22 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <ul className="hidden md:flex items-center space-x-2">
             <li>
-              <a 
-                href="/profile" 
-                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
-              >
-                <User size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
-                Profile
-              </a>
+              {isAuthed ? (
+                <a 
+                  href="/profile" 
+                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+                >
+                  <User size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
+                  Profile
+                </a>
+              ) : (
+                <a 
+                  href="/auth/signin" 
+                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+                >
+                  Sign in
+                </a>
+              )}
             </li>
             <li>
               <a 
@@ -141,12 +173,21 @@ export default function Navbar() {
 
           {/* Mobile Navigation - Profile link outside hamburger */}
           <div className="md:hidden flex items-center">
-            <a 
-              href="/profile" 
-              className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
-            >
-              <User size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />
-            </a>
+            {isAuthed ? (
+              <a 
+                href="/profile" 
+                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
+              >
+                <User size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />
+              </a>
+            ) : (
+              <a 
+                href="/auth/signin" 
+                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
+              >
+                Sign in
+              </a>
+            )}
             
             <button
               className="relative w-8 h-8 focus:outline-none flex items-center justify-center transition-transform hover:scale-110"
