@@ -4,18 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Home, User, MessageSquare, Users, Menu, X } from 'lucide-react';
 import DarkModeToggle from './DarkModeToggle';
-import { useRouter, usePathname } from 'next/navigation';
-import { supabaseBrowser } from '@/utils/supabase/browser';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [activeGroupId, setActiveGroupId] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const [isAuthed, setIsAuthed] = useState(null); // null = unknown, true/false known
-  const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,63 +17,6 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Load active game metadata from localStorage and listen to changes
-  useEffect(() => {
-    const load = () => {
-      try {
-        const gid = localStorage.getItem('activeGameGroupId') || localStorage.getItem('lastGroupId') || ''
-        const code = localStorage.getItem('activeGameInviteCode') || ''
-        setActiveGroupId(gid || '')
-        setInviteCode(code || '')
-      } catch {}
-    }
-    load()
-    const onStorage = (e) => {
-      if (!e) return
-      if (e.key === 'activeGameGroupId' || e.key === 'activeGameInviteCode' || e.key === 'lastGroupId') {
-        load()
-      }
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [])
-
-  // Check auth status and subscribe to changes
-  useEffect(() => {
-    const supabase = supabaseBrowser();
-    let mounted = true;
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (mounted) setIsAuthed(!!data?.user);
-      } catch {
-        if (mounted) setIsAuthed(false);
-      }
-    })();
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthed(!!session?.user);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription?.unsubscribe?.();
-    }
-  }, []);
-
-  const handleLogoClick = (e) => {
-    // If currently on a swipe page (in-game), go to home to start a new game
-    const inGamePath = typeof pathname === 'string' && /\/groups\/.+\/swipe/.test(pathname)
-    if (inGamePath) {
-      e.preventDefault()
-      router.push('/')
-      return
-    }
-    // Else if we have an active game, jump back into it
-    if (activeGroupId) {
-      e.preventDefault()
-      router.push(`/groups/${activeGroupId}/swipe`)
-    }
-  }
 
   return (
     <nav 
@@ -97,10 +33,8 @@ export default function Navbar() {
           <Link href="/" className="text-2xl font-bold transition-all duration-300 hover:scale-105 cursor-pointer flex items-center"
             style={{ color: "var(--nav-text)" }}
             onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            onClick={handleLogoClick}
-          >
-            <Image alt="Logo" src="/logo_720.png" width={50} height={50} className="w-10 h-10 mr-2"/>
+            onMouseLeave={() => setShowTooltip(false)}>
+            <Image src="/logo_720.png" width={50} height={50} className="w-10 h-10 mr-2"/>
             Gastroswipe
           </Link>
           
@@ -127,44 +61,52 @@ export default function Navbar() {
         </div>
         
         <div className="flex items-center space-x-4">
-          {/* Global invite pill when in an active game */}
           {/* Desktop Navigation */}
           <ul className="hidden md:flex items-center space-x-2">
             <li>
-              {isAuthed ? (
-                <a 
-                  href="/profile" 
-                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
-                >
-                  <User size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
-                  Profile
-                </a>
-              ) : (
-                <a 
-                  href="/auth/signin" 
-                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
-                >
-                  Sign in
-                </a>
-              )}
+              <Link 
+                href="/profile" 
+                className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
+                style={{ 
+                  color: "var(--nav-text)",
+                  background: "var(--nav-item-bg)"
+                }}
+                onMouseEnter={(e) => e.target.style.background = "var(--nav-item-hover)"}
+                onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
+              >
+                <User size={18} className="group-hover:scale-110 transition-transform" />
+                Profile
+              </Link>
             </li>
             <li>
-              <a 
-                href="/chat" 
-                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+              <Link 
+                href="/dev" 
+                className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
+                style={{ 
+                  color: "var(--nav-text)",
+                  background: "var(--nav-item-bg)"
+                }}
+                onMouseEnter={(e) => e.target.style.background = "var(--nav-item-hover)"}
+                onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
               >
-                <MessageSquare size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
+                <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
                 Chat
-              </a>
+              </Link>
             </li>
             <li>
-              <a 
-                href="/groups" 
-                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+              <Link 
+                href="/dev" 
+                className="px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 group"
+                style={{ 
+                  color: "var(--nav-text)",
+                  background: "var(--nav-item-bg)"
+                }}
+                onMouseEnter={(e) => e.target.style.background = "var(--nav-item-hover)"}
+                onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
               >
-                <Users size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
+                <Users size={18} className="group-hover:scale-110 transition-transform" />
                 Groups
-              </a>
+              </Link>
             </li>
             <li className="pl-2">
               <DarkModeToggle iconSize={20} />
@@ -173,21 +115,18 @@ export default function Navbar() {
 
           {/* Mobile Navigation - Profile link outside hamburger */}
           <div className="md:hidden flex items-center">
-            {isAuthed ? (
-              <a 
-                href="/profile" 
-                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
-              >
-                <User size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />
-              </a>
-            ) : (
-              <a 
-                href="/auth/signin" 
-                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
-              >
-                Sign in
-              </a>
-            )}
+            <Link 
+              href="/profile" 
+              className="px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 mr-4 group"
+              style={{ 
+                color: "var(--nav-text)",
+                background: "var(--nav-item-bg)"
+              }}
+              onMouseEnter={(e) => e.target.style.background = "var(--nav-item-hover)"}
+              onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
+            >
+              <User size={20} className="group-hover:scale-110 transition-transform" />
+            </Link>
             
             <button
               className="relative w-8 h-8 focus:outline-none flex items-center justify-center transition-transform hover:scale-110"
@@ -209,17 +148,23 @@ export default function Navbar() {
         style={{ background: "var(--nav-bg)" }}
       >
         <ul className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-          {[{name: 'Chat', href: '/chat'}, {name: 'Groups', href: '/groups'}].map((item, index) => (
-            <li key={item.name}>
-              <a 
-                href={item.href} 
-                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-out group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
+          {['Chat', 'Groups'].map((item, index) => (
+            <li key={item}>
+              <Link 
+                href="/dev" 
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group"
+                style={{ 
+                  color: "var(--nav-text)",
+                  background: "var(--nav-item-bg)"
+                }}
+                onMouseEnter={(e) => e.target.style.background = "var(--nav-item-hover)"}
+                onMouseLeave={(e) => e.target.style.background = "var(--nav-item-bg)"}
                 onClick={() => setOpen(false)}
               >
-                {index === 0 && <MessageSquare size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />}
-                {index === 1 && <Users size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />}
-                {item.name}
-              </a>
+                {index === 0 && <MessageSquare size={20} className="group-hover:scale-110 transition-transform" />}
+                {index === 1 && <Users size={20} className="group-hover:scale-110 transition-transform" />}
+                {item}
+              </Link>
             </li>
           ))}
         </ul>
