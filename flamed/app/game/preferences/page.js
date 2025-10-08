@@ -9,7 +9,6 @@ export default function PreferencesPage() {
   const spGroupId = search.get('groupId') || '';
   const router = useRouter();
   const [groupId, setGroupId] = useState(spGroupId || '');
-  const [inviteCode, setInviteCode] = useState('');
 
   const [hostPrefs, setHostPrefs] = useState({
     requireKidFriendly: false,
@@ -35,12 +34,6 @@ export default function PreferencesPage() {
 
   useEffect(() => {
     if (!groupId) return;
-    // Try to load invite code from localStorage immediately for UI
-    try {
-      const lc = localStorage.getItem('activeGameInviteCode') || ''
-      if (lc) setInviteCode(lc)
-    } catch {}
-
     const savedHost = localStorage.getItem(`hostPrefs:${groupId}`);
     if (savedHost) {
       try {
@@ -76,18 +69,6 @@ export default function PreferencesPage() {
         }
       } catch {}
     })()
-
-    // Also fetch latest invite code from server for this group (best-effort)
-    ;(async () => {
-      try {
-        const r = await fetch(`/api/groups/${groupId}/invite`, { credentials: 'include', cache: 'no-store' })
-        const j = await r.json().catch(() => ({}))
-        if (r.ok && j?.invite?.code) {
-          setInviteCode(String(j.invite.code))
-          try { localStorage.setItem('activeGameInviteCode', String(j.invite.code)) } catch {}
-        }
-      } catch {}
-    })()
   }, [groupId]);
 
   const handleSave = () => {
@@ -104,22 +85,24 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      {/* Hero */}
-      <div className="rounded-2xl p-5 shadow-sm border animate-fade-in" style={{ background: 'linear-gradient(135deg, var(--nav-bg) 0%, var(--nav-item-bg) 100%)', borderColor: 'var(--nav-shadow)' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--nav-text)' }}>Get ready to swipe</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>Tune your preferences for this round.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="chip">Invite</span>
-            <div className="px-3 py-1 rounded-full text-xs font-mono" style={{ background: 'var(--background)', color: 'var(--foreground)', border: '1px solid var(--nav-shadow)' }}>{inviteCode || '—'}</div>
-          </div>
-        </div>
+    <div className="max-w-xl mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="text-center animate-fade-in-up">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
+          Your Preferences
+        </h1>
+        <p className="text-sm px-4 py-2 rounded-full inline-block" style={{ 
+          color: 'var(--muted)',
+          backgroundColor: 'var(--nav-item-hover)'
+        }}>
+          Step 3 of 3: Set groups personal preferences
+        </p>
       </div>
 
-      <div className="rounded-2xl p-4 shadow-sm border" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
+      <div className="mb-4 text-sm text-center" style={{ color: 'var(--muted)' }}>
+        Group: <span className="font-mono">{groupId || '(none)'}</span>
+      </div>
+
       <PreferencesPanel
         hostPrefs={hostPrefs}
         setHostPrefs={setHostPrefs}
@@ -128,17 +111,33 @@ export default function PreferencesPage() {
         isHost={false}
         mode="personal"
       />
-      </div>
 
-      <div className="flex justify-end">
+      <div className="mt-4 flex justify-end">
         <button
           type="button"
           onClick={handleSave}
-          className="px-5 py-3 rounded-xl font-semibold shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-          style={{ background: 'var(--accent)', color: 'white' }}
+          className="px-4 py-2 rounded-lg font-semibold"
+          style={{ 
+            backgroundColor: 'var(--accent)', 
+            color: 'var(--nav-text)',
+            boxShadow: '0 4px 14px 0 rgba(170, 96, 200, 0.3)',
+            '--tw-ring-color': 'var(--accent)',
+            '--tw-ring-offset-color': 'var(--background)'
+          }}
         >
-          Start swiping
+          Start Swiping!
         </button>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="flex justify-center animate-fade-in-up-delayed">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-8 h-1 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-8 h-1 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--accent)' }}></div>
+        </div>
       </div>
     </div>
   );
