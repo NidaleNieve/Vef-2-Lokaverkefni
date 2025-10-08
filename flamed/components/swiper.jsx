@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react"; //bætti við useRef, forwardRef, useImperativeHandle til þess að geta notað takkana sem swipe
+import { useEffect, useMemo, useState, useRef, useCallback, forwardRef, useImperativeHandle } from "react"; //bætti við useRef, forwardRef, useImperativeHandle til þess að geta notað takkana sem swipe
 import { supabase } from "../lib/supabaseClient";
 import Results from "./results";
 
@@ -97,7 +97,9 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     const [showEndPrompt, setShowEndPrompt] = useState(false);
     const [memberCount, setMemberCount] = useState(null);
     const [submitters, setSubmitters] = useState(0);
+    const [participantsCount, setParticipantsCount] = useState(0);
     const [showResultsView, setShowResultsView] = useState(false);
+    const [wasForced, setWasForced] = useState(false);
 
     //læsir UI þegar verið er að swipa með tökkum
     const [uiLocked, setUiLocked] = useState(false);
@@ -106,6 +108,37 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     useEffect(() => {
         setUiLocked(false);
     }, [current]);
+
+    // Track swipe status messaging
+    const lastStatusRef = useRef(null);
+    useEffect(() => {
+        lastStatusRef.current = null;
+        setWasForced(false);
+    }, [sessionId]);
+
+    const postStatus = useCallback(async (status) => {
+        if (!groupId || !sessionId) return;
+        const normalized = status === 'forced' ? 'forced' : (status === 'completed' ? 'completed' : 'started');
+        if (lastStatusRef.current === normalized) return;
+        try {
+            const res = await fetch(`/api/groups/${groupId}/messages`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ content: JSON.stringify({ type: 'swipe_status', session_id: sessionId, status: normalized }) })
+            });
+            if (res.ok) {
+                lastStatusRef.current = normalized;
+            }
+        } catch (e) {
+            console.error('postStatus error', e);
+        }
+    }, [groupId, sessionId]);
+
+    useEffect(() => {
+        if (!groupId || !sessionId) return;
+        postStatus('started');
+    }, [groupId, sessionId, postStatus]);
 
         /*
         Example: Fetch via Supabase RPC with filters (to enable when backend is ready)
@@ -202,23 +235,43 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                 categories: Array.isArray(playerPreferences?.categories) ? playerPreferences.categories : [],
                 price: Array.isArray(playerPreferences?.price) ? playerPreferences.price : (playerPreferences?.price ? [playerPreferences.price] : []),
             }
+            const seenIds = restaurants.map(r => String(r.id))
             const res = await fetch(`/api/groups/${groupId}/restaurants`, {
                 method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ player, sortBy: 'random', limit: 15 })
+                body: JSON.stringify({ player, sortBy: 'random', limit: 15, excludeIds: seenIds })
             })
             const j = await res.json().catch(() => ({}))
             if (!res.ok) throw new Error(j?.error || `Failed to load more (${res.status})`)
-            const incoming = Array.isArray(j?.data) ? j.data : []
-            // de-dupe by id
-            const existingIds = new Set(restaurants.map(r => r.id))
-            const merged = [...restaurants]
-            for (const r of incoming) {
-                if (!existingIds.has(r.id)) merged.push(r)
+            const incoming = (Array.isArray(j?.data) ? j.data : []).map(r => ({ ...r, id: String(r.id) }))
+            // If nothing new returned, allow reshuffle by clearing seenIds (fallback)
+            let next = incoming
+            if (incoming.length === 0) {
+                const res2 = await fetch(`/api/groups/${groupId}/restaurants`, {
+                    method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+                    body: JSON.stringify({ player, sortBy: 'random', limit: 15 })
+                })
+                const j2 = await res2.json().catch(() => ({}))
+                if (res2.ok) next = (Array.isArray(j2?.data) ? j2.data : []).map(r => ({ ...r, id: String(r.id) }))
             }
-            setRestaurants(merged)
-            // let user continue; keep current as is
+            // reset end prompt and append, with fallback if nothing new
+            setShowEndPrompt(false)
+            let added = 0
+            setRestaurants(prev => {
+                const existing = new Set(prev.map(r => String(r.id)))
+                const merged = [...prev]
+                for (const r of next) {
+                    const key = String(r.id)
+                    if (!existing.has(key)) { merged.push(r); existing.add(key); added++ }
+                }
+                return merged
+            })
+            // If we couldn't add anything new, reshuffle by replacing list entirely
+            if (added === 0 && next.length > 0) {
+                setRestaurants(next)
+                setCurrent(0)
+            }
+            // Keep current where it is so user continues swiping seamlessly when items were added
         } catch (e) {
-            // optionally toast
             console.error('loadMoreRestaurants error', e)
         }
     }
@@ -248,15 +301,58 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     useEffect(() => {
         let cancelled = false
         if (!groupId || !sessionId) return
-        ;(async () => {
+        let timer
+        const tick = async () => {
             try {
                 const r = await fetch(`/api/groups/${groupId}/results?session_id=${encodeURIComponent(sessionId)}`, { credentials: 'include' })
                 const j = await r.json().catch(() => ({}))
-                if (!cancelled && r.ok) setSubmitters(Number(j?.submitters || 0))
+                if (!cancelled && r.ok) {
+                    setSubmitters(Number(j?.submitters || 0))
+                    setParticipantsCount(Number(j?.participants || 0))
+                }
             } catch {}
-        })()
+            if (!cancelled) timer = setTimeout(tick, 2000)
+        }
+        tick()
+        return () => { cancelled = true; if (timer) clearTimeout(timer) }
+    }, [groupId, sessionId])
+
+    // Listen for host force-results and auto-finish swiping (must be before any early return)
+    useEffect(() => {
+        let cancelled = false
+        if (!groupId || !sessionId) return
+        const poll = async () => {
+            try {
+                const r = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' })
+                const j = await r.json().catch(() => ({}))
+                if (!cancelled && r.ok && Array.isArray(j?.items)) {
+                    for (const m of j.items) {
+                        try {
+                            const c = JSON.parse(String(m?.content || ''))
+                            if (c?.type === 'force_results' && c?.session_id === sessionId) {
+                                setWasForced(true)
+                                setCurrent(restaurants.length)
+                                setShowResultsView(true)
+                                return
+                            }
+                        } catch {}
+                    }
+                }
+            } catch {}
+            if (!cancelled) setTimeout(poll, 2000)
+        }
+        poll()
         return () => { cancelled = true }
-    }, [groupId, sessionId, current])
+    }, [groupId, sessionId, restaurants.length])
+
+    useEffect(() => {
+        if (!showResultsView) return
+        if (wasForced) {
+            postStatus('forced')
+        } else {
+            postStatus('completed')
+        }
+    }, [showResultsView, wasForced, postStatus])
 
     //sýnir loading
     if (loading) {
@@ -302,34 +398,11 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         );
     }
 
-    // When end of the loaded stack is reached, offer choices instead of auto-results
-    const everyoneDone = memberCount && submitters >= memberCount
-    if (current >= restaurants.length && !showResultsView) {
-        return (
-            <div className="max-w-md mx-auto text-center rounded-2xl p-6 border shadow-sm" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>You reached the end</h3>
-                <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
-                    {everyoneDone ? 'Everyone is finished. You can view results now.' : 'You can keep swiping or wait to view results.'}
-                </p>
-                <div className="flex gap-2 justify-center">
-                    <button className="nav-item px-3 py-2 rounded-lg" onClick={loadMoreRestaurants}>Continue swiping</button>
-                    <button className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }} onClick={() => setShowResultsView(true)}>
-                        {everyoneDone ? 'View results' : 'Wait for results'}
-                    </button>
-                </div>
-                {isHost && (
-                    <div className="mt-3 pt-3 border-t border-[color:var(--nav-shadow)] flex justify-between items-center">
-                        <span className="text-xs" style={{ color: 'var(--muted)' }}>Host can end now</span>
-                        <button className="px-3 py-1 rounded text-xs" style={{ background: 'var(--accent)', color: 'white' }} onClick={forceResultsNow}>
-                            Force results
-                        </button>
-                    </div>
-                )}
-            </div>
-        )
-    }
+    // When end of the loaded stack is reached, offer choices inline instead of switching UI
+    const outOfCards = current >= restaurants.length
+    const everyoneDone = (participantsCount > 0 && submitters >= participantsCount) || (memberCount && submitters >= memberCount)
 
-    if (current >= restaurants.length && showResultsView) {
+    if (outOfCards && showResultsView) {
         return (
             <Results
                 restaurants={restaurants}
@@ -371,14 +444,18 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
             // announce force
             await fetch(`/api/groups/${groupId}/messages`, {
                 method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ content: 'Host ended swiping and fetched results.' })
+                body: JSON.stringify({ content: JSON.stringify({ type: 'force_results', session_id: sessionId }) })
             })
             // move to results view by jumping to end
+            setWasForced(true)
+            setShowResultsView(true)
             setCurrent(restaurants.length)
         } catch (e) {
             console.error('forceResults error', e)
         }
     }
+
+    
 
     return (
         <div className="min-h-[28rem] flex flex-col items-center justify-center">
@@ -388,7 +465,7 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
             <div className="relative w-72 h-96">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}
                 <AnimatePresence initial={false} mode="popLayout">
-                    {visibleCards.map((restaurant, index) => {
+                    {!outOfCards && visibleCards.map((restaurant, index) => {
                         const isTop = index === 0;
                         const stackIndex = index;
                         {/*Card component sem sér um hvert card, action prop sem triggerar swipe með tökkum*/}
@@ -407,6 +484,28 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                         );
                     })}
                 </AnimatePresence>
+                {outOfCards && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center rounded-2xl p-6 border" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)', zIndex: 200 }}>
+                        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>You’re out of cards</h3>
+                        <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+                            {everyoneDone ? 'Everyone is finished. You can view results now.' : 'Load more to keep swiping or wait for results.'}
+                        </p>
+                        <div className="flex gap-2">
+                            <button className="nav-item px-3 py-2 rounded-lg" onClick={loadMoreRestaurants}>Continue swiping</button>
+                            <button className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }} onClick={() => { setWasForced(false); setCurrent(restaurants.length); setShowResultsView(true); }}>
+                                {everyoneDone ? 'View results' : 'Wait for results'}
+                            </button>
+                        </div>
+                        {isHost && (
+                            <div className="mt-3 pt-3 border-t border-[color:var(--nav-shadow)] flex justify-between items-center w-full">
+                                <span className="text-xs" style={{ color: 'var(--muted)' }}>Host can end now</span>
+                                <button className="px-3 py-1 rounded text-xs" style={{ background: 'var(--accent)', color: 'white' }} onClick={forceResultsNow}>
+                                    Force results
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="mt-8 pt-2 px-2 sm:px-0 flex items-center gap-3">
@@ -450,14 +549,14 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                     <div className="rounded-2xl p-5 shadow-lg border max-w-sm w-full" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
                         <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>You reached 15 swipes</h3>
                         <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
-                            {memberCount && submitters >= memberCount
+                            {everyoneDone
                                 ? 'Everyone is done. See results?'
                                 : 'Continue swiping or wait for results.'}
                         </p>
                         <div className="flex gap-2 justify-end">
                             <button className="nav-item px-3 py-2 rounded-lg" onClick={() => setShowEndPrompt(false)}>Continue swiping</button>
                             <button className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }} onClick={() => setCurrent(restaurants.length)}>
-                                {memberCount && submitters >= memberCount ? 'See results' : 'Wait for results'}
+                                {everyoneDone ? 'See results' : 'Wait for results'}
                             </button>
                         </div>
                         {isHost && (
@@ -647,15 +746,21 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     boxShadow: "var(--drag-shadow)"
                 }}
             >
-                <Image
-                    src={imageSrc}
-                    alt={restaurant.name}
-                    width={300}
-                    height={400}
-                    className="w-full h-72 object-cover"
-                    draggable={false}
-                    onError={handleImageError}
-                />
+                {imageSrc ? (
+                    <Image
+                        src={imageSrc}
+                        alt={restaurant.name || 'Restaurant'}
+                        width={300}
+                        height={400}
+                        className="w-full h-72 object-cover"
+                        draggable={false}
+                        onError={handleImageError}
+                    />
+                ) : (
+                    <div className="w-full h-72 flex items-center justify-center text-sm" style={{ background: 'var(--nav-item-hover)', color: 'var(--muted)' }}>
+                        No image
+                    </div>
+                )}
                 <div className="p-3">
                     <h3 className="text-lg font-semibold">
                         {restaurant.name}

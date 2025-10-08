@@ -86,6 +86,7 @@ export class RestaurantFilterBuilder {
   private supa: any
   private query: any
   private appliedFilters: RestaurantFilters = {}
+  private excludedIds: Array<string | number> = []
 
   constructor(supabaseClient: any) {
     this.supa = supabaseClient
@@ -138,6 +139,20 @@ export class RestaurantFilterBuilder {
       this.appliedFilters.cuisinesAll = validAll
     }
     
+    return this
+  }
+
+  // Exclude a list of restaurant IDs from results
+  excludeIds(ids?: Array<string | number>) {
+    const arr = Array.isArray(ids) ? ids.filter(x => typeof x === 'string' || typeof x === 'number') : []
+    if (arr.length > 0) {
+      this.excludedIds = arr
+      const csv = arr
+        .map(v => typeof v === 'number' ? String(v) : `"${String(v).replace(/"/g, '\\"')}"`)
+        .join(',')
+      // Exclude these ids
+      this.query = this.query.not('id', 'in', `(${csv})`)
+    }
     return this
   }
 

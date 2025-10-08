@@ -3,9 +3,9 @@ import { serverClient } from '@/utils/supabase/server'
 //nota crypto til þess að búa til random uuid fyrir session id
 import { randomUUID } from 'crypto'
 
-export async function GET(req, { params }) {
+export async function GET(req, ctx) {
   //fæ groupid úr params og checka hvort að það sé til
-  const groupId = params?.id
+  const { id: groupId } = await ctx.params
   if (!groupId) return NextResponse.json({ ok: false, error: 'Missing groupId' }, { status: 400 })
   
   //bý til server client og fetcha user, ef að user er ekki til þá hendi error
@@ -42,9 +42,9 @@ export async function GET(req, { params }) {
 }
 
 //post functionið sem sendir round_start message í messages
-export async function POST(req, { params }) {
+export async function POST(req, ctx) {
   //fæ groupid úr params og checka hvort að það sé til
-  const groupId = params?.id
+  const { id: groupId } = await ctx.params
   if (!groupId) return NextResponse.json({ ok: false, error: 'Missing groupId' }, { status: 400 })
 
   //bý til server client og fetcha user, ef að user er ekki til þá hendi error

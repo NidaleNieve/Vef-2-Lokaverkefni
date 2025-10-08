@@ -76,6 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       sortOrder = 'desc',
       limit = 30,
       offset = 0,
+        excludeIds = [],
       city,
       includeUnknownPrice = false,
     } = body
@@ -111,6 +112,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .city(city)
       .rating(player.minRating ? Number(player.minRating) : undefined, undefined)
       .cuisines(cuisinesAny, undefined)
+      .excludeIds(excludeIds)
       .price(priceTags, !!includeUnknownPrice)
       .activeOnly(true)
       .sort(sortBy, sortOrder)
@@ -139,6 +141,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           effective: {
             priceTags,
             cuisinesAny,
+            excludeIds,
           }
         }
       }

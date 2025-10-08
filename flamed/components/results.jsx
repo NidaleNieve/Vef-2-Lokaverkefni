@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import CongratulationCard from "./CongratulationCard";
 
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart, isHost = false }) {
-  //fæ array af accepted rejected veitingastöðum
+  // We no longer display personal picks; keep arrays for submission only
   const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
   const rejected = restaurants.filter(r => rejectedIds.includes(r.id));
 
@@ -12,10 +12,31 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   const [fetching, setFetching] = useState(false);
   const [agg, setAgg] = useState(null);
   const [err, setErr] = useState('');
-  const [memberCount, setMemberCount] = useState(null);
   const [autoLoop, setAutoLoop] = useState(true);
   const [forced, setForced] = useState(false);
   const didAutoSubmit = useRef(false);
+  const lastStatusRef = useRef(null);
+
+  useEffect(() => {
+    lastStatusRef.current = null
+  }, [sessionId])
+
+  const postStatus = useCallback(async (status) => {
+    if (!groupId || !sessionId) return
+    const normalized = status === 'forced' ? 'forced' : status === 'completed' ? 'completed' : 'started'
+    if (lastStatusRef.current === normalized) return
+    try {
+      const res = await fetch(`/api/groups/${groupId}/messages`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: JSON.stringify({ type: 'swipe_status', session_id: sessionId, status: normalized }) })
+      })
+      if (res.ok) lastStatusRef.current = normalized
+    } catch (e) {
+      console.error('postStatus status error', e)
+    }
+  }, [groupId, sessionId])
 
   //functions fyrir submit
   async function submitMyPicks() {
@@ -52,6 +73,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         throw new Error(j?.error || `Submit failed (${res.status})`);
       }
       setSubmitted(true); //set submitted true til að láta vita að async sé búið successfully
+      postStatus('completed');
     //hef error handling fyrir allt þetta, og set submitting false til að láta vita að async sé búið 
     } catch (e) {
       setErr(e.message || 'Failed to submit results.');
@@ -81,6 +103,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
       setAgg(j);
+      return j;
     //hef error handling fyrir allt þetta
     } catch (e) {
       setErr(e.message || 'Failed to fetch results.');
@@ -89,44 +112,29 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
-  // Load group member count for completion threshold
-  useEffect(() => {
-    let cancelled = false
-    if (!groupId) return
-    ;(async () => {
-      try {
-        const r = await fetch(`/api/groups/${groupId}/members`, { credentials: 'include' })
-        const j = await r.json().catch(() => ({}))
-        if (!cancelled && r.ok && Array.isArray(j?.items)) setMemberCount(j.items.length)
-      } catch {}
-    })()
-    return () => { cancelled = true }
-  }, [groupId])
 
   // Detect host-forced end by scanning messages
   useEffect(() => {
     let cancelled = false
-    if (!groupId) return
+    if (!groupId || !sessionId) return
     const poll = async () => {
       try {
         const r = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' })
         const j = await r.json().catch(() => ({}))
         if (!cancelled && r.ok && Array.isArray(j?.items)) {
           for (const m of j.items) {
-            const content = String(m?.content || '')
-            if (content.includes('Host ended swiping and fetched results')) { setForced(true); break }
             try {
-              const c = JSON.parse(content)
-              if (c?.type === 'force_results') { setForced(true); break }
+              const c = JSON.parse(String(m?.content || ''))
+              if (c?.type === 'force_results' && c?.session_id === sessionId) { setForced(true); setAutoLoop(false); break }
             } catch {}
           }
         }
       } catch {}
-      if (!cancelled && !forced) setTimeout(poll, 3000)
+      if (!cancelled && !forced) setTimeout(poll, 2000)
     }
     poll()
     return () => { cancelled = true }
-  }, [groupId, forced])
+  }, [groupId, sessionId, forced])
 
   // Auto-submit once on mount if not submitted
   useEffect(() => {
@@ -138,51 +146,105 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, sessionId])
 
+  useEffect(() => {
+    if (!groupId || !sessionId) return
+    const target = (forced || agg?.forced) ? 'forced' : 'completed'
+    postStatus(target)
+  }, [groupId, sessionId, forced, agg?.forced, postStatus])
+
   // Poll results until all members have submitted
   useEffect(() => {
     if (!autoLoop || !groupId || !sessionId) return
     let timer
     const tick = async () => {
-      await refreshGroupResult()
-      if (memberCount && agg?.submitters && agg.submitters >= memberCount) {
-        // everyone done → stop polling
+      const data = await refreshGroupResult()
+      const participants = Number((data?.participants ?? agg?.participants) || 0)
+      const submitCount = Number((data?.submitters ?? agg?.submitters) || 0)
+      const forcedFlag = forced || !!(data?.forced ?? agg?.forced)
+      if (forcedFlag || (participants > 0 && submitCount >= participants)) {
         setAutoLoop(false)
         return
       }
-      timer = setTimeout(tick, 2500)
+      timer = setTimeout(tick, 2000)
     }
     tick()
     return () => { if (timer) clearTimeout(timer) }
-  }, [autoLoop, groupId, sessionId, memberCount, agg?.submitters])
+  }, [autoLoop, groupId, sessionId, forced, agg?.participants, agg?.submitters, agg?.forced])
+
+  // Host action: force results for everyone (announce and rely on clients to auto-submit/show)
+  async function hostForceResults() {
+    try {
+      if (!groupId || !sessionId) return
+      // Post force message
+      await fetch(`/api/groups/${groupId}/messages`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ content: JSON.stringify({ type: 'force_results', session_id: sessionId }) })
+      })
+      // Also submit my picks (idempotent)
+      await submitMyPicks()
+      setForced(true)
+      postStatus('forced')
+  setAutoLoop(false)
+      // Fetch aggregation right away
+      await refreshGroupResult()
+    } catch (e) {
+      setErr(e?.message || 'Failed to force results')
+    }
+  }
 
   //finn nöfn vetitingastaðan úr id
-  const idToName = new Map(restaurants.map(r => [r.id, r.name]));
+  // Map ids (string and numeric) to names safely
+  const idToName = useMemo(() => {
+    const m = new Map()
+    for (const r of restaurants) {
+      const keyStr = String(r.id)
+      m.set(keyStr, r.name || 'Unknown')
+    }
+    return m
+  }, [restaurants])
   //finn nöfn af consensus veitingastaðunum
-  const consensusNames = (agg?.consensus_ids || []).map(id => idToName.get(id) || String(id));
+  const consensusNames = (agg?.consensus_ids || [])
+    .map(id => idToName.get(String(id)) || String(id))
+    .filter(Boolean)
 
   // Sort top picks by percentage consensus
   const topPicks = agg?.percentages
     ? Object.entries(agg.percentages)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
-        .map(([id, pct]) => ({ id, name: idToName.get(Number(id)) || String(id), pct }))
+        .map(([id, pct]) => ({ id, name: idToName.get(String(id)) || String(id), pct }))
     : [];
 
-  const isComplete = !!memberCount && !!agg && Number(agg?.submitters || 0) >= Number(memberCount || 0)
-  const canReveal = isComplete || forced
+  const forcedActive = forced || !!agg?.forced
+  const participants = Number(agg?.participants ?? 0)
+  const submitterCount = Number(agg?.submitters ?? 0)
+  const waitingIds = forcedActive ? [] : (Array.isArray(agg?.waiting_for) ? agg.waiting_for : [])
+  const waitingCount = forcedActive ? 0 : (waitingIds.length > 0 ? waitingIds.length : Math.max(participants - submitterCount, 0))
+  const isComplete = forcedActive || (participants > 0 && submitterCount >= participants)
+  const canReveal = isComplete
+
+  useEffect(() => {
+    if (canReveal) setAutoLoop(false)
+  }, [canReveal])
 
   return (
     <div className="rounded-2xl p-6 border shadow-sm" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Group Results</h2>
-        {typeof memberCount === 'number' && (
+        {participants > 0 && (
           <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--background)', color: 'var(--muted)', border: '1px solid var(--nav-shadow)' }}>
-            {agg?.submitters ?? 0} / {memberCount} submitted
+            {submitterCount} / {participants} done
           </span>
         )}
       </div>
 
       {!!err && <p className="text-red-600 mb-3">{err}</p>}
+
+      {forcedActive && (
+        <div className="mb-4 text-xs px-2 py-1 rounded-md" style={{ background: 'var(--nav-item-hover)', color: 'var(--muted)' }}>
+          Host forced the round to end. Any unfinished swipes were submitted automatically.
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex gap-2 flex-wrap mb-4">
@@ -204,6 +266,16 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
             >
               {fetching ? 'Refreshing…' : 'Refresh'}
             </button>
+            {isHost && (
+              <button
+                className="px-3 py-2 rounded-lg"
+                style={{ background: 'var(--accent)', color: 'var(--nav-text)' }}
+                onClick={hostForceResults}
+                title="Force everyone to end and reveal results"
+              >
+                Force results
+              </button>
+            )}
           </>
         ) : (
           <p className="text-sm" style={{ color: 'var(--muted)' }}>Not in a group/round.</p>
@@ -225,19 +297,28 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
             </svg>
             <div>
               <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>Waiting for others…</p>
-              <p className="text-xs" style={{ color: 'var(--muted)' }}>We’ll reveal the final pick when everyone is done{isHost ? ' or you force results' : ''}.</p>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                {waitingCount > 0
+                  ? `We’re waiting on ${waitingCount} more ${waitingCount === 1 ? 'player' : 'players'} to finish.`
+                  : `We’ll reveal the final pick when everyone is done${isHost ? ' or you force results' : ''}.`}
+              </p>
             </div>
           </div>
+          {waitingIds.length > 0 && (
+            <div className="mt-3 text-xs" style={{ color: 'var(--muted)' }}>
+              Waiting on: {waitingIds.join(', ')}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Final reveal */}
+      {/* Final reveal: show only consensus; if none, show next best by percentage */}
       {canReveal && (
         <CongratulationCard restaurantNames={consensusNames.length ? consensusNames : topPicks.map(p => p.name)} isVisible={true} />
       )}
 
-      {/* Top picks preview (always visible for context) */}
-      {agg && topPicks.length > 0 && (
+      {/* Top picks preview (context only; not personal picks) */}
+      {canReveal && agg && topPicks.length > 0 && (
         <div className="mt-4">
           <h3 className="font-semibold mb-2" style={{ color: 'var(--foreground)' }}>Group favorites</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

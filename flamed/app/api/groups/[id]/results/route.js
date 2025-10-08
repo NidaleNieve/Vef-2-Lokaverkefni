@@ -3,9 +3,9 @@
 import { NextResponse } from 'next/server'
 import { serverClient } from '@/utils/supabase/server'
 
-export async function GET(req, { params }) {
+export async function GET(req, ctx) {
   //fæ groupid og sessionid úr params 
-  const groupId = params?.id
+  const { id: groupId } = await ctx.params
   const sessionId = req.nextUrl.searchParams.get('session_id') || ''
 
   //checka hvort að groupId og sessionId sé til
@@ -48,6 +48,29 @@ export async function GET(req, { params }) {
     })
     .filter(Boolean)
 
+  // Track swipe status per user for this session (started/completed/forced)
+  const statusByUser = new Map()
+  const participantSet = new Set()
+  let forced = false
+  for (const m of msgs || []) {
+    try {
+      const payload = JSON.parse(m.content || '{}')
+      if (payload?.type === 'swipe_status' && payload.session_id === sessionId) {
+        const rawUid = payload.user_id || m.user_id
+        const uid = rawUid ? String(rawUid) : null
+        if (uid) {
+          participantSet.add(uid)
+          const normalized = payload.status === 'forced' ? 'forced' : (payload.status === 'completed' ? 'completed' : 'started')
+          statusByUser.set(uid, normalized)
+        }
+      } else if (payload?.type === 'player_join' && payload.user_id) {
+        participantSet.add(String(payload.user_id))
+      } else if (payload?.type === 'force_results' && payload.session_id === sessionId) {
+        forced = true
+      }
+    } catch {}
+  }
+
   //nota map til að geyma nýjasta swipe_results message frá hverjum user
   //þannig að ef user sendir fleiri en eitt message, þá er bara nýjasta talið með
   const byUser = new Map()
@@ -55,9 +78,36 @@ export async function GET(req, { params }) {
     byUser.set(row.user_id, row.payload)
   }
 
+  // Ensure participants include anyone who has submitted picks
+  for (const uidRaw of byUser.keys()) {
+    if (!uidRaw) continue
+    const uid = String(uidRaw)
+    participantSet.add(uid)
+    if (!statusByUser.has(uid)) statusByUser.set(uid, 'completed')
+  }
+
   //tel hversu mörgn submissions eru til
-  const submitters = Array.from(byUser.keys())
-  const submitterCount = submitters.length
+  const resultSubmitters = Array.from(byUser.keys())
+  const resultSubmitterCount = resultSubmitters.length
+
+  // Status summaries
+  const statusCounts = { started: 0, completed: 0, forced: 0 }
+  for (const status of statusByUser.values()) {
+    if (status === 'completed') statusCounts.completed += 1
+    else if (status === 'forced') statusCounts.forced += 1
+    else statusCounts.started += 1
+  }
+  const completedUsers = Array.from(statusByUser.entries()).filter(([, status]) => status === 'completed' || status === 'forced').map(([uid]) => uid)
+  const participants = participantSet.size || statusByUser.size || resultSubmitterCount
+  const completedCount = completedUsers.length
+  const waitingFor = []
+  if (!forced) {
+    for (const uid of participantSet) {
+      const status = statusByUser.get(uid)
+      if (!status || (status !== 'completed' && status !== 'forced')) waitingFor.push(uid)
+    }
+  }
+  const isComplete = forced || (participants > 0 && completedCount >= participants)
 
   //LOGIC
 
@@ -73,15 +123,15 @@ export async function GET(req, { params }) {
 
   // Reikna út prósentur fyrir hvert id
   const percentages = {}
-  if (submitterCount > 0) {
+  if (resultSubmitterCount > 0) {
     for (const [rid, c] of Object.entries(counts)) {
-      percentages[rid] = c / submitterCount
+      percentages[rid] = c / resultSubmitterCount
     }
   }
 
   //finn út hvaða veitingastaðir eru 'consensus' þ.e. samþykktir af öllum
   const consensus_ids = Object.entries(counts)
-    .filter(([, c]) => c === submitterCount && submitterCount > 0)
+    .filter(([, c]) => c === resultSubmitterCount && resultSubmitterCount > 0)
     .map(([rid]) => Number(rid))
 
   //skila niðurstöðum ef að allt gekk vel
@@ -89,7 +139,14 @@ export async function GET(req, { params }) {
     ok: true,
     group_id: groupId,
     session_id: sessionId,
-    submitters: submitterCount,
+    submitters: completedCount,
+    result_submitters: resultSubmitterCount,
+    participants,
+    status_counts: statusCounts,
+    completed_user_ids: completedUsers,
+    waiting_for,
+    forced,
+    is_complete: isComplete,
     messages_considered: parsed.length,
     consensus_ids,
     counts,
