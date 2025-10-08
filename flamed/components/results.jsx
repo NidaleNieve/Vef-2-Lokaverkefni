@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import CongratulationCard from "./CongratulationCard";
 
-export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
+export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart, memberCount }) {
   //fæ array af accepted rejected veitingastöðum
   const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
   const rejected = restaurants.filter(r => rejectedIds.includes(r.id));
@@ -94,100 +95,182 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     ? Object.entries(agg.percentages)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
-        .map(([id, pct]) => ({ id, name: idToName.get(Number(id)) || String(id), pct }))
+        .map(([id, pct]) => {
+          // Try both string and number versions of the id to find the restaurant name
+          const restaurantName = idToName.get(Number(id)) || idToName.get(String(id)) || idToName.get(parseInt(id, 10));
+          return { id, name: restaurantName || `Restaurant #${id}`, pct };
+        })
     : [];
 
   //Temp html
   return (
-    <div className="bg-white rounded-lg p-6 dark:bg-black 
-                    shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)]">
-      <h2 className="text-2xl font-bold mb-4">Results</h2>
+    <div className="glass-card rounded-lg p-6 animate-fade-in-up max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 animate-fade-in-up-delayed" 
+          style={{ color: 'var(--foreground)' }}>
+        🎯 Results
+      </h2>
 
       {/*Byrti villurnar ef það eru*/}
-      {!!err && <p className="text-red-600 mb-3">{err}</p>}
+      {!!err && (
+        <div className="glass-card rounded-lg p-4 mb-4 border-l-4 animate-fade-in-grow" 
+             style={{ borderLeftColor: 'var(--accent)', color: 'var(--foreground)' }}>
+          <p className="text-sm">⚠️ {err}</p>
+        </div>
+      )}
 
-      <div className="flex gap-2 flex-wrap mb-4">
+      <div className="flex gap-3 flex-wrap mb-6">
         {groupId && sessionId ? (
           <>
             <button
-              className="border rounded px-3 py-2"
+              className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${
+                submitted ? 'animate-subtle-ping' : ''
+              } ${submitting ? 'animate-pulse-shrink' : ''}`}
               onClick={submitMyPicks}
               disabled={submitting || submitted}
               title="Send your picks to the server for this round"
             >
-              {submitted ? 'Submitted' : (submitting ? 'Submitting…' : 'Submit my picks')}
+              {submitted ? '✅ Submitted' : (submitting ? '⏳ Submitting…' : '📤 Submit my picks')}
             </button>
 
             <button
-              className="border rounded px-3 py-2"
+              className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${
+                fetching ? 'animate-pulse-shrink' : ''
+              }`}
               onClick={refreshGroupResult}
               disabled={fetching}
               title="Fetch aggregated picks for this round"
             >
-              {fetching ? 'Fetching…' : 'Refresh group result'}
+              {fetching ? '🔄 Fetching…' : '🔄 Refresh group result'}
             </button>
+
+            {typeof memberCount === 'number' && (
+              <div className="chip self-center animate-fade-in">
+                👥 Submitters: {agg?.submitters ?? 0} / {memberCount}
+              </div>
+            )}
           </>
         ) : (
-          <p className="text-sm text-gray-600">
-            Not in a group/round. Submit/aggregate disabled.
-          </p>
+          <div className="glass-card rounded-lg p-4" style={{ color: 'var(--muted)' }}>
+            <p className="text-sm">
+              🚫 Not in a group/round. Submit/aggregate disabled.
+            </p>
+          </div>
         )}
 
         {onRestart && (
-          <button className="border rounded px-3 py-2" onClick={onRestart}>
-            Start over
+          <button className="nav-item rounded-lg px-4 py-3 font-medium text-sm animate-bounce-side" 
+                  onClick={onRestart}>
+            🔄 Start over
           </button>
         )}
       </div>
 
       {agg && (
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Group aggregation</h3>
-          <p className="text-sm text-gray-600 mb-2">
-            Submitters: {agg.submitters} • Messages considered: {agg.messages_considered}
-          </p>
+        <div className="glass-card rounded-lg p-5 mb-6 animate-fade-in-grow">
+          <h3 className="font-semibold text-lg mb-4 animate-text-pulse" 
+              style={{ color: 'var(--accent)' }}>
+            🤝 Group Aggregation
+          </h3>
+          
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <div className="chip">
+              👥 {agg.submitters}{memberCount ? ` / ${memberCount}` : ''}
+            </div>
+            <div className="chip">
+              📨 {agg.messages_considered} messages
+            </div>
+          </div>
 
           {consensusNames.length > 0 ? (
-            <div className="mb-3">
-              <p className="font-semibold">Consensus pick(s):</p>
-              <ul className="list-disc ml-5">
-                {consensusNames.map((n, i) => <li key={i}>{n}</li>)}
-              </ul>
-            </div>
+            <CongratulationCard 
+              restaurantNames={consensusNames} 
+              isVisible={true} 
+            />
           ) : (
-            <p className="mb-3">No unanimous pick yet.</p>
+            <div className="glass-card rounded-lg p-4 mb-4" 
+                 style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
+              <p className="text-sm animate-text-pulse">⏳ No unanimous pick yet...</p>
+            </div>
           )}
 
           {topPicks.length > 0 && (
-            <div>
-              <p className="font-semibold mb-1">Top agreement (percent):</p>
-              <ul className="list-disc ml-5">
-                {topPicks.map(p => (
-                  <li key={p.id}>
-                    {p.name}: {(p.pct * 100).toFixed(0)}%
-                  </li>
+            <div className="animate-fade-in-up-delayed">
+              <p className="font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+                📊 Top Agreement:
+              </p>
+              <div className="space-y-2">
+                {topPicks.map((p, index) => (
+                  <div key={p.id} 
+                       className="glass-card rounded-lg p-3 flex justify-between items-center animate-fade-in" 
+                       style={{ animationDelay: `${index * 0.1}s` }}>
+                    <span className="font-medium" style={{ color: 'var(--foreground)' }}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '📍'} {p.name}
+                    </span>
+                    <div className="chip">
+                      {(p.pct * 100).toFixed(0)}%
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      <div>
-        <h3 className="font-semibold mb-2">Accepted:</h3>
-        <ul>
-          {accepted.map(r => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="mt-4">
-        <h3 className="font-semibold mb-2">Rejected:</h3>
-        <ul>
-          {rejected.map(r => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
+      <div className="space-y-6">
+        <div className="glass-card rounded-lg p-5 animate-fade-in-up">
+          <h3 className="font-semibold text-lg mb-4 text-green-600 dark:text-green-400">
+            ✅ Accepted ({accepted.length})
+          </h3>
+          {accepted.length > 0 ? (
+            <div className="space-y-2">
+              {accepted.map((r, index) => (
+                <div key={r.id} 
+                     className="glass-card rounded-lg p-3 animate-fade-in hover:scale-105 transition-transform duration-200" 
+                     style={{ 
+                       animationDelay: `${index * 0.1}s`,
+                       background: 'var(--nav-item-hover)' 
+                     }}>
+                  <span className="font-medium animate-float" style={{ color: 'var(--foreground)' }}>
+                    🍽️ {r.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="glass-card rounded-lg p-4" 
+                 style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
+              <p className="text-sm animate-text-pulse">No restaurants accepted yet...</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="glass-card rounded-lg p-5 animate-fade-in-up-delayed">
+          <h3 className="font-semibold text-lg mb-4 text-red-600 dark:text-red-400">
+            ❌ Rejected ({rejected.length})
+          </h3>
+          {rejected.length > 0 ? (
+            <div className="space-y-2">
+              {rejected.map((r, index) => (
+                <div key={r.id} 
+                     className="glass-card rounded-lg p-3 animate-fade-in opacity-70 hover:opacity-90 transition-opacity duration-200" 
+                     style={{ 
+                       animationDelay: `${index * 0.1}s`,
+                       background: 'var(--nav-item-bg)' 
+                     }}>
+                  <span className="font-medium" style={{ color: 'var(--muted)' }}>
+                    🚫 {r.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="glass-card rounded-lg p-4" 
+                 style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
+              <p className="text-sm animate-text-pulse">No restaurants rejected yet...</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
