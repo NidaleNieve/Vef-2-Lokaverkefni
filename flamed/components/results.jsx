@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import CongratulationCard from "./CongratulationCard";
 
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart, isHost = false }) {
   //fæ array af accepted rejected veitingastöðum
@@ -13,6 +14,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   const [err, setErr] = useState('');
   const [memberCount, setMemberCount] = useState(null);
   const [autoLoop, setAutoLoop] = useState(true);
+  const [forced, setForced] = useState(false);
   const didAutoSubmit = useRef(false);
 
   //functions fyrir submit
@@ -101,6 +103,31 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     return () => { cancelled = true }
   }, [groupId])
 
+  // Detect host-forced end by scanning messages
+  useEffect(() => {
+    let cancelled = false
+    if (!groupId) return
+    const poll = async () => {
+      try {
+        const r = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' })
+        const j = await r.json().catch(() => ({}))
+        if (!cancelled && r.ok && Array.isArray(j?.items)) {
+          for (const m of j.items) {
+            const content = String(m?.content || '')
+            if (content.includes('Host ended swiping and fetched results')) { setForced(true); break }
+            try {
+              const c = JSON.parse(content)
+              if (c?.type === 'force_results') { setForced(true); break }
+            } catch {}
+          }
+        }
+      } catch {}
+      if (!cancelled && !forced) setTimeout(poll, 3000)
+    }
+    poll()
+    return () => { cancelled = true }
+  }, [groupId, forced])
+
   // Auto-submit once on mount if not submitted
   useEffect(() => {
     if (didAutoSubmit.current) return
@@ -141,104 +168,97 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         .map(([id, pct]) => ({ id, name: idToName.get(Number(id)) || String(id), pct }))
     : [];
 
-  //Temp html
-  return (
-    <div className="bg-white rounded-lg p-6 dark:bg-black 
-                    shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)]">
-      <h2 className="text-2xl font-bold mb-4">Results</h2>
+  const isComplete = !!memberCount && !!agg && Number(agg?.submitters || 0) >= Number(memberCount || 0)
+  const canReveal = isComplete || forced
 
-      {/*Byrti villurnar ef það eru*/}
+  return (
+    <div className="rounded-2xl p-6 border shadow-sm" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Group Results</h2>
+        {typeof memberCount === 'number' && (
+          <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--background)', color: 'var(--muted)', border: '1px solid var(--nav-shadow)' }}>
+            {agg?.submitters ?? 0} / {memberCount} submitted
+          </span>
+        )}
+      </div>
+
       {!!err && <p className="text-red-600 mb-3">{err}</p>}
 
+      {/* Controls */}
       <div className="flex gap-2 flex-wrap mb-4">
         {groupId && sessionId ? (
           <>
             <button
-              className="border rounded px-3 py-2"
+              className="nav-item px-3 py-2 rounded-lg"
               onClick={submitMyPicks}
               disabled={submitting || submitted}
-              title="Send your picks to the server for this round"
+              title="Send your picks for this round"
             >
               {submitted ? 'Submitted' : (submitting ? 'Submitting…' : 'Submit my picks')}
             </button>
-
             <button
-              className="border rounded px-3 py-2"
+              className="nav-item px-3 py-2 rounded-lg"
               onClick={refreshGroupResult}
               disabled={fetching}
-              title="Fetch aggregated picks for this round"
+              title="Refresh aggregation"
             >
-              {fetching ? 'Fetching…' : 'Refresh group result'}
+              {fetching ? 'Refreshing…' : 'Refresh'}
             </button>
-
-            {typeof memberCount === 'number' && (
-              <span className="text-xs text-gray-600 self-center">Submitters: {agg?.submitters ?? 0} / {memberCount}</span>
-            )}
           </>
         ) : (
-          <p className="text-sm text-gray-600">
-            Not in a group/round. Submit/aggregate disabled.
-          </p>
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>Not in a group/round.</p>
         )}
-
         {onRestart && (
-          <button className="border rounded px-3 py-2" onClick={onRestart}>
+          <button className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'var(--nav-text)' }} onClick={onRestart}>
             Start over
           </button>
         )}
       </div>
 
-      {agg && (
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Group aggregation</h3>
-          <p className="text-sm text-gray-600 mb-2">
-            Submitters: {agg.submitters}{memberCount ? ` / ${memberCount}` : ''} • Messages considered: {agg.messages_considered}
-          </p>
-
-          {consensusNames.length > 0 ? (
-            <div className="mb-3">
-              <p className="font-semibold">Consensus pick(s):</p>
-              <ul className="list-disc ml-5">
-                {consensusNames.map((n, i) => <li key={i}>{n}</li>)}
-              </ul>
-            </div>
-          ) : (
-            <p className="mb-3">No unanimous pick yet.</p>
-          )}
-
-          {topPicks.length > 0 && (
+      {/* Waiting state */}
+      {!canReveal && (
+        <div className="rounded-xl p-5 mb-4 border" style={{ background: 'var(--background)', borderColor: 'var(--nav-shadow)' }}>
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ color: 'var(--muted)' }}>
+              <circle cx="12" cy="12" r="10" strokeWidth="3" className="opacity-30" />
+              <path d="M12 2a10 10 0 0 1 10 10" strokeWidth="3" className="opacity-70" />
+            </svg>
             <div>
-              <p className="font-semibold mb-1">Top agreement (percent):</p>
-              <ul className="list-disc ml-5">
-                {topPicks.map(p => (
-                  <li key={p.id}>
-                    {p.name}: {(p.pct * 100).toFixed(0)}%
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>Waiting for others…</p>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}>We’ll reveal the final pick when everyone is done{isHost ? ' or you force results' : ''}.</p>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      <div>
-        <h3 className="font-semibold mb-2">Accepted:</h3>
-        <ul>
-          {accepted.map(r => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="mt-4">
-        <h3 className="font-semibold mb-2">Rejected:</h3>
-        <ul>
-          {rejected.map(r => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
-      </div>
+      {/* Final reveal */}
+      {canReveal && (
+        <CongratulationCard restaurantNames={consensusNames.length ? consensusNames : topPicks.map(p => p.name)} isVisible={true} />
+      )}
+
+      {/* Top picks preview (always visible for context) */}
+      {agg && topPicks.length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold mb-2" style={{ color: 'var(--foreground)' }}>Group favorites</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {topPicks.map((p, idx) => (
+              <div key={p.id} className="rounded-lg p-3 border" style={{ background: 'var(--background)', borderColor: 'var(--nav-shadow)' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium" style={{ color: 'var(--foreground)' }}>
+                    {idx === 0 ? '🏆 ' : ''}{p.name}
+                  </span>
+                  <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{(p.pct * 100).toFixed(0)}%</span>
+                </div>
+                <div className="h-2 rounded bg-[var(--nav-item-hover)] overflow-hidden">
+                  <div className="h-full rounded" style={{ width: `${Math.min(100, Math.max(0, p.pct * 100))}%`, background: 'var(--accent)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }
 
 /*

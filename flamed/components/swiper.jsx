@@ -97,6 +97,7 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     const [showEndPrompt, setShowEndPrompt] = useState(false);
     const [memberCount, setMemberCount] = useState(null);
     const [submitters, setSubmitters] = useState(0);
+    const [showResultsView, setShowResultsView] = useState(false);
 
     //læsir UI þegar verið er að swipa með tökkum
     const [uiLocked, setUiLocked] = useState(false);
@@ -192,6 +193,36 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         return () => { cancelled = true }
     }, [groupId, JSON.stringify(playerPreferences)])
 
+    async function loadMoreRestaurants() {
+        try {
+            if (!groupId) return
+            const player = {
+                query: '',
+                minRating: playerPreferences?.rating ? Number(playerPreferences.rating) : undefined,
+                categories: Array.isArray(playerPreferences?.categories) ? playerPreferences.categories : [],
+                price: Array.isArray(playerPreferences?.price) ? playerPreferences.price : (playerPreferences?.price ? [playerPreferences.price] : []),
+            }
+            const res = await fetch(`/api/groups/${groupId}/restaurants`, {
+                method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+                body: JSON.stringify({ player, sortBy: 'random', limit: 15 })
+            })
+            const j = await res.json().catch(() => ({}))
+            if (!res.ok) throw new Error(j?.error || `Failed to load more (${res.status})`)
+            const incoming = Array.isArray(j?.data) ? j.data : []
+            // de-dupe by id
+            const existingIds = new Set(restaurants.map(r => r.id))
+            const merged = [...restaurants]
+            for (const r of incoming) {
+                if (!existingIds.has(r.id)) merged.push(r)
+            }
+            setRestaurants(merged)
+            // let user continue; keep current as is
+        } catch (e) {
+            // optionally toast
+            console.error('loadMoreRestaurants error', e)
+        }
+    }
+
     // Show end prompt at 15 swipes (must be declared before any early return)
     useEffect(() => {
         try {
@@ -271,8 +302,34 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         );
     }
 
-    //ef að allir veitingastaðirnir eru búnir, þá sýnir results component úr results skjalinu
-    if (current >= restaurants.length) {
+    // When end of the loaded stack is reached, offer choices instead of auto-results
+    const everyoneDone = memberCount && submitters >= memberCount
+    if (current >= restaurants.length && !showResultsView) {
+        return (
+            <div className="max-w-md mx-auto text-center rounded-2xl p-6 border shadow-sm" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
+                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>You reached the end</h3>
+                <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+                    {everyoneDone ? 'Everyone is finished. You can view results now.' : 'You can keep swiping or wait to view results.'}
+                </p>
+                <div className="flex gap-2 justify-center">
+                    <button className="nav-item px-3 py-2 rounded-lg" onClick={loadMoreRestaurants}>Continue swiping</button>
+                    <button className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }} onClick={() => setShowResultsView(true)}>
+                        {everyoneDone ? 'View results' : 'Wait for results'}
+                    </button>
+                </div>
+                {isHost && (
+                    <div className="mt-3 pt-3 border-t border-[color:var(--nav-shadow)] flex justify-between items-center">
+                        <span className="text-xs" style={{ color: 'var(--muted)' }}>Host can end now</span>
+                        <button className="px-3 py-1 rounded text-xs" style={{ background: 'var(--accent)', color: 'white' }} onClick={forceResultsNow}>
+                            Force results
+                        </button>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    if (current >= restaurants.length && showResultsView) {
         return (
             <Results
                 restaurants={restaurants}
