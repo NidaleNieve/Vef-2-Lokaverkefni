@@ -117,7 +117,13 @@ export default function PreferencesPage() {
           type="button"
           onClick={handleSave}
           className="px-4 py-2 rounded-lg font-semibold"
-          style={{ backgroundColor: 'var(--accent)', color: 'var(--nav-text)' }}
+          style={{ 
+            backgroundColor: 'var(--accent)', 
+            color: 'var(--nav-text)',
+            boxShadow: '0 4px 14px 0 rgba(170, 96, 200, 0.3)',
+            '--tw-ring-color': 'var(--accent)',
+            '--tw-ring-offset-color': 'var(--background)'
+          }}
         >
           Start Swiping!
         </button>

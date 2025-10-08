@@ -348,6 +348,9 @@ export default function PreferencesPanel({
                   const isExpanded = Array.isArray(expandedGroups) && expandedGroups.includes(group)
                   return (
                     <button
+                      style={{ 
+                        color: 'var(--nav-text)',
+                      }}
                       key={group}
                       type="button"
                       disabled={blocked}
