@@ -132,7 +132,7 @@ export async function GET(req, ctx) {
   //finn út hvaða veitingastaðir eru 'consensus' þ.e. samþykktir af öllum
   const consensus_ids = Object.entries(counts)
     .filter(([, c]) => c === resultSubmitterCount && resultSubmitterCount > 0)
-    .map(([rid]) => Number(rid))
+    .map(([rid]) => String(rid))
 
   //skila niðurstöðum ef að allt gekk vel
   return NextResponse.json({
@@ -144,7 +144,7 @@ export async function GET(req, ctx) {
     participants,
     status_counts: statusCounts,
     completed_user_ids: completedUsers,
-    waiting_for,
+    waiting_for: waitingFor,
     forced,
     is_complete: isComplete,
     messages_considered: parsed.length,

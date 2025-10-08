@@ -158,6 +158,11 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     let timer
     const tick = async () => {
       const data = await refreshGroupResult()
+      // If fetch failed, stop autoloop to avoid infinite spinner and let user retry manually
+      if (!data) {
+        setAutoLoop(false)
+        return
+      }
       const participants = Number((data?.participants ?? agg?.participants) || 0)
       const submitCount = Number((data?.submitters ?? agg?.submitters) || 0)
       const forcedFlag = forced || !!(data?.forced ?? agg?.forced)
@@ -238,7 +243,18 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         )}
       </div>
 
-      {!!err && <p className="text-red-600 mb-3">{err}</p>}
+      {!!err && (
+        <div className="rounded-lg p-4 mb-4 border" style={{ background: 'var(--background)', borderColor: 'var(--nav-shadow)' }}>
+          <p className="text-red-600 mb-2">{err}</p>
+          <button
+            className="nav-item px-3 py-2 rounded-lg"
+            onClick={async () => { setErr(''); setAutoLoop(true); await refreshGroupResult(); }}
+            disabled={fetching}
+          >
+            {fetching ? 'Retrying…' : 'Retry'}
+          </button>
+        </div>
+      )}
 
       {forcedActive && (
         <div className="mb-4 text-xs px-2 py-1 rounded-md" style={{ background: 'var(--nav-item-hover)', color: 'var(--muted)' }}>
@@ -288,7 +304,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
       </div>
 
       {/* Waiting state */}
-      {!canReveal && (
+      {!canReveal && !err && (
         <div className="rounded-xl p-5 mb-4 border" style={{ background: 'var(--background)', borderColor: 'var(--nav-shadow)' }}>
           <div className="flex items-center gap-3">
             <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ color: 'var(--muted)' }}>
