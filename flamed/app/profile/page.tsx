@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { User, Settings, LogOut, Save, Edit3, Camera, Check } from 'lucide-react'
 import Link from 'next/link'
+import { supabaseBrowser } from '@/utils/supabase/browser'
 
 // pre-defined avatar seeds for consistent, diverse avatars
 const AVATAR_SEEDS = [
@@ -25,14 +26,19 @@ const getAvatarUrl = (seed) => {
 
 // dummy profile data
 export default function ProfilePage() {
+  const supa = supabaseBrowser()
   // user profile state
   const [userProfile, setUserProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+    name: 'Guest',
+    email: '',
     profilePicture: null,
     avatarSeed: 'John', // default avatar seed
     joinDate: '2024-01-15' // random join date
   })
+  const [userId, setUserId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [nameStatus, setNameStatus] = useState<null | { ok: boolean; message: string }>(null)
 
   // food preferences state
   const [preferences, setPreferences] = useState({
@@ -51,6 +57,21 @@ export default function ProfilePage() {
   useEffect(() => {
     loadUserAvatar()
     loadUserPreferences()
+    ;(async () => {
+      const { data: { user } } = await supa.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+        const fullName = (user.user_metadata?.full_name as string) || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+        const joined = user?.created_at ?? '2024-01-15'
+        setUserProfile(prev => ({
+          ...prev,
+          name: fullName,
+          email: user.email || prev.email,
+          joinDate: joined.substring(0, 10)
+        }))
+        setNewName(fullName)
+      }
+    })()
   }, [])
 
   // Load user preferences from localStorage
@@ -206,6 +227,64 @@ export default function ProfilePage() {
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>
                   Member since {new Date(userProfile.joinDate).toLocaleDateString()}
                 </p>
+
+                {/* Edit name inline action */}
+                {userId && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {!editingName ? (
+                      <button
+                        onClick={() => { setEditingName(true); setNewName(userProfile.name || '') }}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                        style={{ background: 'var(--nav-item-bg)', color: 'var(--nav-text)' }}
+                      >
+                        <Edit3 size={16} /> Edit name
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <input
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          maxLength={60}
+                          className="px-3 py-2 rounded-lg border outline-none transition-colors flex-1 min-w-[200px]"
+                          style={{ background: 'var(--nav-item-bg)', color: 'var(--nav-text)', borderColor: 'var(--accent)' }}
+                          placeholder="Enter your name"
+                        />
+                        <button
+                          onClick={async () => {
+                            const name = newName.trim()
+                            if (!name) { setNameStatus({ ok:false, message:'Name cannot be empty' }); return }
+                            setNameStatus(null)
+                            const { error } = await supa.auth.updateUser({ data: { full_name: name } })
+                            if (error) {
+                              setNameStatus({ ok:false, message: error.message })
+                            } else {
+                              setNameStatus({ ok:true, message:'Name updated' })
+                              setUserProfile(prev => ({ ...prev, name }))
+                              setEditingName(false)
+                            }
+                            setTimeout(() => setNameStatus(null), 2500)
+                          }}
+                          className="px-3 py-2 rounded-lg font-medium transition-transform transform-gpu will-change-transform active:scale-95"
+                          style={{ background: 'var(--accent)', color: 'white' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => { setEditingName(false); setNewName(userProfile.name || '') }}
+                          className="px-3 py-2 rounded-lg transition-colors"
+                          style={{ background: 'var(--nav-item-bg)', color: 'var(--nav-text)' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                    {nameStatus && (
+                      <span className={`text-sm ${nameStatus.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {nameStatus.message}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* sign out button */}
