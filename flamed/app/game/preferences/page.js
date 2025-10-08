@@ -9,6 +9,7 @@ export default function PreferencesPage() {
   const spGroupId = search.get('groupId') || '';
   const router = useRouter();
   const [groupId, setGroupId] = useState(spGroupId || '');
+  const [inviteCode, setInviteCode] = useState('');
 
   const [hostPrefs, setHostPrefs] = useState({
     requireKidFriendly: false,
@@ -34,6 +35,11 @@ export default function PreferencesPage() {
 
   useEffect(() => {
     if (!groupId) return;
+    // Preload invite from localStorage so players can see it here too
+    try {
+      const cached = localStorage.getItem('activeGameInviteCode');
+      if (cached) setInviteCode(String(cached));
+    } catch {}
     const savedHost = localStorage.getItem(`hostPrefs:${groupId}`);
     if (savedHost) {
       try {
@@ -69,6 +75,19 @@ export default function PreferencesPage() {
         }
       } catch {}
     })()
+
+    // Also best-effort fetch of invite code so the badge is accurate
+    ;(async () => {
+      try {
+        const r = await fetch(`/api/groups/${groupId}/invite`, { credentials: 'include', cache: 'no-store' })
+        const jj = await r.json().catch(() => ({}))
+        const code = jj?.invite?.code || jj?.code || ''
+        if (r.ok && code) {
+          setInviteCode(String(code))
+          try { localStorage.setItem('activeGameInviteCode', String(code)) } catch {}
+        }
+      } catch {}
+    })()
   }, [groupId]);
 
   const handleSave = () => {
@@ -91,6 +110,13 @@ export default function PreferencesPage() {
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
           Your Preferences
         </h1>
+        {inviteCode && (
+          <div className="mb-2">
+            <span className="px-3 py-1 rounded-full text-sm font-mono" style={{ background: 'var(--nav-item-hover)', color: 'var(--text-muted)', border: '1px solid var(--nav-shadow)' }}>
+              Invite: {inviteCode}
+            </span>
+          </div>
+        )}
         <p className="text-sm px-4 py-2 rounded-full inline-block" style={{ 
           color: 'var(--muted)',
           backgroundColor: 'var(--nav-item-hover)'
@@ -99,9 +125,11 @@ export default function PreferencesPage() {
         </p>
       </div>
 
+        {/*
       <div className="mb-4 text-sm text-center" style={{ color: 'var(--muted)' }}>
         Group: <span className="font-mono">{groupId || '(none)'}</span>
       </div>
+      */}
 
       <PreferencesPanel
         hostPrefs={hostPrefs}
