@@ -102,7 +102,7 @@ export default function Intro() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 relative overflow-x-hidden" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div className="min-h-screen flex flex-col items-center p-10 relative overflow-x-hidden" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
       {/* Animated background elements */}
       {showFoodIcons && (
         <>
