@@ -154,7 +154,7 @@ export default function Intro() {
           
           {/* Clickable Circle with enhanced animations */}
           <div
-            className={`relative flex items-center justify-center w-50 h-50 md:w-66 md:h-66 rounded-full cursor-pointer shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
+            className={`relative flex items-center justify-center w-[14rem] h-[14rem] md:w-[16.5rem] md:h-[16.5rem] rounded-full cursor-pointer shadow-lg transition-transform transition-colors transition-shadow duration-300 ease-out hover:scale-105 active:scale-95 ${
               isClicked ? 'animate-pulse-shrink' : ''
             }`}
             style={{
@@ -165,7 +165,7 @@ export default function Intro() {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <Plus size={120} className="transition-transform duration-300 hover:rotate-90" />
+            <Plus size={120} className="transition-transform duration-300 ease-out hover:rotate-90" />
             
             {/* Sparkle effects on hover */}
             {isHovered && (
@@ -198,7 +198,7 @@ export default function Intro() {
             />
             <button 
               type="submit"
-              className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              className="px-6 py-3 rounded-xl font-semibold transition-transform transition-colors transition-shadow duration-300 ease-out hover:scale-105 active:scale-95"
               style={{
                 backgroundColor: 'var(--accent)',
                 color: 'var(--nav-text)'

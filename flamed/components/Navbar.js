@@ -134,7 +134,7 @@ export default function Navbar() {
               {isAuthed ? (
                 <a 
                   href="/profile" 
-                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)] hover:shadow-sm"
                 >
                   <User size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
                   Profile
@@ -142,7 +142,7 @@ export default function Navbar() {
               ) : (
                 <a 
                   href="/auth/signin" 
-                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+                  className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)] hover:shadow-sm"
                 >
                   Sign in
                 </a>
@@ -151,7 +151,7 @@ export default function Navbar() {
             <li>
               <a 
                 href="/chat" 
-                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)] hover:shadow-sm"
               >
                 <MessageSquare size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
                 Chat
@@ -160,7 +160,7 @@ export default function Navbar() {
             <li>
               <a 
                 href="/groups" 
-                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm"
+                className="px-4 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)] hover:shadow-sm"
               >
                 <Users size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
                 Groups
@@ -176,14 +176,14 @@ export default function Navbar() {
             {isAuthed ? (
               <a 
                 href="/profile" 
-                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
+                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)]"
               >
                 <User size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />
               </a>
             ) : (
               <a 
                 href="/auth/signin" 
-                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
+                className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)]"
               >
                 Sign in
               </a>
@@ -213,7 +213,7 @@ export default function Navbar() {
             <li key={item.name}>
               <a 
                 href={item.href} 
-                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-out group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-out group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[var(--nav-text)]"
                 onClick={() => setOpen(false)}
               >
                 {index === 0 && <MessageSquare size={20} className="transition-transform duration-200 ease-out group-hover:scale-105" />}
