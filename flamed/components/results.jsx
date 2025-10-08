@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
-export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart, isHost = false }) {
+export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
   const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
   const rejected = restaurants.filter(r => rejectedIds.includes(r.id));
@@ -11,9 +11,6 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   const [fetching, setFetching] = useState(false);
   const [agg, setAgg] = useState(null);
   const [err, setErr] = useState('');
-  const [memberCount, setMemberCount] = useState(null);
-  const [autoLoop, setAutoLoop] = useState(true);
-  const didAutoSubmit = useRef(false);
 
   //functions fyrir submit
   async function submitMyPicks() {
@@ -87,47 +84,6 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
-  // Load group member count for completion threshold
-  useEffect(() => {
-    let cancelled = false
-    if (!groupId) return
-    ;(async () => {
-      try {
-        const r = await fetch(`/api/groups/${groupId}/members`, { credentials: 'include' })
-        const j = await r.json().catch(() => ({}))
-        if (!cancelled && r.ok && Array.isArray(j?.items)) setMemberCount(j.items.length)
-      } catch {}
-    })()
-    return () => { cancelled = true }
-  }, [groupId])
-
-  // Auto-submit once on mount if not submitted
-  useEffect(() => {
-    if (didAutoSubmit.current) return
-    if (!groupId || !sessionId) return
-    // Auto submit accepted/rejected results once
-    didAutoSubmit.current = true
-    submitMyPicks()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, sessionId])
-
-  // Poll results until all members have submitted
-  useEffect(() => {
-    if (!autoLoop || !groupId || !sessionId) return
-    let timer
-    const tick = async () => {
-      await refreshGroupResult()
-      if (memberCount && agg?.submitters && agg.submitters >= memberCount) {
-        // everyone done → stop polling
-        setAutoLoop(false)
-        return
-      }
-      timer = setTimeout(tick, 2500)
-    }
-    tick()
-    return () => { if (timer) clearTimeout(timer) }
-  }, [autoLoop, groupId, sessionId, memberCount, agg?.submitters])
-
   //finn nöfn vetitingastaðan úr id
   const idToName = new Map(restaurants.map(r => [r.id, r.name]));
   //finn nöfn af consensus veitingastaðunum
@@ -170,10 +126,6 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
             >
               {fetching ? 'Fetching…' : 'Refresh group result'}
             </button>
-
-            {typeof memberCount === 'number' && (
-              <span className="text-xs text-gray-600 self-center">Submitters: {agg?.submitters ?? 0} / {memberCount}</span>
-            )}
           </>
         ) : (
           <p className="text-sm text-gray-600">
@@ -192,7 +144,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         <div className="mb-6">
           <h3 className="font-semibold mb-2">Group aggregation</h3>
           <p className="text-sm text-gray-600 mb-2">
-            Submitters: {agg.submitters}{memberCount ? ` / ${memberCount}` : ''} • Messages considered: {agg.messages_considered}
+            Submitters: {agg.submitters} • Messages considered: {agg.messages_considered}
           </p>
 
           {consensusNames.length > 0 ? (

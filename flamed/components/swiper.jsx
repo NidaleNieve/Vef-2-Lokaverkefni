@@ -17,7 +17,7 @@ const vw = typeof window !== 'undefined' ? window.innerWidth : 1000;
 const vh = typeof window !== 'undefined' ? window.innerHeight : 1000;
 
 //Main functioninið, sem renderar veitingastaðina
-export default function Swiper({ groupId, hostPreferences = {}, playerPreferences = {}, isHost = false }) {
+export default function Swiper({ groupId, hostPreferences = {}, playerPreferences = {} }) {
     /*Fæ session id, sem er random uuid
     const [sessionId] = useState(() =>
         typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
@@ -94,9 +94,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     const [accepted, setAccepted] = useState([]); //array sem geymir veitingastaðin sem eru samþykktir
     const [rejected, setRejected] = useState([]);
     const [action, setAction] = useState(null); //action state til þess að geta triggerað swipe með tökkum
-    const [showEndPrompt, setShowEndPrompt] = useState(false);
-    const [memberCount, setMemberCount] = useState(null);
-    const [submitters, setSubmitters] = useState(0);
 
     //læsir UI þegar verið er að swipa með tökkum
     const [uiLocked, setUiLocked] = useState(false);
@@ -177,7 +174,7 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                     method: 'POST',
                     headers: { 'content-type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ player, sortBy: 'random', limit: 15 })
+                    body: JSON.stringify({ player, sortBy: 'random', limit: 30 })
                 })
                 const j = await res.json().catch(() => ({}))
                 if (!res.ok) throw new Error(j?.error || `Failed to load restaurants (${res.status})`)
@@ -191,41 +188,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         load()
         return () => { cancelled = true }
     }, [groupId, JSON.stringify(playerPreferences)])
-
-    // Show end prompt at 15 swipes (must be declared before any early return)
-    useEffect(() => {
-        try {
-            if (current >= 15 && !showEndPrompt) setShowEndPrompt(true)
-        } catch {}
-    }, [current, showEndPrompt])
-
-    // Track members (for completion threshold) (must be declared before any early return)
-    useEffect(() => {
-        let cancelled = false
-        if (!groupId) return
-        ;(async () => {
-            try {
-                const m = await fetch(`/api/groups/${groupId}/members`, { credentials: 'include' })
-                const mj = await m.json().catch(() => ({}))
-                if (!cancelled && m.ok && Array.isArray(mj?.items)) setMemberCount(mj.items.length)
-            } catch {}
-        })()
-        return () => { cancelled = true }
-    }, [groupId])
-
-    // Track current submitter count (must be declared before any early return)
-    useEffect(() => {
-        let cancelled = false
-        if (!groupId || !sessionId) return
-        ;(async () => {
-            try {
-                const r = await fetch(`/api/groups/${groupId}/results?session_id=${encodeURIComponent(sessionId)}`, { credentials: 'include' })
-                const j = await r.json().catch(() => ({}))
-                if (!cancelled && r.ok) setSubmitters(Number(j?.submitters || 0))
-            } catch {}
-        })()
-        return () => { cancelled = true }
-    }, [groupId, sessionId, current])
 
     //sýnir loading
     if (loading) {
@@ -278,9 +240,9 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                 restaurants={restaurants}
                 acceptedIds={accepted}
                 rejectedIds={rejected}
+                //group id og session id
                 groupId={groupId}
                 sessionId={sessionId}
-                isHost={isHost}
             />
         );
     }
@@ -295,33 +257,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         setUiLocked(true); //Locka cardið þegar það er verið að swipa
         setAction({ type, id: top.id });
     };
-
-
-    async function forceResultsNow() {
-        // Send current picks as a message and post a host notice, then rely on Results auto-fetching
-        try {
-            if (!groupId || !sessionId) return
-            const payload = {
-                type: 'swipe_results',
-                session_id: sessionId,
-                accepted_ids: accepted,
-                rejected_ids: rejected,
-            }
-            await fetch(`/api/groups/${groupId}/messages`, {
-                method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ content: JSON.stringify(payload) })
-            })
-            // announce force
-            await fetch(`/api/groups/${groupId}/messages`, {
-                method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ content: 'Host ended swiping and fetched results.' })
-            })
-            // move to results view by jumping to end
-            setCurrent(restaurants.length)
-        } catch (e) {
-            console.error('forceResults error', e)
-        }
-    }
 
     return (
         <div className="min-h-[28rem] flex flex-col items-center justify-center">
@@ -386,34 +321,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                 </button>
                 
             </div>
-
-            {/* End prompt modal */}
-            {showEndPrompt && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="rounded-2xl p-5 shadow-lg border max-w-sm w-full" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
-                        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>You reached 15 swipes</h3>
-                        <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
-                            {memberCount && submitters >= memberCount
-                                ? 'Everyone is done. See results?'
-                                : 'Continue swiping or wait for results.'}
-                        </p>
-                        <div className="flex gap-2 justify-end">
-                            <button className="nav-item px-3 py-2 rounded-lg" onClick={() => setShowEndPrompt(false)}>Continue swiping</button>
-                            <button className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }} onClick={() => setCurrent(restaurants.length)}>
-                                {memberCount && submitters >= memberCount ? 'See results' : 'Wait for results'}
-                            </button>
-                        </div>
-                        {isHost && (
-                            <div className="mt-3 pt-3 border-t border-[color:var(--nav-shadow)] flex justify-between items-center">
-                                <span className="text-xs" style={{ color: 'var(--muted)' }}>Host can end now</span>
-                                <button className="px-3 py-1 rounded text-xs" style={{ background: 'var(--accent)', color: 'white' }} onClick={forceResultsNow}>
-                                    Force results
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
             <div className="text-sm text-gray-500 mt-4">
                 {current + 1} / {restaurants.length}
             </div>
