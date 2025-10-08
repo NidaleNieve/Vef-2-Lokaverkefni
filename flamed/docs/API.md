@@ -140,146 +140,34 @@ All error responses include:
 - `INTERNAL_ERROR` - Unexpected server error
 - `DATABASE_ERROR` - Database operation failed
 
-## Migration Guide
+## API Endpoints Summary
 
-### From Old Auth Endpoints
+For detailed database schema information, RPC functions, and geocoding integration, see [DATABASE.md](./DATABASE.md).
 
-**Old:**
-```javascript
-// POST /api/auth/signin
-fetch('/api/auth/signin', {
-  method: 'POST',
-  body: JSON.stringify({ email, password })
-})
+### Quick Reference
 
-// POST /api/auth/signout  
-fetch('/api/auth/signout', { method: 'POST' })
-```
+**Authentication:**
 
-**New:**
-```javascript
-// POST /api/auth/signin
-fetch('/api/auth/signin', {
-  method: 'POST',
-  body: JSON.stringify({ email, password })
-})
+- `POST /api/auth/signin` - Login
+- `POST /api/auth/signout` - Logout  
+- `POST /api/auth/users` - Register
 
-// POST /api/auth/signout  
-fetch('/api/auth/signout', { method: 'POST' })
-```
+**Restaurants:**
 
-### From Old Restaurant Endpoints
+- `GET /api/restaurants` - List restaurants
+- `POST /api/restaurants` - Search with filters
+- `GET /api/restaurants/meta/cuisines` - Available cuisines
+- `GET /api/restaurants/meta/price-tags` - Available price tags
+- `GET /api/geocode` - Geocode restaurants (admin)
 
-**Old:**
-```javascript
-// Multiple separate endpoints
-fetch('/api/restaurants/filter/rating?min=4&max=5')
-fetch('/api/restaurants/filter/search', { method: 'POST', ... })
-```
+**Groups:**
 
-**New:**
-```javascript
-// Single unified endpoint
-fetch('/api/restaurants', {
-  method: 'POST',
-  body: JSON.stringify({
-    filters: { minRating: 4, maxRating: 5, ... }
-  })
-})
+- `GET /api/groups` - List user's groups
+- `POST /api/groups` - Create group
+- `POST /api/groups/redeem` - Join group with invite code
+- `GET /api/groups/[id]/messages` - Get messages
+- `POST /api/groups/[id]/messages` - Send message
 
-// Or simple search
-fetch('/api/restaurants/search?q=pizza&city=reykjavik')
-```
+## Reference
 
-
-## Data accessible in supabase
-### Restuarants
-| Name | Format | type |
-|---| ---| --- |
-| id | uuid | string |
-| name | varchar | string |
-| is_active | boolean | boolean |
-| created_at | timestamp with time zone | string | 
-| updated_at | timestamp with time zone | string |
-| external_id | text | string |
-| location_id | bigint | number |
-| avg_rating | numeric | number |
-| review_count | integer | number |
-| status | text | string |
-| status_text | text | string |
-| price_tag | text | string |
-| cuisines | text[] | array |
-| has_menu | boolean | boolean |
-| menu_url | text | string |
-| parent_city | text | string |
-| hero_img_url | text | string |
-| square_img_url | text | string |
-| thumbnail_template | text | string |
-| review_snippets | jsonb | json |
-| raw | jsonb | json |
-
-## Get location data (Google Maps Geocoding)
-
-Use the server API route to geocode restaurants by combining their `name` and `parent_city` via the Google Maps Geocoding API.
-
-### 1) Prerequisites
-- Supabase `restaurants` table has `id`, `name`, `parent_city` (and optionally `is_active`).
-- Add env vars in `./.env.local` (don’t commit this file):
-
-```bash
-# Supabase (client-side, public)
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-anon-key
-
-# Google Maps (server-side only)
-GOOGLE_MAPS_API_KEY=your-google-maps-server-key
-```
-
-### 2) Start the dev server
-Run `npm run dev` and open http://localhost:3000.
-
-### 3) Call the geocoding endpoint
-GET `/api/geocode`
-
-Query params:
-- `limit` (number, default 20, max 50)
-- `offset` (number, default 0)
-- `active` (boolean, default true) – filters `is_active = true`
-- `id` (string) – geocode a single restaurant by id (overrides limit/offset)
-
-Examples:
-- `/api/geocode` – first 20 active restaurants
-- `/api/geocode?limit=50&offset=0` – first 50 active restaurants
-- `/api/geocode?active=false` – include inactive rows too
-- `/api/geocode?id=<uuid>` – single row by id
-
-### 4) Response shape
-
-```json
-{
-  "items": [
-    {
-      "id": "<uuid>",
-      "name": "Pizza Place",
-      "parent_city": "Reykjavík",
-      "formatted_address": "Pizza Place, Reykjavík, Iceland",
-      "place_id": "<google-place-id>",
-      "lat": 64.123,
-      "lng": -21.987,
-      "status": "ok"
-    }
-  ],
-  "count": 1
-}
-```
-
-Status values:
-- `ok` – geocoding succeeded
-- `no_results` – Google returned no matches
-- `skipped:missing_fields` – missing `name` or `parent_city`
-- `error` – request error (see `error` field)
-
-Notes:
-- The endpoint returns lat/lng but does not store them. If you want persistence, add a follow-up update step/server action.
-- Ensure Geocoding API is enabled and billing is set on your Google Cloud project. The route uses small concurrency (5) per request to be polite to quotas.
-- Keep `GOOGLE_MAPS_API_KEY` server-only. Do not expose it on the client.
+For complete database schema, RPC function documentation, and geocoding setup details, see [DATABASE.md](./DATABASE.md).
