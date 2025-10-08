@@ -11,6 +11,7 @@ export default function Intro() {
   const [isHovered, setIsHovered] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [showFoodIcons, setShowFoodIcons] = useState(false);
+  const [banner, setBanner] = useState(null);
 
   // Added from home-client.jsx logic (state)
   const [groupId, setGroupId] = useState('');
@@ -34,6 +35,29 @@ export default function Intro() {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Banner parsing for welcome/checkInbox/email verification
+  useEffect(() => {
+    try {
+      const u = new URL(window.location.href)
+      const params = u.searchParams
+      const hash = u.hash
+      if (params.get('checkInbox') === '1') {
+        setBanner({ type: 'info', text: 'Check your inbox to verify your email.' })
+        params.delete('checkInbox')
+      }
+      if (params.get('welcome') === '1') {
+        setBanner({ type: 'success', text: 'Welcome back!' })
+        params.delete('welcome')
+      }
+      if (params.get('type') === 'signup' || hash.includes('type=signup')) {
+        setBanner({ type: 'success', text: 'Email verified successfully.' })
+        params.delete('type'); params.delete('token'); params.delete('redirect_to')
+      }
+      const cleaned = `${u.pathname}${params.toString() ? `?${params.toString()}` : ''}`
+      window.history.replaceState({}, '', cleaned)
+    } catch {}
+  }, [])
 
   /* Þurfum það ekki lengur útaf nýju invite codes
   //sækir groupId úr local storage, qol feature
@@ -113,6 +137,17 @@ export default function Intro() {
         </>
       )}
      
+      {/* Optional Banner */}
+      {banner && (
+        <div className={`mb-3 w-full max-w-xl rounded-lg border px-4 py-3 text-sm ${
+          banner.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200/50 dark:border-green-800/40' :
+          banner.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border-blue-200/50 dark:border-blue-800/40' :
+          'bg-gray-50 dark:bg-gray-800/40 text-gray-800 dark:text-gray-200 border-gray-200/50 dark:border-gray-700/40'
+        }`}>
+          {banner.text}
+        </div>
+      )}
+
       {/* Welcome Message */}
       <div className="text-center mb-6 mt-8 animate-fade-in-up">
         <h1 className="text-4xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
