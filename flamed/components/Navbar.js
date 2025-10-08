@@ -105,17 +105,6 @@ export default function Navbar() {
         
         <div className="flex items-center space-x-4">
           {/* Global invite pill when in an active game */}
-          {activeGroupId && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full text-xs bg-[var(--nav-item-bg)] text-[color:var(--nav-text)] border" style={{ borderColor: 'var(--nav-shadow)' }}>
-              <span className="opacity-80">Invite:</span>
-              <span className="font-mono tracking-wide">{inviteCode || '———'}</span>
-              <button
-                className="px-2 py-0.5 rounded nav-item"
-                onClick={async ()=>{ if (inviteCode) { try { await navigator.clipboard.writeText(inviteCode) } catch {} }}}
-                title="Copy invite code"
-              >Copy</button>
-            </div>
-          )}
           {/* Desktop Navigation */}
           <ul className="hidden md:flex items-center space-x-2">
             <li>
@@ -152,12 +141,6 @@ export default function Navbar() {
 
           {/* Mobile Navigation - Profile link outside hamburger */}
           <div className="md:hidden flex items-center">
-            {/* Invite pill on mobile */}
-            {activeGroupId && (
-              <span className="mr-3 px-2 py-1 rounded-full text-[10px] bg-[var(--nav-item-bg)] text-[color:var(--nav-text)] border" style={{ borderColor: 'var(--nav-shadow)' }}>
-                {inviteCode || '———'}
-              </span>
-            )}
             <a 
               href="/profile" 
               className="px-3 py-2 rounded-lg transition-all duration-200 ease-out flex items-center gap-2 mr-4 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)]"

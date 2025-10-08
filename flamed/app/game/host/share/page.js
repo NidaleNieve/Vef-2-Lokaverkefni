@@ -72,15 +72,19 @@ export default function HostSharePage() {
     const j = await res.json().catch(() => ({}));
     if (!res.ok) { alert(j?.error || `Failed to create invite (${res.status})`); return; }
     setInviteCode(j?.code || '');
+    try {
+      localStorage.setItem('activeGameInviteCode', j?.code || '')
+    } catch {}
   }
 
   async function startRoundAndAnnounce() {
     if (!selectedGroupId) { alert('Pick a group first'); return; }
     setStarting(true);
     try {
-      // Persist host prefs under the selected group as well
-      if (hostPrefs) localStorage.setItem(`hostPrefs:${selectedGroupId}`, JSON.stringify(hostPrefs));
-      localStorage.setItem('lastGroupId', selectedGroupId);
+  // Persist host prefs under the selected group as well
+  if (hostPrefs) localStorage.setItem(`hostPrefs:${selectedGroupId}`, JSON.stringify(hostPrefs));
+  localStorage.setItem('lastGroupId', selectedGroupId);
+  try { localStorage.setItem('activeGameGroupId', selectedGroupId) } catch {}
 
       // Start a game round for this group
       const res = await fetch(`/api/groups/${selectedGroupId}/round`, {

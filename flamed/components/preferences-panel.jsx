@@ -104,7 +104,7 @@ export default function PreferencesPanel({
   return (
     <div className="mb-6 space-y-4 text-sm">
       {(mode === 'host' || mode === 'both') && (
-        <section className="rounded-lg border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-black/60">
+  <section className="rounded-2xl p-4 shadow-sm border" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-base font-semibold">Host controls (optional)</h2>
             <span className="text-xs uppercase tracking-wide text-slate-400">
@@ -116,7 +116,7 @@ export default function PreferencesPanel({
             {!isHost && (
               <div>
                 <label className="flex items-center justify-between gap-3">
-                  <span>Minimum rating</span>
+                  <span style={{ color: 'var(--foreground)' }}>Minimum rating</span>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
@@ -133,21 +133,23 @@ export default function PreferencesPanel({
                         const n = Math.max(0, Math.min(5, Number(raw)))
                         setPlayerPrefs(prev => ({ ...prev, rating: String(n) }))
                       }}
-                      className="w-24 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                      className="w-24 rounded border p-1 text-right text-sm"
+                      style={{ background: 'var(--background)', color: 'var(--foreground)', borderColor: 'var(--muted)' }}
                       placeholder="Any"
                     />
                     {playerPrefs.rating && (
                       <button
                         type="button"
                         onClick={() => setPlayerPrefs(prev => ({ ...prev, rating: '' }))}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs hover:underline"
+                        style={{ color: 'var(--accent)' }}
                       >
                         Clear
                       </button>
                     )}
                   </div>
                 </label>
-                <p className="mt-1 text-xs text-gray-500">Only show restaurants rated at or above this value.</p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>Only show restaurants rated at or above this value.</p>
               </div>
             )}
             <label className={`flex items-center gap-2 ${!isHost ? 'opacity-60 cursor-not-allowed' : ''}`}>
@@ -162,12 +164,12 @@ export default function PreferencesPanel({
                   }))
                 }
               />
-              <span>Require kid friendly venues</span>
+              <span style={{ color: 'var(--foreground)' }}>Require kid friendly venues</span>
             </label>
 
             <div>
               <label className={`flex items-center justify-between gap-3 ${!isHost ? 'opacity-60' : ''}`}>
-                <span>Maximum radius (km)</span>
+                <span style={{ color: 'var(--foreground)' }}>Maximum radius (km)</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -187,7 +189,8 @@ export default function PreferencesPanel({
                       )
                       setHostPrefs(prev => ({ ...prev, maxRadius: String(numeric) }))
                     }}
-                    className="w-20 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                    className="w-20 rounded border p-1 text-right text-sm"
+                    style={{ background: 'var(--background)', color: 'var(--foreground)', borderColor: 'var(--muted)' }}
                     placeholder="Any"
                   />
                   {hostPrefs.maxRadius && isHost && (
@@ -196,20 +199,21 @@ export default function PreferencesPanel({
                       onClick={() =>
                         setHostPrefs(prev => ({ ...prev, maxRadius: '' }))
                       }
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs hover:underline"
+                      style={{ color: 'var(--accent)' }}
                     >
                       Clear
                     </button>
                   )}
                 </div>
               </label>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>
                 Players may still choose a smaller radius.
               </p>
             </div>
 
             <div>
-              <p className="font-medium">Blocked categories</p>
+              <p className="font-medium" style={{ color: 'var(--foreground)' }}>Blocked categories</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {Object.keys(cuisineGroups).map(group => {
                   const label = group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()
@@ -220,23 +224,24 @@ export default function PreferencesPanel({
                       type="button"
                       onClick={() => isHost && toggleHostTopLevel(group)}
                       disabled={!isHost}
-                      className={`rounded-full border px-3 py-1 text-xs transition ${
-                        blockedTop
-                          ? 'border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/40 dark:text-red-200'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
-                      }`}
+                      className="rounded-full border px-3 py-1 text-xs transition"
+                      style={{
+                        borderColor: blockedTop ? 'rgba(239, 68, 68, 0.5)' : 'var(--muted)',
+                        background: blockedTop ? 'rgba(239, 68, 68, 0.12)' : 'var(--background)',
+                        color: 'var(--foreground)'
+                      }}
                     >
                       {blockedTop ? 'Blocked: ' : ''}{label}
                     </button>
                   )
                 })}
               </div>
-              <p className="mt-1 text-xs text-gray-500">Host can only block entire top-level cuisine groups. Players will see all sub-cuisines under blocked groups disabled.</p>
+              <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>Host can only block entire top-level cuisine groups. Players will see all sub-cuisines under blocked groups disabled.</p>
             </div>
             {/* Host: Max price control */}
             <div>
               <label className={`flex items-center justify-between gap-3 ${!isHost ? 'opacity-60' : ''}`}>
-                <span>Maximum price</span>
+                <span style={{ color: 'var(--foreground)' }}>Maximum price</span>
                 <div className="flex items-center gap-2">
                   {PRICE_OPTIONS.map(p => {
                     const selected = hostPrefs.maxPrice === p
@@ -246,7 +251,8 @@ export default function PreferencesPanel({
                         type="button"
                         disabled={!isHost}
                         onClick={() => isHost && setHostPrefs(prev => ({ ...prev, maxPrice: prev.maxPrice === p ? undefined : p }))}
-                        className={`rounded border px-2 py-1 text-xs ${selected ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                        className="rounded border px-2 py-1 text-xs"
+                        style={{ borderColor: selected ? 'var(--accent)' : 'var(--muted)', color: selected ? 'var(--accent)' : 'var(--foreground)' }}
                       >
                         {p}
                       </button>
@@ -256,29 +262,31 @@ export default function PreferencesPanel({
                     <button
                       type="button"
                       onClick={() => setHostPrefs(prev => ({ ...prev, maxPrice: undefined }))}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs hover:underline"
+                      style={{ color: 'var(--accent)' }}
                     >
                       Clear
                     </button>
                   )}
                 </div>
               </label>
-              <p className="mt-1 text-xs text-gray-500">Players can’t pick a price above this.</p>
+              <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>Players can’t pick a price above this.</p>
             </div>
           </div>
         </section>
       )}
 
       {(mode === 'personal' || mode === 'both') && (
-        <section className="rounded-lg border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-black/60">
+  <section className="rounded-2xl p-4 shadow-sm border" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Personal preferences</h2>
+            <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>Personal preferences</h2>
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wide text-slate-400">Optional</span>
+              <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Optional</span>
               <button
                 type="button"
                 onClick={onResetPlayer}
                 className="text-xs underline opacity-80 hover:opacity-100"
+                style={{ color: 'var(--accent)' }}
                 title="Reset preferences"
               >
                 Reset
@@ -289,7 +297,7 @@ export default function PreferencesPanel({
             {/** Removed duplicate first Radius and Price UI; constrained versions below remain **/}
 
             <div>
-              <p className="font-medium">Cuisine preferences</p>
+              <p className="font-medium" style={{ color: 'var(--foreground)' }}>Cuisine preferences</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {Object.keys(cuisineGroups).map(group => {
                   const label = group === 'Japanese_Sushi' ? 'Japanese/Sushi' : group.replace(/([A-Z])/g, ' $1').trim()
@@ -329,13 +337,14 @@ export default function PreferencesPanel({
                           }
                         })
                       }}
-                      className={`rounded-full border px-3 py-1 text-xs ${
-                        blocked
-                          ? 'opacity-50 cursor-not-allowed border-gray-300'
-                          : isExpanded
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-200'
-                      }`}
+                      className="rounded-full border px-3 py-1 text-xs"
+                      style={{
+                        opacity: blocked ? 0.5 : 1,
+                        cursor: blocked ? 'not-allowed' : 'pointer',
+                        borderColor: isExpanded ? 'var(--accent)' : 'var(--muted)',
+                        color: 'var(--foreground)',
+                        background: 'var(--background)'
+                      }}
                     >
                       {label}
                     </button>
@@ -368,11 +377,8 @@ export default function PreferencesPanel({
                                 setImplicitAllGroups(prev => ({ ...prev, [group]: false }))
                                 setPlayerPrefs(prev => ({ ...prev, categories: Array.from(set) }))
                               }}
-                              className={`rounded-full border px-3 py-1 text-xs transition ${
-                                chosen
-                                  ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
-                                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 dark:border-gray-700 dark:bg-black dark:text-gray-200 dark:hover:border-blue-500'
-                              }`}
+                              className="rounded-full border px-3 py-1 text-xs transition"
+                              style={{ borderColor: chosen ? 'var(--accent)' : 'var(--muted)', background: chosen ? 'rgba(129, 140, 248, 0.12)' : 'var(--background)', color: 'var(--foreground)' }}
                             >
                               {cat}
                             </button>
@@ -383,13 +389,13 @@ export default function PreferencesPanel({
                   })}
                 </div>
               )}
-              <p className="mt-1 text-xs text-gray-500">Host-blocked cuisines are disabled here.</p>
+              <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>Host-blocked cuisines are disabled here.</p>
             </div>
 
             {/* Player: Enforce host max constraints visually */}
             <div>
               <label className="flex items-center justify-between gap-3">
-                <span>Price</span>
+                <span style={{ color: 'var(--foreground)' }}>Price</span>
                 <div className="flex items-center gap-2">
                   {PRICE_OPTIONS.map(p => {
                     // If host set a maxPrice, disable options above it
@@ -398,7 +404,7 @@ export default function PreferencesPanel({
                     const disabled = idx > hostIdx
                     const selected = Array.isArray(playerPrefs.price) ? playerPrefs.price.includes(p) : false
                     return (
-                      <label key={p} className={`inline-flex items-center gap-1 ${disabled ? 'opacity-50' : ''}`}>
+                      <label key={p} className="inline-flex items-center gap-1" style={{ opacity: disabled ? 0.5 : 1 }}>
                         <input
                           type="checkbox"
                           disabled={disabled}
@@ -419,7 +425,7 @@ export default function PreferencesPanel({
 
             <div>
               <label className="flex items-center justify-between gap-3">
-                <span>Radius (km)</span>
+                <span style={{ color: 'var(--foreground)' }}>Radius (km)</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -435,24 +441,26 @@ export default function PreferencesPanel({
                       }
                       setPlayerPrefs(prev => ({ ...prev, radius: v }))
                     }}
-                    className="w-20 rounded border border-gray-300 bg-white/80 p-1 text-right text-sm dark:border-gray-700 dark:bg-black/60"
+                    className="w-20 rounded border p-1 text-right text-sm"
+                    style={{ background: 'var(--background)', color: 'var(--foreground)', borderColor: 'var(--muted)' }}
                     placeholder="Any"
                   />
                   {playerPrefs.radius && (
                     <button
                       type="button"
                       onClick={() => setPlayerPrefs(prev => ({ ...prev, radius: '' }))}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs hover:underline"
+                      style={{ color: 'var(--accent)' }}
                     >
                       Clear
                     </button>
                   )}
                 </div>
               </label>
-              <p className="mt-1 text-xs text-gray-500">If host set a maximum radius, your input is capped to that value.</p>
+              <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>If host set a maximum radius, your input is capped to that value.</p>
             </div>
           </div>
-          <p className="mt-3 text-xs italic text-gray-400">
+          <p className="mt-3 text-xs italic" style={{ color: 'var(--muted)' }}>
             Filtering will hook into Supabase RPC once the backend is ready.
           </p>
         </section>

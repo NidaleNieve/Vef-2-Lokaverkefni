@@ -85,6 +85,11 @@ export default function GroupSwipePage() {
 				const r = await fetch(`/api/groups/${groupId}/invite`, { credentials: 'include', cache: 'no-store' })
 				const j = await r.json().catch(() => ({}))
 				if (r.ok && j?.invite?.code) setInviteCode(String(j.invite.code))
+				// Persist active game info for global UI (navbar pill, smart logo)
+				try {
+					localStorage.setItem('activeGameGroupId', groupId)
+					if (j?.invite?.code) localStorage.setItem('activeGameInviteCode', String(j.invite.code))
+				} catch {}
 			} catch {}
 		})()
 	}, [groupId])
