@@ -80,6 +80,11 @@ export default function GroupSwipePage() {
 	// Fetch a recent invite code so others can join mid-game
 	useEffect(() => {
 		if (!groupId) return
+		// Pre-populate from localStorage for immediate UI before server fetch
+		try {
+			const cached = localStorage.getItem('activeGameInviteCode')
+			if (cached) setInviteCode(String(cached))
+		} catch {}
 		;(async () => {
 			try {
 				const r = await fetch(`/api/groups/${groupId}/invite`, { credentials: 'include', cache: 'no-store' })
@@ -98,9 +103,8 @@ export default function GroupSwipePage() {
 		<div className="max-w-xl mx-auto p-4 space-y-4">
 			{/* Game-like HUD */}
 			<div className="rounded-2xl p-4 shadow-sm border animate-fade-in" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
-				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Swipe Showdown</h2>
-					{/* Group display removed as requested */}
+				<div className="flex items-center justify-end">
+					{/* Title intentionally removed as requested */}
 				</div>
 				<div className="mt-2 flex items-center justify-between">
 					<div className="flex items-center gap-2">
