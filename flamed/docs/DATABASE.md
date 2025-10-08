@@ -98,3 +98,41 @@
 | accuracy          | text                     |                                           |
 | updated_at        | timestamp with time zone | DEFAULT `now()`                           |
 | geom              | USER-DEFINED             | (likely geometry)                         |
+
+
+## Integrations
+
+### Cron
+Allows the database to automatically run scheduled tasks.
+
+### GraphQL
+Provides a modern API interface that lets applications request exact data.
+### Vault
+Securely stores and manages sensitive information behind authorization.
+
+
+## Extensions
+
+### uuid-ossp
+Generates unique identifiers (UUIDs).
+
+### pg_graphql
+Automatically creates a GraphQL API from your database tables.
+
+### pg_trgm
+Enables fuzzy text searching, so users can find restaurants even with typos or partial names.
+
+### pgcrypto
+Provides encryption and password hashing functions to keep sensitive data secure.
+
+### pg_stat_statemenets
+Tracks database performance by monitoring which queries are slow or used frequently.
+
+### postgis
+Adds powerful location features like calculating distances between restaurants and users. Enables "find restaurants near me" functionality with precise geographic calculations.
+
+### pg_cron
+Schedules automated database tasks to run at specific times. Can automatically clean up old data, send notifications, or update statistics without manual intervention.
+
+### tsm_system_rows
+Provides efficient random sampling of database records.
