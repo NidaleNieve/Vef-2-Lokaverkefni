@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
@@ -11,6 +11,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   const [fetching, setFetching] = useState(false);
   const [agg, setAgg] = useState(null);
   const [err, setErr] = useState('');
+  const [published, setPublished] = useState(false);
 
   //functions fyrir submit
   async function submitMyPicks() {
@@ -55,7 +56,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
-  //function fyrir refresha og sækja niðurstöður, mun vera automatic
+  // Fetch results status (published or not) and aggregation once published
   async function refreshGroupResult() {
     //error handling fyrir groupId og sessionId
     if (!groupId || !sessionId) { 
@@ -73,9 +74,10 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
       });
 
       //error handling fyrir response
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
-      setAgg(j);
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
+  setPublished(!!j?.published);
+  if (j?.published) setAgg(j);
     //hef error handling fyrir allt þetta
     } catch (e) {
       setErr(e.message || 'Failed to fetch results.');
@@ -83,6 +85,54 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
       setFetching(false);
     }
   }
+
+  // Auto-submit picks on mount (once) and poll status until published
+  useEffect(() => {
+    let cancelled = false;
+
+    async function autoSubmitIfNeeded() {
+      if (!groupId || !sessionId) return;
+      if (submitted) return;
+      try {
+        setSubmitting(true);
+        const info = {
+          content: JSON.stringify({
+            type: 'swipe_results',
+            session_id: sessionId,
+            accepted_ids: acceptedIds,
+            rejected_ids: rejectedIds,
+          }),
+        };
+        const res = await fetch(`/api/groups/${groupId}/messages`, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify(info),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j?.error || `Submit failed (${res.status})`);
+        }
+        if (!cancelled) setSubmitted(true);
+      } catch (e) {
+        if (!cancelled) setErr(e.message || 'Failed to submit results.');
+      } finally {
+        if (!cancelled) setSubmitting(false);
+      }
+    }
+
+    autoSubmitIfNeeded();
+
+    // Poll server every 2s until published
+  let timer = null;
+    async function tick() {
+      if (cancelled) return;
+      await refreshGroupResult();
+      if (!published) timer = setTimeout(tick, 2000);
+    }
+    tick();
+
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, sessionId]);
 
   //finn nöfn vetitingastaðan úr id
   const idToName = new Map(restaurants.map(r => [r.id, r.name]));
@@ -107,36 +157,17 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
       {!!err && <p className="text-red-600 mb-3">{err}</p>}
 
       <div className="flex gap-2 flex-wrap mb-4">
-        {groupId && sessionId ? (
-          <>
-            <button
-              className="border rounded px-3 py-2"
-              onClick={submitMyPicks}
-              disabled={submitting || submitted}
-              title="Send your picks to the server for this round"
-            >
-              {submitted ? 'Submitted' : (submitting ? 'Submitting…' : 'Submit my picks')}
-            </button>
-
-            <button
-              className="border rounded px-3 py-2"
-              onClick={refreshGroupResult}
-              disabled={fetching}
-              title="Fetch aggregated picks for this round"
-            >
-              {fetching ? 'Fetching…' : 'Refresh group result'}
-            </button>
-          </>
+        {!groupId || !sessionId ? (
+          <p className="text-sm text-gray-600">Not in a group/round.</p>
         ) : (
           <p className="text-sm text-gray-600">
-            Not in a group/round. Submit/aggregate disabled.
+            {published ? 'Results have been published.' : 'Waiting for host to publish results…'}
+            {` `}
+            {`(`}submitted: {submitted ? 'yes' : 'no'}{`)`}
           </p>
         )}
-
         {onRestart && (
-          <button className="border rounded px-3 py-2" onClick={onRestart}>
-            Start over
-          </button>
+          <button className="border rounded px-3 py-2" onClick={onRestart}>Start over</button>
         )}
       </div>
 
