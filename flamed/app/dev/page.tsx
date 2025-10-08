@@ -45,6 +45,7 @@ export default function Dev() {
     (async () => {
       const { data: { user } } = await supa.auth.getUser()
       setUserId(user?.id ?? null)
+      if (user?.email) setEmail(user.email) // prefill with session email
     })()
   }, [supa])
 
@@ -166,6 +167,17 @@ export default function Dev() {
   // After creating a group or redeeming an invite, refresh groups
   async function refreshGroupsIfPossible() {
     if (userId) await loadMyGroups()
+  }
+
+  // send password reset email
+  async function sendResetLink() {
+    const { data: { user } } = await supa.auth.getUser()
+    if (!user?.email) { logit({ resetPasswordForEmail: 'no session email' }); return }
+    const origin = window.location.origin
+    const { error } = await supa.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${origin}/auth/reset`,
+    })
+    logit({ resetPasswordForEmail: error ? error.message : 'sent' })
   }
 
   return (
@@ -303,6 +315,38 @@ export default function Dev() {
             await fetchJSON('/api/auth/signout', { method:'POST' })
             setUserId(null); setGroupId('')
           }}>Sign out</button>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <button
+            className="border px-3 py-2"
+            onClick={sendResetLink}
+            disabled={!userId}
+            title="Sends a password reset email"
+          >
+            Send reset link (logged in)
+          </button>
+
+          <Link
+            href="/auth/reset"
+            className="border px-3 py-2 rounded"
+            title="Page the email link will land on"
+          >
+            Go to &apos;Update password&apos; page
+          </Link>
+        </div>
+        
+        {/* Not logged in reset helper */}
+        <div className="pt-2 space-y-2 border rounded p-2">
+          <div className="text-sm opacity-80">Forgot password? (Not logged in)</div>
+          <div className="flex gap-2">
+            <input className="border p-2 flex-1" placeholder="email for reset" value={email} onChange={e=>setEmail(e.target.value)} />
+            <button className="border px-3 py-2" onClick={async()=>{
+              const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth/reset` })
+              logit({ reset_for_email: error?.message || 'sent' })
+            }}>Send email</button>
+          </div>
+          <Link className="underline text-xs" href="/auth/forgot-password">Open reset page</Link>
         </div>
       </div>
 

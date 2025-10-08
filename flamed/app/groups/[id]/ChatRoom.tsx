@@ -27,6 +27,19 @@ export default function ChatRoom({ groupId }: { groupId: string }) {
   const [autoScroll, setAutoScroll] = useState(true)
   const [unread, setUnread] = useState(0)
 
+  // Remember last visited group for chat landing redirect
+  useEffect(() => {
+    try { localStorage.setItem('lastGroupId', groupId) } catch {}
+  }, [groupId])
+
+  // Load current user id for own-message styling
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supa.auth.getUser()
+      setCurrentUserId(user?.id ?? null)
+    })()
+  }, [supa])
+
   useEffect(() => {
     const el = scrollerRef.current
     if (!el) return

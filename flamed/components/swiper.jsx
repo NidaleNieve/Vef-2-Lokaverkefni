@@ -261,33 +261,7 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     return (
         <div className="min-h-[28rem] flex flex-col items-center justify-center">
 
-            {/* Preference Summaries */}
-            {(hostSummary.length > 0 || playerSummary.length > 0) && (
-                <div className="mb-6 w-full max-w-sm rounded-lg border border-gray-200 bg-white/80 p-3 text-xs text-gray-600 shadow-sm dark:border-gray-700 dark:bg-black/70 dark:text-gray-300">
-                {hostSummary.length > 0 && (
-                    <div className="mb-3">
-                    <p className="font-semibold text-gray-700 dark:text-gray-200">Host constraints</p>
-                    <ul className="mt-1 list-disc space-y-1 pl-4">
-                        {hostSummary.map((item, idx) => (
-                        <li key={`host-${idx}`}>{item}</li>
-                        ))}
-                    </ul>
-                    </div>
-                )}
-                <div>
-                    <p className="font-semibold text-gray-700 dark:text-gray-200">Your preferences</p>
-                    {playerSummary.length > 0 ? (
-                    <ul className="mt-1 list-disc space-y-1 pl-4">
-                        {playerSummary.map((item, idx) => (
-                        <li key={`player-${idx}`}>{item}</li>
-                        ))}
-                    </ul>
-                    ) : (
-                    <p className="mt-1 text-gray-500 dark:text-gray-400">Using default settings.</p>
-                    )}
-                </div>
-                </div>
-            )}
+            {/* Filters summary removed for a cleaner, more game-like experience */}
 
             <div className="relative w-72 h-96">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}

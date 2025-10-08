@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 
 // main signin component
 export default function SigninPage() {
+  const router = useRouter()
   // email input
   const [email, setEmail] = useState('')
   // password input
@@ -34,6 +36,11 @@ export default function SigninPage() {
       // get json response
       const json = await res.json()
       setResult(json)
+      if (json?.ok) {
+        // redirect home when sign-in successful
+        router.replace('/?welcome=1')
+        return
+      }
     } catch (err: any) {
       // show error if request fails
       setResult({ ok: false, error: err?.message || 'request failed' })
@@ -140,11 +147,7 @@ export default function SigninPage() {
                     remember me
                   </label>
                 </div>
-                <Link 
-                  href="/auth/forgot-password" 
-                  className="font-medium transition-colors"
-                  style={{ color: 'var(--accent)' }}
-                >
+                <Link href="/auth/forgot-password" className="font-medium transition-colors" style={{ color: 'var(--accent)' }}>
                   forgot password?
                 </Link>
               </div>
@@ -170,7 +173,7 @@ export default function SigninPage() {
                 )}
               </button>
             </form>
-            {/* signup link */}
+            {/* signup / reset links */}
             <div className="mt-6 text-center text-sm">
               <span style={{ color: 'var(--muted)' }}>no account?</span>{' '}
               <Link 
@@ -180,28 +183,17 @@ export default function SigninPage() {
               >
                 sign up now
               </Link>
+              <div className="mt-2 text-xs" style={{ color: 'var(--muted)' }}>
+                You can also <Link href="/auth/forgot-password" style={{ color: 'var(--accent)' }}>reset your password</Link>.
+              </div>
             </div>
           </div>
-          {/* result message for success or error */}
-          {result && (
-            <div className={`px-8 py-4 transition-all duration-300 ${
-              result.ok ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'
-            }`}>
-              <div className={`flex items-start ${
-                result.ok ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
-              }`}>
-                <div className="flex-shrink-0 mt-0.5">
-                  {result.ok ? (
-                    <CheckCircle className="h-5 w-5" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5" />
-                  )}
-                </div>
-                <div className="ml-3 overflow-hidden">
-                  <pre className="text-sm whitespace-pre-wrap overflow-auto max-h-40">
-                    {JSON.stringify(result, null, 2)}
-                  </pre>
-                </div>
+          {/* show concise error only */}
+          {result && !result.ok && (
+            <div className="px-8 py-3 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5" />
+                <div className="text-sm">{result.error || 'Sign in failed'}</div>
               </div>
             </div>
           )}

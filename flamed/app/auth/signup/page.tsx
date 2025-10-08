@@ -4,10 +4,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 
 // main signup component
 export default function SignupPage() {
+  const router = useRouter()
   // email input
   const [email, setEmail] = useState('')
   // password input
@@ -37,6 +39,11 @@ export default function SignupPage() {
       // get json response
       const json = await res.json()
       setResult(json)
+      if (json?.ok) {
+        // redirect with inbox hint
+        router.replace('/?checkInbox=1')
+        return
+      }
     } catch (err: any) {
       // show error if request fails
       setResult({ ok: false, error: err?.message || 'request failed' })
@@ -212,26 +219,12 @@ export default function SignupPage() {
               </Link>
             </div>
           </div>
-          {/* result message for success or error */}
-          {result && (
-            <div className={`px-8 py-4 transition-all duration-300 ${
-              result.ok ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'
-            }`}>
-              <div className={`flex items-start ${
-                result.ok ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
-              }`}>
-                <div className="flex-shrink-0 mt-0.5">
-                  {result.ok ? (
-                    <CheckCircle className="h-5 w-5" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5" />
-                  )}
-                </div>
-                <div className="ml-3 overflow-hidden">
-                  <pre className="text-sm whitespace-pre-wrap overflow-auto max-h-40">
-                    {JSON.stringify(result, null, 2)}
-                  </pre>
-                </div>
+          {/* result error only */}
+          {result && !result.ok && (
+            <div className="px-8 py-3 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5" />
+                <div className="text-sm">{result.error || 'Sign up failed'}</div>
               </div>
             </div>
           )}

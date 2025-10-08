@@ -11,6 +11,7 @@ export default function Intro() {
   const [isHovered, setIsHovered] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [showFoodIcons, setShowFoodIcons] = useState(false);
+  const [banner, setBanner] = useState(null);
 
   // Added from home-client.jsx logic (state)
   const [groupId, setGroupId] = useState('');
@@ -34,6 +35,29 @@ export default function Intro() {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Banner parsing for welcome/checkInbox/email verification
+  useEffect(() => {
+    try {
+      const u = new URL(window.location.href)
+      const params = u.searchParams
+      const hash = u.hash
+      if (params.get('checkInbox') === '1') {
+        setBanner({ type: 'info', text: 'Check your inbox to verify your email.' })
+        params.delete('checkInbox')
+      }
+      if (params.get('welcome') === '1') {
+        setBanner({ type: 'success', text: 'Welcome back!' })
+        params.delete('welcome')
+      }
+      if (params.get('type') === 'signup' || hash.includes('type=signup')) {
+        setBanner({ type: 'success', text: 'Email verified successfully.' })
+        params.delete('type'); params.delete('token'); params.delete('redirect_to')
+      }
+      const cleaned = `${u.pathname}${params.toString() ? `?${params.toString()}` : ''}`
+      window.history.replaceState({}, '', cleaned)
+    } catch {}
+  }, [])
 
   /* Þurfum það ekki lengur útaf nýju invite codes
   //sækir groupId úr local storage, qol feature
@@ -113,6 +137,17 @@ export default function Intro() {
         </>
       )}
      
+      {/* Optional Banner */}
+      {banner && (
+        <div className={`mb-3 w-full max-w-xl rounded-lg border px-4 py-3 text-sm ${
+          banner.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200/50 dark:border-green-800/40' :
+          banner.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border-blue-200/50 dark:border-blue-800/40' :
+          'bg-gray-50 dark:bg-gray-800/40 text-gray-800 dark:text-gray-200 border-gray-200/50 dark:border-gray-700/40'
+        }`}>
+          {banner.text}
+        </div>
+      )}
+
       {/* Welcome Message */}
       <div className="text-center mb-6 mt-8 animate-fade-in-up">
         <h1 className="text-4xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
@@ -134,7 +169,7 @@ export default function Intro() {
               Click me!
             </div>
             <svg 
-              className={`w-8 h-8 transition-all duration-500 ${isHovered ? 'scale-110' : ''}`} 
+              className={`w-8 h-8 transition-transform duration-300 ease-out transform-gpu will-change-transform ${isHovered ? 'scale-110' : ''}`} 
               fill="none" 
               viewBox="0 0 24 24" 
               stroke="currentColor"
@@ -146,7 +181,7 @@ export default function Intro() {
           
           {/* Pulsing circle behind main circle */}
           <div 
-            className={`absolute inset-0 rounded-full opacity-20 ${
+            className={`absolute inset-0 rounded-full opacity-20 will-change-[opacity,transform] ${
               isHovered ? 'animate-ping' : ''
             }`}
             style={{ backgroundColor: 'var(--accent)' }}
@@ -154,7 +189,7 @@ export default function Intro() {
           
           {/* Clickable Circle with enhanced animations */}
           <div
-            className={`relative flex items-center justify-center w-50 h-50 md:w-66 md:h-66 rounded-full cursor-pointer shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
+            className={`group relative flex items-center justify-center w-50 h-50 md:w-66 md:h-66 rounded-full cursor-pointer shadow-lg transition-transform duration-300 ease-out transform-gpu will-change-transform hover:scale-105 active:scale-95 ${
               isClicked ? 'animate-pulse-shrink' : ''
             }`}
             style={{
@@ -165,7 +200,7 @@ export default function Intro() {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <Plus size={120} className="transition-transform duration-300 hover:rotate-90" />
+            <Plus size={120} className="transition-transform duration-300 ease-out transform-gpu will-change-transform group-hover:rotate-90" />
             
             {/* Sparkle effects on hover */}
             {isHovered && (
@@ -189,7 +224,7 @@ export default function Intro() {
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value)}
               placeholder="ENTER EXISTING CODE"
-              className="flex-1 px-4 py-3 border-2 rounded-xl font-mono font-semibold text-center focus:outline-none transition-all duration-300 focus:scale-105"
+              className="flex-1 px-4 py-3 border-2 rounded-xl font-mono font-semibold text-center focus:outline-none transition-colors duration-200"
               style={{
                 borderColor: 'var(--accent)',
                 backgroundColor: 'var(--background)',
@@ -198,7 +233,7 @@ export default function Intro() {
             />
             <button 
               type="submit"
-              className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+              className="px-6 py-3 rounded-xl font-semibold transition-transform duration-300 ease-out transform-gpu will-change-transform hover:scale-105 active:scale-95"
               style={{
                 backgroundColor: 'var(--accent)',
                 color: 'var(--nav-text)'

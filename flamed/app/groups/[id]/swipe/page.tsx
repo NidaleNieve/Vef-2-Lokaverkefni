@@ -85,18 +85,40 @@ export default function GroupSwipePage() {
 				const r = await fetch(`/api/groups/${groupId}/invite`, { credentials: 'include', cache: 'no-store' })
 				const j = await r.json().catch(() => ({}))
 				if (r.ok && j?.invite?.code) setInviteCode(String(j.invite.code))
+				// Persist active game info for global UI (navbar pill, smart logo)
+				try {
+					localStorage.setItem('activeGameGroupId', groupId)
+					if (j?.invite?.code) localStorage.setItem('activeGameInviteCode', String(j.invite.code))
+				} catch {}
 			} catch {}
 		})()
 	}, [groupId])
 
 	return (
-		<div className="max-w-xl mx-auto p-4 space-y-3">
-			<div className="flex items-center justify-between text-sm opacity-80">
-				<div>Group: <span className="font-mono">{groupId || '(none)'}</span></div>
-				<div>Invite: <span className="font-mono">{inviteCode || '—'}</span></div>
+		<div className="max-w-xl mx-auto p-4 space-y-4">
+			{/* Game-like HUD */}
+			<div className="rounded-2xl p-4 shadow-sm border animate-fade-in" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
+				<div className="flex items-center justify-between">
+					<h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Swipe Showdown</h2>
+					{/* Group display removed as requested */}
+				</div>
+				<div className="mt-2 flex items-center justify-between">
+					<div className="flex items-center gap-2">
+						<span className="chip">Invite</span>
+						<span className="px-2 py-1 rounded-full text-xs font-mono" style={{ background: 'var(--background)', color: 'var(--foreground)', border: '1px solid var(--nav-shadow)' }}>{inviteCode || '—'}</span>
+					</div>
+					{inviteCode && (
+						<button
+							onClick={async () => { try { await navigator.clipboard.writeText(inviteCode) } catch {} }}
+							className="nav-item px-3 py-1 rounded-lg text-xs"
+						>
+							Copy code
+						</button>
+					)}
+				</div>
 			</div>
 
-			{/* Existing Swiper component consumes groupId and prefs */}
+			{/* Swiper component consumes groupId and prefs */}
 			<Swiper
 				groupId={groupId}
 				hostPreferences={hostPrefs}

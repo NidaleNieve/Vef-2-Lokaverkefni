@@ -34,11 +34,10 @@ All error responses include:
 
 ## Authentication Endpoints
 
-### Sessions (Login/Logout)
+### Login/Logout
 
-- `POST /api/auth/sessions` - Create session (login)
-- `DELETE /api/auth/sessions` - Destroy session (logout)  
-- `GET /api/auth/sessions` - Get current session info
+- `POST /api/auth/signin` - Create session (login)
+- `POST /api/auth/signout` - Destroy session (logout)
 
 ### Users (Registration)
 
@@ -159,14 +158,14 @@ fetch('/api/auth/signout', { method: 'POST' })
 
 **New:**
 ```javascript
-// POST /api/auth/sessions
-fetch('/api/auth/sessions', {
-  method: 'POST', 
+// POST /api/auth/signin
+fetch('/api/auth/signin', {
+  method: 'POST',
   body: JSON.stringify({ email, password })
 })
 
-// DELETE /api/auth/sessions
-fetch('/api/auth/sessions', { method: 'DELETE' })
+// POST /api/auth/signout  
+fetch('/api/auth/signout', { method: 'POST' })
 ```
 
 ### From Old Restaurant Endpoints
