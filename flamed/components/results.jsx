@@ -12,6 +12,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   const [agg, setAgg] = useState(null);
   const [err, setErr] = useState('');
   const [published, setPublished] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   //functions fyrir submit
   async function submitMyPicks() {
@@ -86,6 +87,28 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
+  // Host control: publish results for the current session immediately
+  async function publishNow() {
+    if (!groupId) return;
+    setErr('');
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}/publish`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || `Publish failed (${res.status})`);
+      setPublished(true);
+      await refreshGroupResult();
+    } catch (e) {
+      setErr(e.message || 'Failed to publish results.');
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   // Auto-submit picks on mount (once) and poll status until published
   useEffect(() => {
     let cancelled = false;
@@ -121,12 +144,12 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
 
     autoSubmitIfNeeded();
 
-    // Poll server every 2s until published
+    // Poll server every 8s until published
   let timer = null;
     async function tick() {
       if (cancelled) return;
       await refreshGroupResult();
-      if (!published) timer = setTimeout(tick, 2000);
+      if (!published) timer = setTimeout(tick, 8000);
     }
     tick();
 
@@ -156,15 +179,37 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
       {/*Byrti villurnar ef það eru*/}
       {!!err && <p className="text-red-600 mb-3">{err}</p>}
 
-      <div className="flex gap-2 flex-wrap mb-4">
+      <div className="flex gap-2 flex-wrap mb-4 items-center">
         {!groupId || !sessionId ? (
           <p className="text-sm text-gray-600">Not in a group/round.</p>
         ) : (
-          <p className="text-sm text-gray-600">
-            {published ? 'Results have been published.' : 'Waiting for host to publish results…'}
-            {` `}
-            {`(`}submitted: {submitted ? 'yes' : 'no'}{`)`}
-          </p>
+          <>
+            <p className="text-sm text-gray-600">
+              {published ? 'Results have been published.' : 'Waiting for host to publish results…'}
+              {` `}
+              {`(`}submitted: {submitted ? 'yes' : 'no'}{`)`}
+            </p>
+            {!published && (
+              <>
+                <button
+                  className="border rounded px-3 py-2"
+                  onClick={refreshGroupResult}
+                  disabled={fetching}
+                  title="Fetch latest status"
+                >
+                  {fetching ? 'Refreshing…' : 'Refresh now'}
+                </button>
+                <button
+                  className="border rounded px-3 py-2"
+                  onClick={publishNow}
+                  disabled={publishing}
+                  title="Publish results now (host)"
+                >
+                  {publishing ? 'Publishing…' : 'Publish results now'}
+                </button>
+              </>
+            )}
+          </>
         )}
         {onRestart && (
           <button className="border rounded px-3 py-2" onClick={onRestart}>Start over</button>
