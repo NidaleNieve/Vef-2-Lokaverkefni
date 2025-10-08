@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
@@ -98,6 +99,15 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     : [];
 
   //Temp html
+  // mark results as watched so navbar can hide the active-game pill
+  useEffect(() => {
+    try {
+      if (groupId) {
+        // store the groupId that had results watched
+        localStorage.setItem('activeGameResultsWatched', String(groupId));
+      }
+    } catch {}
+  }, [groupId]);
   return (
     <div className="bg-white rounded-lg p-6 dark:bg-black 
                     shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)]">

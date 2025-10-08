@@ -75,7 +75,10 @@ export default function HostSharePage() {
     setInviteCode(code);
     try {
       if (code) localStorage.setItem('activeGameInviteCode', String(code))
-      if (selectedGroupId) localStorage.setItem('activeGameGroupId', String(selectedGroupId))
+      if (selectedGroupId) {
+        localStorage.setItem('activeGameGroupId', String(selectedGroupId))
+        try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {}
+      }
     } catch {}
   }
 
@@ -87,7 +90,7 @@ export default function HostSharePage() {
       // Persist host prefs under the selected group as well
       if (hostPrefs) localStorage.setItem(`hostPrefs:${selectedGroupId}`, JSON.stringify(hostPrefs));
       localStorage.setItem('lastGroupId', selectedGroupId);
-      try { localStorage.setItem('activeGameGroupId', selectedGroupId) } catch {}
+      try { localStorage.setItem('activeGameGroupId', selectedGroupId); try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {} } catch {}
 
       // Start a game round for this group
       const res = await fetch(`/api/groups/${selectedGroupId}/round`, {

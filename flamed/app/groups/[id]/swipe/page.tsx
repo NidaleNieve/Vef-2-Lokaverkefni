@@ -93,6 +93,8 @@ export default function GroupSwipePage() {
 				// Persist active game info for global UI (navbar pill, smart logo)
 				try {
 					localStorage.setItem('activeGameGroupId', groupId)
+					// record creation time for active game visibility logic
+					try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {}
 					if (j?.invite?.code) localStorage.setItem('activeGameInviteCode', String(j.invite.code))
 				} catch {}
 			} catch {}

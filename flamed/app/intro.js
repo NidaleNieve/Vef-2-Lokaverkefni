@@ -102,6 +102,7 @@ export default function Intro() {
       try {
         localStorage.setItem('lastGroupId', gid);
         localStorage.setItem('activeGameGroupId', gid);
+        try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {}
         localStorage.setItem('activeGameInviteCode', code);
       } catch {}
       router.push(`/game/preferences?groupId=${encodeURIComponent(gid)}`);

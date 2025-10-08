@@ -13,6 +13,7 @@ export default function Navbar() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [showActiveGame, setShowActiveGame] = useState(true);
   const [isAuthed, setIsAuthed] = useState(null); // null unknown
 
   useEffect(() => {
@@ -29,14 +30,31 @@ export default function Navbar() {
       try {
         const gid = localStorage.getItem('activeGameGroupId') || localStorage.getItem('lastGroupId') || ''
         const code = localStorage.getItem('activeGameInviteCode') || ''
+        const createdAt = localStorage.getItem('activeGameCreatedAt') || null
+        const resultsWatched = localStorage.getItem('activeGameResultsWatched') || null
+
         setActiveGroupId(gid || '')
         setInviteCode(code || '')
+
+        // Decide whether to show the Game button:
+        // - hide if the game was created more than 10 minutes ago
+        // - hide if the results for this group were watched
+        let visible = !!gid
+        if (gid && createdAt) {
+          try {
+            const ageMs = Date.now() - Date.parse(createdAt)
+            if (!Number.isNaN(ageMs) && ageMs > 10 * 60 * 1000) visible = false
+          } catch {}
+        }
+        if (gid && resultsWatched && resultsWatched === gid) visible = false
+        setShowActiveGame(visible)
       } catch {}
     }
     load()
     const onStorage = (e) => {
       if (!e) return
-      if (e.key === 'activeGameGroupId' || e.key === 'activeGameInviteCode' || e.key === 'lastGroupId') {
+      // react to changes relevant to active-game visibility
+      if (e.key === 'activeGameGroupId' || e.key === 'activeGameInviteCode' || e.key === 'lastGroupId' || e.key === 'activeGameCreatedAt' || e.key === 'activeGameResultsWatched') {
         load()
       }
     }
@@ -110,7 +128,7 @@ export default function Navbar() {
         <div className="flex items-center space-x-4">
           {/* Desktop Navigation */}
           <ul className="hidden md:flex items-center space-x-2">
-            {activeGroupId && (
+            {showActiveGame && activeGroupId && (
               <li>
                 <a 
                   href={`/groups/${activeGroupId}/swipe`} 
@@ -201,7 +219,7 @@ export default function Navbar() {
         style={{ background: "var(--nav-bg)" }}
       >
         <ul className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-          {activeGroupId && (
+          {showActiveGame && activeGroupId && (
             <li>
               <a 
                 href={`/groups/${activeGroupId}/swipe`} 
