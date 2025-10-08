@@ -31,6 +31,26 @@ Ef að enginn er sammála, eða margir veitingastaðir fundnir, þá er hægt a�
   
 =======
 
+
+## API & DATABASE Documentation
+see [DATABASE.md](./DATABASE.md).
+see [API.md](./API.md).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## WireFrame
 ![wireframe](./20250829_115336.jpg)
 
@@ -71,6 +91,3 @@ Picking a random location will remove any dissenting voices.
 Dale just hired a group of interns for the summer. After a decade of hard work business is picking up, even without a college degree, Dale has found a way to sustain himself, much to his parents chagrin. At the start of the summer Dale decided he would expand his buisness to be able to take on a more clienttell and scaleback his involvment to set himself up for retirement, to enable himself to do that, he decided to hire a bach of interns for the summer. If everything goes well, he plans to hire them fulltime. Dale wants a light hearted way to break the ice, organize a little shindig and grab some food with his new team members.
 
 
-## API & DATABASE Documentation
-see [DATABASE.md](./DATABASE.md).
-see [API.md](./API.md).
