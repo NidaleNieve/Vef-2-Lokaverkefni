@@ -9,6 +9,7 @@ export default function PreferencesPage() {
   const spGroupId = search.get('groupId') || '';
   const router = useRouter();
   const [groupId, setGroupId] = useState(spGroupId || '');
+  const [inviteCode, setInviteCode] = useState('');
 
   const [hostPrefs, setHostPrefs] = useState({
     requireKidFriendly: false,
@@ -34,6 +35,12 @@ export default function PreferencesPage() {
 
   useEffect(() => {
     if (!groupId) return;
+    // Try to load invite code from localStorage immediately for UI
+    try {
+      const lc = localStorage.getItem('activeGameInviteCode') || ''
+      if (lc) setInviteCode(lc)
+    } catch {}
+
     const savedHost = localStorage.getItem(`hostPrefs:${groupId}`);
     if (savedHost) {
       try {
@@ -69,6 +76,18 @@ export default function PreferencesPage() {
         }
       } catch {}
     })()
+
+    // Also fetch latest invite code from server for this group (best-effort)
+    ;(async () => {
+      try {
+        const r = await fetch(`/api/groups/${groupId}/invite`, { credentials: 'include', cache: 'no-store' })
+        const j = await r.json().catch(() => ({}))
+        if (r.ok && j?.invite?.code) {
+          setInviteCode(String(j.invite.code))
+          try { localStorage.setItem('activeGameInviteCode', String(j.invite.code)) } catch {}
+        }
+      } catch {}
+    })()
   }, [groupId]);
 
   const handleSave = () => {
@@ -93,7 +112,10 @@ export default function PreferencesPage() {
             <h1 className="text-2xl font-bold" style={{ color: 'var(--nav-text)' }}>Get ready to swipe</h1>
             <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>Tune your preferences for this round.</p>
           </div>
-          <div className="px-3 py-1 rounded-full text-xs font-mono" style={{ background: 'var(--background)', color: 'var(--foreground)', border: '1px solid var(--nav-shadow)' }}>{(groupId || '—').slice(0,8)}</div>
+          <div className="flex items-center gap-2">
+            <span className="chip">Invite</span>
+            <div className="px-3 py-1 rounded-full text-xs font-mono" style={{ background: 'var(--background)', color: 'var(--foreground)', border: '1px solid var(--nav-shadow)' }}>{inviteCode || '—'}</div>
+          </div>
         </div>
       </div>
 

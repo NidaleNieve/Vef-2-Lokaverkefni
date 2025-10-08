@@ -100,10 +100,7 @@ export default function GroupSwipePage() {
 			<div className="rounded-2xl p-4 shadow-sm border animate-fade-in" style={{ background: 'var(--nav-item-bg)', borderColor: 'var(--nav-shadow)' }}>
 				<div className="flex items-center justify-between">
 					<h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Swipe Showdown</h2>
-					<div className="flex items-center gap-2">
-						<span className="chip">Group</span>
-						<span className="px-2 py-1 rounded-full text-xs font-mono" style={{ background: 'var(--background)', color: 'var(--foreground)', border: '1px solid var(--nav-shadow)' }}>{(groupId || '—').slice(0, 8)}</span>
-					</div>
+					{/* Group display removed as requested */}
 				</div>
 				<div className="mt-2 flex items-center justify-between">
 					<div className="flex items-center gap-2">

@@ -140,11 +140,7 @@ export default function SigninPage() {
                     remember me
                   </label>
                 </div>
-                <Link 
-                  href="/auth/forgot-password" 
-                  className="font-medium transition-colors"
-                  style={{ color: 'var(--accent)' }}
-                >
+                <Link href="/auth/forgot-password" className="font-medium transition-colors" style={{ color: 'var(--accent)' }}>
                   forgot password?
                 </Link>
               </div>
@@ -170,7 +166,7 @@ export default function SigninPage() {
                 )}
               </button>
             </form>
-            {/* signup link */}
+            {/* signup / reset links */}
             <div className="mt-6 text-center text-sm">
               <span style={{ color: 'var(--muted)' }}>no account?</span>{' '}
               <Link 
@@ -180,6 +176,9 @@ export default function SigninPage() {
               >
                 sign up now
               </Link>
+              <div className="mt-2 text-xs" style={{ color: 'var(--muted)' }}>
+                You can also <Link href="/auth/forgot-password" style={{ color: 'var(--accent)' }}>reset your password</Link>.
+              </div>
             </div>
           </div>
           {/* result message for success or error */}
