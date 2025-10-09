@@ -2,10 +2,13 @@
 ## Almenn lýsing og wireflows af Vefappi
 
 Daníel, Kiara, Hörður
+<br>
 
-=======
-## Gastroswipe?
+## [www.Gastroswipe.app](https://www.gastroswipe.app) 
 
+<br>
+
+==============
 ![Homescreen Image](./ReadmeMedia/Homescreen.png)
 
 #### Game process:
@@ -72,13 +75,13 @@ Ef að enginn er sammála, eða margir veitingastaðir fundnir, þá er hægt a�
 - Eftir að hafa klárað fyrsta leikinn sinn spyr appið þig hvort að þú viljir búa til account til þess að geta vista stillingar og óskir þínar. Það væri einnig hægt að vista hópinn þannig að þurfi ekki að bjóða öllum aftur
 - Bæta við Sundlaugum og öðrum skemmtistöðum (td. söfn eða Smárabíó skemmtisvæðið). Það væri hægt að velja í byrjun hvort að maður vilji finna veitingastaði og/eða skemmtistað, þetta getur notað nákvæmlega sama formattið.
   
-=======
+==============
 
 ## API & DATABASE Documentation
 see [DATABASE.md](./flamed/docs/DATABASE.md).
 see [API.md](./flamed/docs/API.md).
 
-=======
+==============
 
 ## Sérvirkni
 #### Unanimous Pick Kerfi
@@ -86,7 +89,7 @@ Fall sem finnur veitingastaði sem allir eru sammála um að fara í.
 Það tekur inn arrays af 'Veitingastaða IDs' frá öllum spilendum og reiknar út prósentu sem sýnir hversu sammála allir spilendurnir eru um alla veitingastaðina.
 
 
-=======
+==============
 ### Daníel
 #### JavaScript and Game
 Vann í Leikja kerfinu, multiplayer logicinu, tengja backend við frontend, skipuleggja og raða verkefninu. Nánast allt Javascript.
@@ -101,7 +104,7 @@ Sótti gögn fyrir bakendan, bjó til api routes, bjó til account system, chat 
 Útfærði Framer Motion animations, hannaði hybrid design system sem blandar Tailwind CSS og custom CSS variables, bjó til responsive design.
 
 
-=======
+==============
 ### Samantekt og næstu skref
 
 - Það á eftir að búa til leikina 
@@ -110,7 +113,7 @@ Sótti gögn fyrir bakendan, bjó til api routes, bjó til account system, chat 
 - Laga restaurant gögnin til aðeins.
 - gera sér chat fyrir game logic.
 
-=======
+==============
 
 ## WireFrame
 ![wireframe](./20250829_115336.jpg)
