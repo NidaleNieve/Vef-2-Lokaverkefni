@@ -103,6 +103,42 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
         setUiLocked(false);
     }, [current]);
 
+    // Listen for host publish event; on publish, auto-submit current picks and fast-forward to results
+    useEffect(() => {
+        if (!groupId || !sessionId) return;
+        const channel = supabase
+            .channel(`grp:${groupId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, (payload) => {
+                try {
+                    const j = JSON.parse(payload?.new?.content || '{}');
+                    if (j && j.type === 'publish_results' && j.session_id === sessionId) {
+                        // Auto-submit current picks
+                        (async () => {
+                            try {
+                                const info = {
+                                    content: JSON.stringify({
+                                        type: 'swipe_results', session_id: sessionId,
+                                        accepted_ids: accepted, rejected_ids: rejected,
+                                    })
+                                };
+                                await fetch(`/api/groups/${groupId}/messages`, {
+                                    method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+                                    body: JSON.stringify(info)
+                                });
+                            } catch {}
+                        })();
+                        // Jump to results by finishing the deck
+                        setCurrent(restaurants.length);
+                    }
+                } catch {}
+            })
+            .subscribe();
+
+        return () => {
+            try { supabase.removeChannel(channel); } catch {}
+        };
+    }, [groupId, sessionId, accepted, rejected, restaurants.length]);
+
         /*
         Example: Fetch via Supabase RPC with filters (to enable when backend is ready)
 

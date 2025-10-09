@@ -1,31 +1,33 @@
-import { useEffect, useRef, useState } from "react";
-import CongratulationCard from "./CongratulationCard";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabaseBrowser } from '@/utils/supabase/browser';
 
-export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart, memberCount }) {
+export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
   const accepted = restaurants.filter(r => acceptedIds.includes(r.id));
   const rejected = restaurants.filter(r => rejectedIds.includes(r.id));
 
-  //states fyrir submit, fetch, og errors
+  // State
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [agg, setAgg] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [isHost, setIsHost] = useState(false);
   const [err, setErr] = useState('');
+  const [published, setPublished] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
-  //functions fyrir submit
+  // Submit picks (manual button)
   async function submitMyPicks() {
-    //error handling fyrir groupId og sessionId
     if (!groupId || !sessionId) {
-      setErr('Missing groupId or sessionId.'); //nota setErr til þess að geta svo byrt villu
+      setErr('Missing groupId or sessionId.');
       return;
     }
-    setErr(''); //ef engin villa, þá set ég hana blank
-    setSubmitting(true); //stilli set submitting til þess að láta vita að það sé verið að submitta asynchronously
-
+    if (submitted) return;
+    setErr('');
+    setSubmitting(true);
     try {
       const info = {
-        // Bý til json body fyrir post request sem inniheldur veitingastaðina og session id
         content: JSON.stringify({
           type: 'swipe_results',
           session_id: sessionId,
@@ -33,22 +35,15 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
           rejected_ids: rejectedIds,
         }),
       };
-
-      //sendi upplýsingar á api endpointið
       const res = await fetch(`/api/groups/${groupId}/messages`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
         body: JSON.stringify(info),
-        credentials: 'include',
       });
-
-      //hef error handling fyrir respons
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.error || `Submit failed (${res.status})`);
       }
-      setSubmitted(true); //set submitted true til að láta vita að async sé búið successfully
-    //hef error handling fyrir allt þetta, og set submitting false til að láta vita að async sé búið 
+      setSubmitted(true);
     } catch (e) {
       setErr(e.message || 'Failed to submit results.');
     } finally {
@@ -56,62 +51,141 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     }
   }
 
-  //function fyrir refresha og sækja niðurstöður, mun vera automatic
-  async function refreshGroupResult() {
-    //error handling fyrir groupId og sessionId
-    if (!groupId || !sessionId) { 
-      setErr('Missing groupId or sessionId.');//nota setErr til þess að geta svo byrt villu
-      return;
+  // Fetch results status (published or not) and aggregation once published
+  const refreshGroupResult = useCallback(async () => {
+    if (!groupId || !sessionId) {
+      setErr('Missing groupId or sessionId.');
+      return false;
     }
-    setErr(''); //ef engin villa, þá set ég hana blank
-    setFetching(true); //stilli set fetching til þess að láta vita að það sé verið að fetcha asynchronously
+    setErr('');
+    setFetching(true);
 
     try {
-      //sæki niðurstöður frá api endpointinu
       const res = await fetch(`/api/groups/${groupId}/results?session_id=${encodeURIComponent(sessionId)}`, {
         method: 'GET',
         credentials: 'include',
       });
-
-      //error handling fyrir response
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
-      setAgg(j);
-    //hef error handling fyrir allt þetta
+      const publishedFlag = !!j?.published;
+      setPublished(publishedFlag);
+      setStatus(j);
+      setIsHost(!!j?.is_host);
+      if (publishedFlag) setAgg(j);
+      return publishedFlag;
     } catch (e) {
       setErr(e.message || 'Failed to fetch results.');
+      return false;
     } finally {
       setFetching(false);
     }
+  }, [groupId, sessionId]);
+
+  // Host control: publish results for the current session immediately
+  async function publishNow() {
+    if (!groupId || !isHost) return;
+    setErr('');
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}/publish`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || `Publish failed (${res.status})`);
+      setPublished(true);
+      await refreshGroupResult();
+    } catch (e) {
+      setErr(e.message || 'Failed to publish results.');
+    } finally {
+      setPublishing(false);
+    }
   }
 
-  //finn nöfn vetitingastaðan úr id
-  const idToName = new Map(restaurants.map(r => [r.id, r.name]));
-  //finn nöfn af consensus veitingastaðunum
-  const consensusNames = (agg?.consensus_ids || []).map(id => idToName.get(id) || String(id));
+  // Auto-submit picks on mount (once) and poll status until published
+  useEffect(() => {
+    let cancelled = false;
 
-  // Sort top picks by percentage consensus
-  const topPicks = agg?.percentages
-    ? Object.entries(agg.percentages)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([id, pct]) => {
-          // Try both string and number versions of the id to find the restaurant name
-          const restaurantName = idToName.get(Number(id)) || idToName.get(String(id)) || idToName.get(parseInt(id, 10));
-          return { id, name: restaurantName || `Restaurant #${id}`, pct };
-        })
-    : [];
+    async function autoSubmitIfNeeded() {
+      if (!groupId || !sessionId) return;
+      if (submitted) return;
+      try {
+        setSubmitting(true);
+        const info = {
+          content: JSON.stringify({
+            type: 'swipe_results',
+            session_id: sessionId,
+            accepted_ids: acceptedIds,
+            rejected_ids: rejectedIds,
+          }),
+        };
+        const res = await fetch(`/api/groups/${groupId}/messages`, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify(info),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j?.error || `Submit failed (${res.status})`);
+        }
+        if (!cancelled) setSubmitted(true);
+      } catch (e) {
+        if (!cancelled) setErr(e.message || 'Failed to submit results.');
+      } finally {
+        if (!cancelled) setSubmitting(false);
+      }
+    }
+
+    autoSubmitIfNeeded();
+
+    // Poll server every 8s until published
+  let timer = null;
+    async function tick() {
+      if (cancelled) return;
+      const isPublished = await refreshGroupResult();
+      if (!isPublished) timer = setTimeout(tick, 8000);
+    }
+    tick();
+
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, sessionId, refreshGroupResult, submitted]);
+
+  // Listen for new submissions or publish messages to refresh immediately
+  useEffect(() => {
+    if (!groupId || !sessionId) return;
+    const supa = supabaseBrowser();
+    const channel = supa
+      .channel(`results:${groupId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, (payload) => {
+        try {
+          const j = JSON.parse(payload?.new?.content || '{}');
+          if (!j || j.session_id !== sessionId) return;
+          if (j.type === 'swipe_results' || j.type === 'publish_results') {
+            refreshGroupResult();
+          }
+        } catch {}
+      })
+      .subscribe();
+
+    return () => {
+      try { supa.removeChannel(channel); } catch {}
+    };
+  }, [groupId, sessionId, refreshGroupResult]);
+
+  // Prepare top picks (ID + percentage only)
+  const topPicks = useMemo(() => {
+    if (!Array.isArray(agg?.top_agreement)) return [];
+    return agg.top_agreement
+      .filter(item => item && item.id != null)
+      .slice(0, 5)
+      .map(item => ({
+        id: String(item.id),
+        pct: typeof item.pct === 'number' ? item.pct : 0,
+      }));
+  }, [agg?.top_agreement]);
 
   //Temp html
-  // mark results as watched so navbar can hide the active-game pill
-  useEffect(() => {
-    try {
-      if (groupId) {
-        // store the groupId that had results watched
-        localStorage.setItem('activeGameResultsWatched', String(groupId));
-      }
-    } catch {}
-  }, [groupId]);
   return (
     <div className="glass-card rounded-lg p-6 animate-fade-in-up max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-6 animate-fade-in-up-delayed" 
@@ -127,159 +201,88 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
         </div>
       )}
 
-      <div className="flex gap-3 flex-wrap mb-6">
-        {groupId && sessionId ? (
+      <div className="flex gap-2 flex-wrap mb-4 items-center">
+        {!groupId || !sessionId ? (
+          <p className="text-sm text-gray-600">Not in a group/round.</p>
+        ) : (
           <>
-            <button
-              className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${
-                submitted ? 'animate-subtle-ping' : ''
-              } ${submitting ? 'animate-pulse-shrink' : ''}`}
-              onClick={submitMyPicks}
-              disabled={submitting || submitted}
-              title="Send your picks to the server for this round"
-            >
-              {submitted ? '✅ Submitted' : (submitting ? '⏳ Submitting…' : '📤 Submit my picks')}
-            </button>
-
-            <button
-              className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${
-                fetching ? 'animate-pulse-shrink' : ''
-              }`}
-              onClick={refreshGroupResult}
-              disabled={fetching}
-              title="Fetch aggregated picks for this round"
-            >
-              {fetching ? '🔄 Fetching…' : '🔄 Refresh group result'}
-            </button>
-
-            {typeof memberCount === 'number' && (
-              <div className="chip self-center animate-fade-in">
-                👥 Submitters: {agg?.submitters ?? 0} / {memberCount}
-              </div>
+            <p className="text-sm text-gray-600">
+              {published ? 'Results have been published.' : 'Waiting for host to publish results…'}
+              {status?.submitters != null ? ` • submissions received: ${status.submitters}` : ''}
+              {` `}
+              {`(`}you submitted: {submitted ? 'yes' : 'no'}{`)`}
+            </p>
+            {!published && (
+              <>
+                <button
+                  className="border rounded px-3 py-2"
+                  onClick={refreshGroupResult}
+                  disabled={fetching}
+                  title="Fetch latest status"
+                >
+                  {fetching ? 'Refreshing…' : 'Refresh now'}
+                </button>
+                {isHost && (
+                  <button
+                    className="border rounded px-3 py-2"
+                    onClick={publishNow}
+                    disabled={publishing}
+                    title="Publish results now"
+                  >
+                    {publishing ? 'Publishing…' : 'Publish results now'}
+                  </button>
+                )}
+              </>
             )}
           </>
-        ) : (
-          <div className="glass-card rounded-lg p-4" style={{ color: 'var(--muted)' }}>
-            <p className="text-sm">
-              🚫 Not in a group/round. Submit/aggregate disabled.
-            </p>
-          </div>
         )}
-
         {onRestart && (
-          <button className="nav-item rounded-lg px-4 py-3 font-medium text-sm animate-bounce-side" 
-                  onClick={onRestart}>
-            🔄 Start over
-          </button>
+          <button className="border rounded px-3 py-2" onClick={onRestart}>Start over</button>
         )}
       </div>
 
       {agg && (
-        <div className="glass-card rounded-lg p-5 mb-6 animate-fade-in-grow">
-          <h3 className="font-semibold text-lg mb-4 animate-text-pulse" 
-              style={{ color: 'var(--accent)' }}>
-            🤝 Group Aggregation
-          </h3>
-          
-          <div className="flex gap-2 mb-4 flex-wrap">
-            <div className="chip">
-              👥 {agg.submitters}{memberCount ? ` / ${memberCount}` : ''}
-            </div>
-            <div className="chip">
-              📨 {agg.messages_considered} messages
-            </div>
-          </div>
-
-          {consensusNames.length > 0 ? (
-            <CongratulationCard 
-              restaurantNames={consensusNames} 
-              isVisible={true} 
-            />
-          ) : (
-            <div className="glass-card rounded-lg p-4 mb-4" 
-                 style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
-              <p className="text-sm animate-text-pulse">⏳ No unanimous pick yet...</p>
-            </div>
-          )}
+        <div className="mb-6">
+          <h3 className="font-semibold mb-2">Group aggregation</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            Submitters: {agg.submitters} • Messages considered: {agg.messages_considered}
+          </p>
 
           {topPicks.length > 0 && (
-            <div className="animate-fade-in-up-delayed">
-              <p className="font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-                📊 Top Agreement:
-              </p>
-              <div className="space-y-2">
-                {topPicks.map((p, index) => (
-                  <div key={p.id} 
-                       className="glass-card rounded-lg p-3 flex justify-between items-center animate-fade-in" 
-                       style={{ animationDelay: `${index * 0.1}s` }}>
-                    <span className="font-medium" style={{ color: 'var(--foreground)' }}>
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '📍'} {p.name}
-                    </span>
-                    <div className="chip">
-                      {(p.pct * 100).toFixed(0)}%
-                    </div>
-                  </div>
+            <div>
+              <p className="font-semibold mb-1">Top agreement (percent):</p>
+              <ul className="list-disc ml-5">
+                {topPicks.map(p => (
+                  <li key={p.id}>
+                    ID {p.id}: {(p.pct * 100).toFixed(0)}%
+                  </li>
                 ))}
               </div>
             </div>
+          ) : (
+            <p className="mb-3 text-sm" style={{ color: 'var(--muted)' }}>No agreement data yet.</p>
+          )}
+          {topPicks.length === 0 && (
+            <p className="mb-3">No agreement data yet.</p>
           )}
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="glass-card rounded-lg p-5 animate-fade-in-up">
-          <h3 className="font-semibold text-lg mb-4 text-green-600 dark:text-green-400">
-            ✅ Accepted ({accepted.length})
-          </h3>
-          {accepted.length > 0 ? (
-            <div className="space-y-2">
-              {accepted.map((r, index) => (
-                <div key={r.id} 
-                     className="glass-card rounded-lg p-3 animate-fade-in hover:scale-105 transition-transform duration-200" 
-                     style={{ 
-                       animationDelay: `${index * 0.1}s`,
-                       background: 'var(--nav-item-hover)' 
-                     }}>
-                  <span className="font-medium animate-float" style={{ color: 'var(--foreground)' }}>
-                    🍽️ {r.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="glass-card rounded-lg p-4" 
-                 style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
-              <p className="text-sm animate-text-pulse">No restaurants accepted yet...</p>
-            </div>
-          )}
-        </div>
-        
-        <div className="glass-card rounded-lg p-5 animate-fade-in-up-delayed">
-          <h3 className="font-semibold text-lg mb-4 text-red-600 dark:text-red-400">
-            ❌ Rejected ({rejected.length})
-          </h3>
-          {rejected.length > 0 ? (
-            <div className="space-y-2">
-              {rejected.map((r, index) => (
-                <div key={r.id} 
-                     className="glass-card rounded-lg p-3 animate-fade-in opacity-70 hover:opacity-90 transition-opacity duration-200" 
-                     style={{ 
-                       animationDelay: `${index * 0.1}s`,
-                       background: 'var(--nav-item-bg)' 
-                     }}>
-                  <span className="font-medium" style={{ color: 'var(--muted)' }}>
-                    🚫 {r.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="glass-card rounded-lg p-4" 
-                 style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
-              <p className="text-sm animate-text-pulse">No restaurants rejected yet...</p>
-            </div>
-          )}
-        </div>
+      <div>
+        <h3 className="font-semibold mb-2">Accepted:</h3>
+        <ul>
+          {accepted.map(r => (
+            <li key={r.id}>{r.name}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="mt-4">
+        <h3 className="font-semibold mb-2">Rejected:</h3>
+        <ul>
+          {rejected.map(r => (
+            <li key={r.id}>{r.name}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );
