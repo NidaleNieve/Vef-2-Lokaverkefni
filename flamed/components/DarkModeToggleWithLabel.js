@@ -6,13 +6,11 @@ export default function DarkModeToggleWithLabel({ className = "", iconSize = 18 
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    // Default to dark mode unless user explicitly set light
     const savedDarkMode = localStorage.getItem('darkMode');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    const initialDarkMode = savedDarkMode !== null 
-      ? savedDarkMode === 'true' 
-      : systemPrefersDark;
-    
+    const initialDarkMode = savedDarkMode !== null
+      ? savedDarkMode === 'true'
+      : true; // force dark mode default
     setDarkMode(initialDarkMode);
     document.documentElement.classList.toggle('dark', initialDarkMode);
   }, []);
