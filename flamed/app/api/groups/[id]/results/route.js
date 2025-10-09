@@ -86,21 +86,19 @@ export async function GET(req, { params }) {
       session_id: sessionId,
       submitters: submitterCount,
       messages_considered: parsed.length,
+      is_host: await isHost(supa, groupId, user.id),
     })
   }
 
   // Reikna út prósentur fyrir hvert id (eftir að hefur verið birt)
-  const percentages = {}
-  if (submitterCount > 0) {
-    for (const [rid, c] of Object.entries(counts)) {
-      percentages[rid] = c / submitterCount
-    }
-  }
-
-  //finn út hvaða veitingastaðir eru 'consensus' þ.e. samþykktir af öllum
-  const consensus_ids = Object.entries(counts)
-    .filter(([, c]) => c === submitterCount && submitterCount > 0)
-    .map(([rid]) => Number(rid))
+  const top_agreement = Object.entries(counts)
+    .filter(([rid]) => rid && rid !== 'null' && rid !== 'undefined')
+    .map(([rid, c]) => ({ id: rid, pct: submitterCount > 0 ? c / submitterCount : 0 }))
+    .sort((a, b) => {
+      if (b.pct !== a.pct) return b.pct - a.pct
+      return String(a.id).localeCompare(String(b.id))
+    })
+    .slice(0, 5)
 
   //skila niðurstöðum ef að allt gekk vel
   return NextResponse.json({
@@ -110,8 +108,20 @@ export async function GET(req, { params }) {
     session_id: sessionId,
     submitters: submitterCount,
     messages_considered: parsed.length,
-    consensus_ids,
-    counts,
-    percentages,
+    top_agreement,
+    is_host: await isHost(supa, groupId, user.id),
   })
+}
+
+async function isHost(supa, groupId, userId) {
+  const { data, error } = await supa
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .limit(1)
+  if (error) return false
+  if (!Array.isArray(data) || data.length === 0) return false
+  const role = data[0]?.role
+  return role === 'host' || role === 'owner'
 }

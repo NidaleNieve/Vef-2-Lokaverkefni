@@ -25,7 +25,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { data: { user } } = await supa.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Optional: verify host role
   const { data: membership, error: mErr } = await supa
     .from('group_members')
     .select('role')
@@ -36,11 +35,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!Array.isArray(membership) || membership.length === 0) {
     return NextResponse.json({ error: 'Not a member of this group' }, { status: 403 })
   }
-  // if role check is required, uncomment:
-  // const role = membership[0]?.role
-  // if (role !== 'host' && role !== 'owner') {
-  //   return NextResponse.json({ error: 'Only host can publish' }, { status: 403 })
-  // }
+  const role = membership[0]?.role
+  if (role !== 'host' && role !== 'owner') {
+    return NextResponse.json({ error: 'Only host can publish' }, { status: 403 })
+  }
 
   const sessionId = await getLatestSessionId(supa, id)
   if (!sessionId) return NextResponse.json({ error: 'No active round/session' }, { status: 400 })

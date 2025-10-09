@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabaseBrowser } from '@/utils/supabase/browser';
 
 export default function Results({ restaurants, acceptedIds, rejectedIds, groupId, sessionId, onRestart }) {
   //fæ array af accepted rejected veitingastöðum
@@ -10,6 +11,8 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   const [submitted, setSubmitted] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [agg, setAgg] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [isHost, setIsHost] = useState(false);
   const [err, setErr] = useState('');
   const [published, setPublished] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -58,38 +61,38 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   }
 
   // Fetch results status (published or not) and aggregation once published
-  async function refreshGroupResult() {
-    //error handling fyrir groupId og sessionId
-    if (!groupId || !sessionId) { 
-      setErr('Missing groupId or sessionId.');//nota setErr til þess að geta svo byrt villu
-      return;
+  const refreshGroupResult = useCallback(async () => {
+    if (!groupId || !sessionId) {
+      setErr('Missing groupId or sessionId.');
+      return false;
     }
-    setErr(''); //ef engin villa, þá set ég hana blank
-    setFetching(true); //stilli set fetching til þess að láta vita að það sé verið að fetcha asynchronously
+    setErr('');
+    setFetching(true);
 
     try {
-      //sæki niðurstöður frá api endpointinu
       const res = await fetch(`/api/groups/${groupId}/results?session_id=${encodeURIComponent(sessionId)}`, {
         method: 'GET',
         credentials: 'include',
       });
-
-      //error handling fyrir response
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
-  setPublished(!!j?.published);
-  if (j?.published) setAgg(j);
-    //hef error handling fyrir allt þetta
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || `Fetch failed (${res.status})`);
+      const publishedFlag = !!j?.published;
+      setPublished(publishedFlag);
+      setStatus(j);
+      setIsHost(!!j?.is_host);
+      if (publishedFlag) setAgg(j);
+      return publishedFlag;
     } catch (e) {
       setErr(e.message || 'Failed to fetch results.');
+      return false;
     } finally {
       setFetching(false);
     }
-  }
+  }, [groupId, sessionId]);
 
   // Host control: publish results for the current session immediately
   async function publishNow() {
-    if (!groupId) return;
+    if (!groupId || !isHost) return;
     setErr('');
     setPublishing(true);
     try {
@@ -148,27 +151,54 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
   let timer = null;
     async function tick() {
       if (cancelled) return;
-      await refreshGroupResult();
-      if (!published) timer = setTimeout(tick, 8000);
+      const isPublished = await refreshGroupResult();
+      if (!isPublished) timer = setTimeout(tick, 8000);
     }
     tick();
 
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, sessionId]);
+  }, [groupId, sessionId, refreshGroupResult, submitted]);
+
+  // Listen for new submissions or publish messages to refresh immediately
+  useEffect(() => {
+    if (!groupId || !sessionId) return;
+    const supa = supabaseBrowser();
+    const channel = supa
+      .channel(`results:${groupId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, (payload) => {
+        try {
+          const j = JSON.parse(payload?.new?.content || '{}');
+          if (!j || j.session_id !== sessionId) return;
+          if (j.type === 'swipe_results' || j.type === 'publish_results') {
+            refreshGroupResult();
+          }
+        } catch {}
+      })
+      .subscribe();
+
+    return () => {
+      try { supa.removeChannel(channel); } catch {}
+    };
+  }, [groupId, sessionId, refreshGroupResult]);
 
   //finn nöfn vetitingastaðan úr id
-  const idToName = new Map(restaurants.map(r => [r.id, r.name]));
-  //finn nöfn af consensus veitingastaðunum
-  const consensusNames = (agg?.consensus_ids || []).map(id => idToName.get(id) || String(id));
+  const idToName = useMemo(() => new Map(restaurants.map(r => [String(r.id), r.name])), [restaurants]);
 
-  // Sort top picks by percentage consensus
-  const topPicks = agg?.percentages
-    ? Object.entries(agg.percentages)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([id, pct]) => ({ id, name: idToName.get(Number(id)) || String(id), pct }))
-    : [];
+  const topPicks = useMemo(() => {
+    if (!Array.isArray(agg?.top_agreement)) return [];
+    return agg.top_agreement
+      .filter(item => item && item.id != null)
+      .slice(0, 5)
+      .map(item => {
+        const key = String(item.id);
+        return {
+          id: key,
+          name: idToName.get(key) || `ID ${key}`,
+          pct: typeof item.pct === 'number' ? item.pct : 0,
+        };
+      });
+  }, [agg?.top_agreement, idToName]);
 
   //Temp html
   return (
@@ -186,8 +216,9 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
           <>
             <p className="text-sm text-gray-600">
               {published ? 'Results have been published.' : 'Waiting for host to publish results…'}
+              {status?.submitters != null ? ` • submissions received: ${status.submitters}` : ''}
               {` `}
-              {`(`}submitted: {submitted ? 'yes' : 'no'}{`)`}
+              {`(`}you submitted: {submitted ? 'yes' : 'no'}{`)`}
             </p>
             {!published && (
               <>
@@ -199,14 +230,16 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
                 >
                   {fetching ? 'Refreshing…' : 'Refresh now'}
                 </button>
-                <button
-                  className="border rounded px-3 py-2"
-                  onClick={publishNow}
-                  disabled={publishing}
-                  title="Publish results now (host)"
-                >
-                  {publishing ? 'Publishing…' : 'Publish results now'}
-                </button>
+                {isHost && (
+                  <button
+                    className="border rounded px-3 py-2"
+                    onClick={publishNow}
+                    disabled={publishing}
+                    title="Publish results now"
+                  >
+                    {publishing ? 'Publishing…' : 'Publish results now'}
+                  </button>
+                )}
               </>
             )}
           </>
@@ -223,17 +256,6 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
             Submitters: {agg.submitters} • Messages considered: {agg.messages_considered}
           </p>
 
-          {consensusNames.length > 0 ? (
-            <div className="mb-3">
-              <p className="font-semibold">Consensus pick(s):</p>
-              <ul className="list-disc ml-5">
-                {consensusNames.map((n, i) => <li key={i}>{n}</li>)}
-              </ul>
-            </div>
-          ) : (
-            <p className="mb-3">No unanimous pick yet.</p>
-          )}
-
           {topPicks.length > 0 && (
             <div>
               <p className="font-semibold mb-1">Top agreement (percent):</p>
@@ -245,6 +267,9 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
                 ))}
               </ul>
             </div>
+          )}
+          {topPicks.length === 0 && (
+            <p className="mb-3">No agreement data yet.</p>
           )}
         </div>
       )}

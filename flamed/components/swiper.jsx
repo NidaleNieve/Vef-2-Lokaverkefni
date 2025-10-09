@@ -97,32 +97,11 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
 
     //læsir UI þegar verið er að swipa með tökkum
     const [uiLocked, setUiLocked] = useState(false);
-    const [publishing, setPublishing] = useState(false);
 
     //passa að takkarnir triggeri ekki sama cardið oftar en einu sinni. Unlocka þegar næsta card er komið
     useEffect(() => {
         setUiLocked(false);
     }, [current]);
-
-    // Host control: publish results for current session
-    async function publishNow() {
-        if (!groupId || !sessionId) return;
-        try {
-            setPublishing(true);
-            const res = await fetch(`/api/groups/${groupId}/publish`, {
-                method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include'
-            })
-            const j = await res.json().catch(() => ({}))
-            if (!res.ok) throw new Error(j?.error || `Publish failed (${res.status})`)
-            // After publish, listener below will fast-forward to results; as a fallback, jump now
-            setCurrent(restaurants.length)
-        } catch (e) {
-            console.error(e)
-            alert(e?.message || 'Failed to publish results')
-        } finally {
-            setPublishing(false)
-        }
-    }
 
     // Listen for host publish event; on publish, auto-submit current picks and fast-forward to results
     useEffect(() => {
@@ -317,27 +296,6 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
 
     return (
         <div className="min-h-[28rem] flex flex-col items-center justify-center">
-
-            {/* Host/utility controls */}
-            {groupId && sessionId && (
-                <div className="w-full max-w-md mb-3 flex items-center justify-end gap-2">
-                    <button
-                        onClick={() => setCurrent(restaurants.length)}
-                        className="px-3 py-1 rounded border text-sm"
-                        title="Show results view"
-                    >
-                        Show results
-                    </button>
-                    <button
-                        onClick={publishNow}
-                        disabled={publishing}
-                        className="px-3 py-1 rounded border text-sm"
-                        title="Publish results now (host)"
-                    >
-                        {publishing ? 'Publishing…' : 'Publish results'}
-                    </button>
-                </div>
-            )}
 
             {/* Filters summary removed for a cleaner, more game-like experience */}
 
