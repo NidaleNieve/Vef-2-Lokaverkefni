@@ -196,7 +196,7 @@ export default function GroupSwipePage() {
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       {/* Game-like HUD */}
-      <div className="rounded-2xl p-6 shadow-lg border animate-fade-in" style={{ 
+      <div className="rounded-2xl p-4 max-w-sm shadow-lg border animate-fade-in mx-auto" style={{ 
         background: 'var(--nav-item-bg)', 
         borderColor: 'var(--nav-shadow)',
         boxShadow: '0 8px 32px var(--nav-shadow)'
@@ -205,7 +205,7 @@ export default function GroupSwipePage() {
           {/* Invite Code Section - Smaller box */}
           <div className="w-full">
             <div className="flex items-center justify-center gap-2">
-              <code className="px-3 py-2 rounded-lg text-base font-mono font-semibold tracking-wider border" style={{ 
+              <code className="px-2.5 py-1.5 rounded-md text-sm font-mono font-semibold tracking-wide border" style={{ 
                 background: 'var(--background)', 
                 color: 'var(--foreground)', 
                 borderColor: 'var(--accent)'
@@ -215,7 +215,7 @@ export default function GroupSwipePage() {
               {inviteCode && (
                 <button
                   onClick={handleCopyCode}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-out flex items-center gap-2 ${copyFeedback ? 'scale-95' : 'hover:scale-105 active:scale-95'}`}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ease-out flex items-center gap-1.5 ${copyFeedback ? 'scale-95' : 'hover:scale-105 active:scale-95'}`}
                   style={{ 
                     background: copyFeedback ? 'var(--accent)' : 'var(--background)',
                     color: copyFeedback ? 'var(--background)' : 'var(--foreground)',
@@ -225,14 +225,14 @@ export default function GroupSwipePage() {
                 >
                   {copyFeedback ? (
                     <>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       Copied!
                     </>
                   ) : (
                     <>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       Copy

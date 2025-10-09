@@ -10,6 +10,7 @@ export default function PreferencesPage() {
   const router = useRouter();
   const [groupId, setGroupId] = useState(spGroupId || '');
   const [inviteCode, setInviteCode] = useState('');
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
   const [hostPrefs, setHostPrefs] = useState({
     requireKidFriendly: false,
@@ -90,6 +91,25 @@ export default function PreferencesPage() {
     })()
   }, [groupId]);
 
+  const handleCopyCode = async () => {
+    if (!inviteCode) return
+    try {
+      await navigator.clipboard.writeText(inviteCode)
+      setCopyFeedback(true)
+      setTimeout(() => setCopyFeedback(false), 2000)
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = inviteCode
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopyFeedback(true)
+      setTimeout(() => setCopyFeedback(false), 2000)
+    }
+  }
+
   const handleSave = () => {
     if (!groupId) {
       alert('Missing group id');
@@ -105,18 +125,58 @@ export default function PreferencesPage() {
 
   return (
     <div className="max-w-xl mx-auto p-4 space-y-6">
+      {/* invite card before header */}
+      {inviteCode && (
+       <div className="rounded-2xl p-4 max-w-sm shadow-lg border animate-fade-in mx-auto"
+         style={{
+         background: 'var(--nav-item-bg)',
+           borderColor: 'var(--nav-shadow)',
+           boxShadow: '0 8px 32px var(--nav-shadow)'
+         }}>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <code className="px-2.5 py-1 rounded-md text-sm font-mono font-semibold tracking-wide border" style={{ 
+              background: 'var(--background)', 
+              color: 'var(--foreground)', 
+              borderColor: 'var(--accent)'
+            }}>
+              {inviteCode || 'Loading...'}
+            </code>
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ease-out flex items-center gap-1.5 ${copyFeedback ? 'scale-95' : 'hover:scale-105 active:scale-95'}`}
+              style={{ 
+                background: copyFeedback ? 'var(--accent)' : 'var(--background)',
+                color: copyFeedback ? 'var(--background)' : 'var(--foreground)',
+                border: '1px solid var(--nav-shadow)'
+              }}
+              disabled={copyFeedback}
+            >
+              {copyFeedback ? (
+                <>
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="text-center animate-fade-in-up">
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
           Your Preferences
         </h1>
-        {inviteCode && (
-          <div className="mb-2">
-            <span className="px-3 py-1 rounded-full text-sm font-mono" style={{ background: 'var(--nav-item-hover)', color: 'var(--text-muted)', border: '1px solid var(--nav-shadow)' }}>
-              Invite: {inviteCode}
-            </span>
-          </div>
-        )}
         <p className="text-sm px-4 py-2 rounded-full inline-block" style={{ 
           color: 'var(--muted)',
           backgroundColor: 'var(--nav-item-hover)'
@@ -124,6 +184,7 @@ export default function PreferencesPage() {
           Step 3 of 3: Set groups personal preferences
         </p>
       </div>
+
 
         {/*
       <div className="mb-4 text-sm text-center" style={{ color: 'var(--muted)' }}>
