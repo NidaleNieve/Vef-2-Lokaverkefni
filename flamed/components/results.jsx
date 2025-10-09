@@ -389,7 +389,7 @@ export default function Results({
           </h3>
           <div className="flex gap-2 mb-4 flex-wrap">
             <div className="chip">👥 {agg.submitters}{memberCount ? ` / ${memberCount}` : ''}</div>
-            <div className="chip">📨 {agg.messages_considered} messages</div>
+            <div className="chip">📨 {agg.messages_considered / 2 /* Það eru alltaf sent tvö skilaboð, deili með tveimum*/} messages</div>
             {locError && <div className="chip" title={locError}>📍 Location off</div>}
           </div>
           {topPicks.length > 0 ? (
