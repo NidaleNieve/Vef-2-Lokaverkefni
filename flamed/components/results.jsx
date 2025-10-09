@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabaseBrowser } from '@/utils/supabase/browser';
+import Image from 'next/image';
 
 export default function Results({
   restaurants = [],
@@ -162,6 +163,21 @@ export default function Results({
       .map(it => ({ id: String(it.id), pct: typeof it.pct === 'number' ? it.pct : 0 }));
   }, [agg?.top_agreement]);
 
+  // Selected top pick (default first)
+  const [selectedTopId, setSelectedTopId] = useState(null);
+  useEffect(() => {
+    if (topPicks.length > 0 && !selectedTopId) setSelectedTopId(topPicks[0].id);
+  }, [topPicks, selectedTopId]);
+
+  const selectedRestaurant = useMemo(() => {
+    if (!selectedTopId) return null;
+    return restaurants.find(r => String(r.id) === String(selectedTopId)) || null;
+  }, [restaurants, selectedTopId]);
+
+  // Collapse states
+  const [showAccepted, setShowAccepted] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
+
   // Mark results viewed for navbar logic
   useEffect(() => {
     try { if (groupId) localStorage.setItem('activeGameResultsWatched', String(groupId)); } catch {}
@@ -193,16 +209,7 @@ export default function Results({
             >
               {submitted ? '✅ Submitted' : (submitting ? '⏳ Submitting…' : '📤 Submit picks')}
             </button>
-            {!published && (
-              <button
-                className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${fetching ? 'animate-pulse-shrink' : ''}`}
-                onClick={refreshGroupResult}
-                disabled={fetching}
-                title="Fetch latest status"
-              >
-                {fetching ? '🔄 Refreshing…' : '🔄 Refresh status'}
-              </button>
-            )}
+            {/* Manual refresh removed – auto polling handles updates */}
             {!published && isHost && (
               <button
                 className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${publishing ? 'animate-pulse-shrink' : ''}`}
@@ -210,7 +217,7 @@ export default function Results({
                 disabled={publishing}
                 title="Publish results now (host only)"
               >
-                {publishing ? '📣 Publishing…' : '📣 Publish results'}
+                {publishing ? '📣 Publishing…' : '📣 View results and End Game'}
               </button>
             )}
             <div className="chip self-center animate-fade-in text-xs">
@@ -251,20 +258,70 @@ export default function Results({
           </div>
 
           {topPicks.length > 0 ? (
-            <div className="animate-fade-in-up-delayed w-full">
-              <p className="font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-                📊 Top Agreement (IDs only):
-              </p>
-              <div className="space-y-2">
-                {topPicks.map((p, index) => (
-                  <div key={p.id} className="glass-card rounded-lg p-3 flex justify-between items-center animate-fade-in" style={{ animationDelay: `${index * 0.08}s` }}>
-                    <span className="font-mono text-sm" style={{ color: 'var(--foreground)' }}>
-                      {p.id}
-                    </span>
-                    <div className="chip text-xs">{(p.pct * 100).toFixed(0)}%</div>
+            <div className="w-full space-y-4 animate-fade-in-up-delayed">
+              {/* Detailed primary selection */}
+              <div className="glass-card rounded-lg p-4 border border-[var(--accent)]">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative w-full md:w-56 h-40 md:h-40 rounded overflow-hidden bg-[var(--nav-item-bg)] flex items-center justify-center">
+                    {selectedRestaurant?.square_img_url || selectedRestaurant?.hero_img_url ? (
+                      <Image
+                        src={selectedRestaurant.square_img_url || selectedRestaurant.hero_img_url}
+                        alt={selectedRestaurant?.name || 'Restaurant'}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs text-[var(--muted)]">No image</span>
+                    )}
                   </div>
-                ))}
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-semibold text-lg" style={{ color: 'var(--foreground)' }}>
+                        {selectedRestaurant?.name || 'Top Pick'}
+                      </h4>
+                      <div className="chip text-xs">
+                        {(topPicks.find(p => p.id === selectedTopId)?.pct * 100 || 0).toFixed(0)}%
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                      {selectedRestaurant?.parent_city && <span className="chip">📍 {selectedRestaurant.parent_city}</span>}
+                      {selectedRestaurant?.price_tag && <span className="chip">� {selectedRestaurant.price_tag}</span>}
+                      {selectedRestaurant?.avg_rating != null && <span className="chip">⭐ {selectedRestaurant.avg_rating?.toFixed(1)}</span>}
+                      {Array.isArray(selectedRestaurant?.cuisines) && selectedRestaurant.cuisines.slice(0,4).map(c => (
+                        <span key={c} className="chip">{c}</span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-[var(--muted)]">
+                      ID: <span className="font-mono">{selectedTopId}</span>
+                    </p>
+                  </div>
+                </div>
               </div>
+              {/* Runner ups */}
+              {topPicks.length > 1 && (
+                <div className="space-y-2">
+                  <p className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Runner ups:</p>
+                  <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+                    {topPicks.slice(1).map((p, idx) => {
+                      const r = restaurants.find(r => String(r.id) === p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => setSelectedTopId(p.id)}
+                          className={`glass-card rounded-lg p-3 text-left border transition-all duration-150 hover:scale-[1.02] ${selectedTopId === p.id ? 'border-[var(--accent)]' : 'border-transparent'}`}
+                          style={{ animationDelay: `${idx * 0.05}s` }}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-mono text-xs truncate" style={{ color: 'var(--foreground)' }}>{p.id}</span>
+                            <span className="chip text-[10px]">{(p.pct * 100).toFixed(0)}%</span>
+                          </div>
+                          <p className="text-xs text-[var(--muted)] truncate">{r?.name || 'Unknown'}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className="mb-3 text-sm" style={{ color: 'var(--muted)' }}>No agreement data yet.</p>
@@ -273,37 +330,53 @@ export default function Results({
       )}
 
       <div className="space-y-6">
-        <div className="glass-card rounded-lg p-5 animate-fade-in-up">
-          <h3 className="font-semibold text-lg mb-4 text-green-600 dark:text-green-400">✅ Accepted ({accepted.length})</h3>
-          {accepted.length > 0 ? (
-            <div className="space-y-2">
-              {accepted.map((r, i) => (
-                <div key={r.id} className="glass-card rounded-lg p-3 animate-fade-in hover:scale-105 transition-transform duration-200" style={{ animationDelay: `${i * 0.1}s`, background: 'var(--nav-item-hover)' }}>
-                  <span className="font-medium animate-float" style={{ color: 'var(--foreground)' }}>🍽️ {r.name}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="glass-card rounded-lg p-4" style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
-              <p className="text-sm animate-text-pulse">No restaurants accepted yet...</p>
-            </div>
+        <div className="glass-card rounded-lg p-4 animate-fade-in-up">
+          <button
+            onClick={() => setShowAccepted(s => !s)}
+            className="w-full flex justify-between items-center font-semibold text-green-600 dark:text-green-400 mb-2"
+          >
+            <span>✅ Accepted ({accepted.length})</span>
+            <span className="text-xs chip">{showAccepted ? 'Hide' : 'Show'}</span>
+          </button>
+          {showAccepted && (
+            accepted.length > 0 ? (
+              <div className="space-y-2">
+                {accepted.map((r, i) => (
+                  <div key={r.id} className="glass-card rounded-lg p-3 animate-fade-in hover:scale-105 transition-transform duration-200" style={{ animationDelay: `${i * 0.1}s`, background: 'var(--nav-item-hover)' }}>
+                    <span className="font-medium animate-float" style={{ color: 'var(--foreground)' }}>🍽️ {r.name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card rounded-lg p-4" style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
+                <p className="text-sm animate-text-pulse">No restaurants accepted yet...</p>
+              </div>
+            )
           )}
         </div>
 
-        <div className="glass-card rounded-lg p-5 animate-fade-in-up-delayed">
-          <h3 className="font-semibold text-lg mb-4 text-red-600 dark:text-red-400">❌ Rejected ({rejected.length})</h3>
-          {rejected.length > 0 ? (
-            <div className="space-y-2">
-              {rejected.map((r, i) => (
-                <div key={r.id} className="glass-card rounded-lg p-3 animate-fade-in opacity-70 hover:opacity-90 transition-opacity duration-200" style={{ animationDelay: `${i * 0.1}s`, background: 'var(--nav-item-bg)' }}>
-                  <span className="font-medium" style={{ color: 'var(--muted)' }}>🚫 {r.name}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="glass-card rounded-lg p-4" style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
-              <p className="text-sm animate-text-pulse">No restaurants rejected yet...</p>
-            </div>
+        <div className="glass-card rounded-lg p-4 animate-fade-in-up-delayed">
+          <button
+            onClick={() => setShowRejected(s => !s)}
+            className="w-full flex justify-between items-center font-semibold text-red-600 dark:text-red-400 mb-2"
+          >
+            <span>❌ Rejected ({rejected.length})</span>
+            <span className="text-xs chip">{showRejected ? 'Hide' : 'Show'}</span>
+          </button>
+          {showRejected && (
+            rejected.length > 0 ? (
+              <div className="space-y-2">
+                {rejected.map((r, i) => (
+                  <div key={r.id} className="glass-card rounded-lg p-3 animate-fade-in opacity-70 hover:opacity-90 transition-opacity duration-200" style={{ animationDelay: `${i * 0.1}s`, background: 'var(--nav-item-bg)' }}>
+                    <span className="font-medium" style={{ color: 'var(--muted)' }}>🚫 {r.name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card rounded-lg p-4" style={{ background: 'var(--nav-item-bg)', color: 'var(--muted)' }}>
+                <p className="text-sm animate-text-pulse">No restaurants rejected yet...</p>
+              </div>
+            )
           )}
         </div>
       </div>
