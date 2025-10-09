@@ -66,20 +66,36 @@ export default function Navbar() {
   useEffect(() => {
     const supabase = supabaseBrowser();
     let mounted = true;
-    (async () => {
+    const checkAuth = async () => {
       try {
         const { data } = await supabase.auth.getUser();
         if (mounted) setIsAuthed(!!data?.user);
       } catch {
         if (mounted) setIsAuthed(false);
       }
+    };
+    (async () => {
+      await checkAuth();
     })();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthed(!!session?.user);
     });
+    // Also respond to visibility/focus changes and custom auth events
+    const onFocus = () => { checkAuth(); };
+    const onVisibility = () => { if (document.visibilityState === 'visible') checkAuth(); };
+    const onCustomAuth = () => { checkAuth(); };
+    const onStorage = (e) => { if (e && e.key === 'auth:updated') checkAuth(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('auth:updated', onCustomAuth);
+    window.addEventListener('storage', onStorage);
     return () => {
       mounted = false;
       sub.subscription?.unsubscribe?.();
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('auth:updated', onCustomAuth);
+      window.removeEventListener('storage', onStorage);
     }
   }, []);
 

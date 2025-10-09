@@ -27,6 +27,7 @@ const getAvatarUrl = (seed) => {
 // dummy profile data
 export default function ProfilePage() {
   const supa = supabaseBrowser()
+  const [authChecked, setAuthChecked] = useState(false)
   // user profile state
   const [userProfile, setUserProfile] = useState({
     name: 'Guest',
@@ -59,18 +60,22 @@ export default function ProfilePage() {
     loadUserPreferences()
     ;(async () => {
       const { data: { user } } = await supa.auth.getUser()
-      if (user) {
-        setUserId(user.id)
-        const fullName = (user.user_metadata?.full_name as string) || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-        const joined = user?.created_at ?? '2024-01-15'
-        setUserProfile(prev => ({
-          ...prev,
-          name: fullName,
-          email: user.email || prev.email,
-          joinDate: joined.substring(0, 10)
-        }))
-        setNewName(fullName)
+      if (!user) {
+        // not signed in, redirect to signin
+        window.location.replace('/auth/signin?next=/profile')
+        return
       }
+      setAuthChecked(true)
+      setUserId(user.id)
+      const fullName = (user.user_metadata?.full_name as string) || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+      const joined = user?.created_at ?? '2024-01-15'
+      setUserProfile(prev => ({
+        ...prev,
+        name: fullName,
+        email: user.email || prev.email,
+        joinDate: joined.substring(0, 10)
+      }))
+      setNewName(fullName)
     })()
   }, [])
 
@@ -162,6 +167,8 @@ export default function ProfilePage() {
       
       if (json.ok) {
         // redirect to home page after successful sign out
+        try { localStorage.setItem('auth:updated', String(Date.now())); } catch {}
+        try { window.dispatchEvent(new Event('auth:updated')); } catch {}
         setTimeout(() => {
           window.location.href = '/'
         }, 1500)
@@ -171,6 +178,14 @@ export default function ProfilePage() {
     } finally {
       setSignOutLoading(false)
     }
+  }
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <div className="text-center text-sm" style={{ color: 'var(--muted)' }}>Checking session…</div>
+      </div>
+    )
   }
 
   return (

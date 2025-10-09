@@ -19,6 +19,7 @@ type MyGroup = {
 
 export default function GroupsPage() {
   const supa = supabaseBrowser() // connect to our database
+  const [authed, setAuthed] = useState<boolean | null>(null)
   const [groups, setGroups] = useState<MyGroup[]>([]) // list of all groups user is in
   const [loading, setLoading] = useState(true) // shows loading spinner while fetching
   const [error, setError] = useState<string | null>(null) // stores error messages
@@ -32,7 +33,17 @@ export default function GroupsPage() {
 
   // this runs when the page first loads
   useEffect(() => {
-    loadMyGroups() // go get all the groups from database
+    (async () => {
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user) {
+        setAuthed(false)
+        setLoading(false)
+        return
+      }
+      setAuthed(true)
+      loadMyGroups()
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // function to get all groups the user belongs to
@@ -173,6 +184,23 @@ export default function GroupsPage() {
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Unauthed gate
+  if (authed === false) {
+    return (
+      <div className="max-w-xl mx-auto p-6 mt-24 text-center space-y-6">
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>Groups</h1>
+        <p className="text-sm" style={{ color: 'var(--muted)' }}>
+          To use groups you must sign in or create an account.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/auth/signin" className="px-5 py-3 rounded-lg nav-item font-medium">Sign In</Link>
+          <Link href="/auth/signup" className="px-5 py-3 rounded-lg nav-item font-medium">Create Account</Link>
+        </div>
+        <p className="text-xs opacity-70" style={{ color: 'var(--muted)' }}>Access to chats, swipes, and group results requires an account.</p>
       </div>
     )
   }

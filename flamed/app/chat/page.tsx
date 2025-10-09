@@ -13,23 +13,28 @@ export default function ChatLanding() {
   const supa = supabaseBrowser()
   const [groups, setGroups] = useState<MyGroup[]>([])
   const [loading, setLoading] = useState(true)
+  const [authed, setAuthed] = useState<boolean | null>(null)
 
   useEffect(() => {
     (async () => {
       try {
-        // try redirect to last visited group if exists
+        const { data: { user } } = await supa.auth.getUser()
+        if (!user) {
+          setAuthed(false)
+          setLoading(false)
+          return
+        }
+        setAuthed(true)
         const last = typeof window !== 'undefined' ? localStorage.getItem('lastGroupId') : null
         if (last) {
           router.replace(`/groups/${last}`)
           return
         }
-
         const { data, error } = await supa.rpc('get_my_groups')
         if (error) throw error
         const arr = Array.isArray(data) ? (data as MyGroup[]) : []
         setGroups(arr)
         if (arr.length > 0) {
-          // redirect to first group automatically for now
           router.replace(`/groups/${arr[0].group_id}`)
         }
       } catch (e) {
@@ -44,6 +49,22 @@ export default function ChatLanding() {
     return (
       <div className="max-w-2xl mx-auto p-6 mt-24">
         <div className="h-32 rounded-2xl" style={{ background: 'var(--nav-item-bg)' }} />
+      </div>
+    )
+  }
+
+  if (authed === false) {
+    return (
+      <div className="max-w-xl mx-auto p-6 mt-24 text-center space-y-6">
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>Chat</h1>
+        <p className="text-sm" style={{ color: 'var(--muted)' }}>
+          To use chat you must sign in or create an account.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/auth/signin" className="px-5 py-3 rounded-lg nav-item font-medium">Sign In</Link>
+          <Link href="/auth/signup" className="px-5 py-3 rounded-lg nav-item font-medium">Create Account</Link>
+        </div>
+        <p className="text-xs opacity-70" style={{ color: 'var(--muted)' }}>Group messaging and results require an account.</p>
       </div>
     )
   }
