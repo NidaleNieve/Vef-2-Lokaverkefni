@@ -182,23 +182,17 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
     };
   }, [groupId, sessionId, refreshGroupResult]);
 
-  //finn nöfn vetitingastaðan úr id
-  const idToName = useMemo(() => new Map(restaurants.map(r => [String(r.id), r.name])), [restaurants]);
-
+  // Prepare top picks (ID + percentage only)
   const topPicks = useMemo(() => {
     if (!Array.isArray(agg?.top_agreement)) return [];
     return agg.top_agreement
       .filter(item => item && item.id != null)
       .slice(0, 5)
-      .map(item => {
-        const key = String(item.id);
-        return {
-          id: key,
-          name: idToName.get(key) || `ID ${key}`,
-          pct: typeof item.pct === 'number' ? item.pct : 0,
-        };
-      });
-  }, [agg?.top_agreement, idToName]);
+      .map(item => ({
+        id: String(item.id),
+        pct: typeof item.pct === 'number' ? item.pct : 0,
+      }));
+  }, [agg?.top_agreement]);
 
   //Temp html
   return (
@@ -262,7 +256,7 @@ export default function Results({ restaurants, acceptedIds, rejectedIds, groupId
               <ul className="list-disc ml-5">
                 {topPicks.map(p => (
                   <li key={p.id}>
-                    {p.name}: {(p.pct * 100).toFixed(0)}%
+                    ID {p.id}: {(p.pct * 100).toFixed(0)}%
                   </li>
                 ))}
               </ul>
