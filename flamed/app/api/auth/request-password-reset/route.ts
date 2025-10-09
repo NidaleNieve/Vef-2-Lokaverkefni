@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
 import { serverClient } from '@/utils/supabase/server'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-const REDIRECT_TO = `${SITE_URL}/auth/update-password`
-const ALLOWED_ORIGINS = [SITE_URL] // add your prod domain(s) too
+// Note: Build redirect URLs dynamically from the request origin to avoid localhost in production emails.
+// Keep env as a fallback only.
+const FALLBACK_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 export async function POST(req: Request) {
   try {
+    const url = new URL(req.url)
+    const origin = url.origin || FALLBACK_SITE_URL
+    const REDIRECT_TO = `${origin}/auth/update-password`
+    const ALLOWED_ORIGINS = [origin, FALLBACK_SITE_URL]
     // Basic CSRF-style check
-    const origin = req.headers.get('origin') || ''
+    const hdrOrigin = req.headers.get('origin') || ''
     const referer = req.headers.get('referer') || ''
-    const okOrigin = ALLOWED_ORIGINS.some(o => origin.startsWith(o) || referer.startsWith(o))
+    const okOrigin = ALLOWED_ORIGINS.some(o => hdrOrigin.startsWith(o) || referer.startsWith(o))
     if (!okOrigin) return NextResponse.json({ ok: true })
 
     const { email } = await req.json().catch(() => ({ email: '' }))
