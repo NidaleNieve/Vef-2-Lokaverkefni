@@ -6,7 +6,7 @@ Daníel, Kiara, Hörður
 =======
 ## Gastroswipe?
 
-![Homescreen Image](./ReadmeMedia/homescreen.png)
+![Homescreen Image](./ReadmeMedia/Homescreen.png)
 
 #### Game process:
 
@@ -29,7 +29,7 @@ Daníel, Kiara, Hörður
 
 #### Social Media Aspect:
 <div align="center">
-  <img src="(./ReadmeMedia/Profile.png" width="48%">
+  <img src="./ReadmeMedia/Profile.png" width="48%">
   <img src="./ReadmeMedia/Chat-Groups.png" width="48%">
 </div>
 
