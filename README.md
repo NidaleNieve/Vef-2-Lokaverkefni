@@ -63,6 +63,7 @@ Fall sem finnur veitingastaði sem allir eru sammála um að fara í.
 
 =======
 ### Daníel
+#### JavaScript and Game
 Vann í Leikja kerfinu, multiplayer logicinu, tengja backend við frontend, skipuleggja og raða verkefninu. Nánast allt Javascript.
 
 
@@ -74,11 +75,13 @@ xyz
 #### Frontend
 xyz
 
+=======
+### Samantekt og næstu skref
+
+Það á eftir að búa til leikina 
 
 
-
-
-
+=======
 
 ## WireFrame
 ![wireframe](./20250829_115336.jpg)
