@@ -351,24 +351,6 @@ export default function Results({
               {submitted ? '✅ Submitted' : (submitting ? '⏳ Submitting…' : '📤 Submit picks')}
             </button>
             {/* Manual refresh removed – auto polling handles updates */}
-            {!published && isHost && (
-              <>
-                <button
-                  className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${publishing ? 'animate-pulse-shrink' : ''}`}
-                  onClick={publishNow}
-                  disabled={publishing}
-                  title="Publish results now (host only)"
-                >
-                  {publishing ? '📣 Publishing…' : '📣 View results and End Game'}
-                </button>
-                <div className="glass-card rounded-lg px-4 py-2 border-2 border-[var(--accent)] animate-fade-in">
-                  <div className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
-                    👥 Submissions: {status?.submitters ?? agg?.submitters ?? 0} / {memberCount ?? '?'}
-                  </div>
-                  <div className="text-xs opacity-70">Live count • Updates automatically</div>
-                </div>
-              </>
-            )}
             {!published && !isHost && (
               <div className="chip self-center animate-fade-in text-xs">
                 {published ? '✅ Published' : '⌛ Waiting for publish'} • You submitted: {submitted ? 'yes' : 'no'}
@@ -391,6 +373,39 @@ export default function Results({
           </button>
         )}
       </div>
+
+      {/* Host submission counter and publish button - centered */}
+      {!published && isHost && groupId && sessionId && (
+        <div className="glass-card rounded-lg p-6 mb-6 animate-fade-in-grow">
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <div className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>
+                  {status?.submitters ?? agg?.submitters ?? 0}
+                </div>
+                <div className="text-2xl opacity-60">/</div>
+                <div className="text-3xl font-bold opacity-80">
+                  {memberCount ?? '?'}
+                </div>
+              </div>
+              <div className="text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
+                👥 Players Submitted
+              </div>
+              <div className="text-xs opacity-60">Updates live every {published ? '12' : '8'} seconds</div>
+            </div>
+            
+            <button
+              className={`nav-item rounded-lg px-6 py-4 font-semibold text-base transition-all duration-200 ${publishing ? 'animate-pulse-shrink' : 'hover:scale-105'}`}
+              onClick={publishNow}
+              disabled={publishing}
+              title="Publish results now (host only)"
+              style={{ minWidth: '250px' }}
+            >
+              {publishing ? '📣 Publishing…' : '� View Results & End Game'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {agg && (
         <div className="glass-card rounded-lg p-5 mb-6 animate-fade-in-grow">
