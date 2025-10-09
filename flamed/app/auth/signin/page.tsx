@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabaseBrowser } from '@/utils/supabase/browser'
 
 
 // main signin component
 export default function SigninPage() {
   const router = useRouter()
+  const search = useSearchParams()
   const supa = supabaseBrowser()
   const [checking, setChecking] = useState(true)
   // email input
@@ -28,12 +29,17 @@ export default function SigninPage() {
     (async () => {
       const { data: { user } } = await supa.auth.getUser()
       if (user) {
-        router.replace('/profile')
+        const rd = search?.get('redirect')
+        if (rd) {
+          router.replace(rd)
+        } else {
+          router.replace('/profile')
+        }
         return
       }
       setChecking(false)
     })()
-  }, [supa, router])
+  }, [supa, router, search])
 
 
   // this function runs when the form is submitted
@@ -55,8 +61,13 @@ export default function SigninPage() {
         // notify app about auth change for reactive nav
         try { localStorage.setItem('auth:updated', String(Date.now())); } catch {}
         try { window.dispatchEvent(new Event('auth:updated')); } catch {}
-        // redirect home when sign-in successful
-        router.replace('/?welcome=1')
+        // redirect to target if provided, else home/profile as before
+        const rd = search?.get('redirect')
+        if (rd) {
+          router.replace(rd)
+        } else {
+          router.replace('/?welcome=1')
+        }
         return
       }
     } catch (err: any) {

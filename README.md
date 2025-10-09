@@ -1,7 +1,7 @@
 # Vefforritun 2 - Verkefni 2
 ## Almenn lýsing og wireflows af Vefappi
 
-Daniel, Kiara, Hörður
+Daníel, Kiara, Hörður
 
 =======
 ## Flamed?
@@ -38,9 +38,9 @@ see [API.md](./flamed/docs/API.md).
 
 
 
+=======
 
-
-
+##
 
 
 

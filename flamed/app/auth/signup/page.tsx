@@ -1,15 +1,18 @@
 
 // this is the signup page for the app
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { supabaseBrowser } from '@/utils/supabase/browser'
 
 
 // main signup component
 export default function SignupPage() {
   const router = useRouter()
+  const supa = supabaseBrowser()
+  const [checking, setChecking] = useState(true)
   // email input
   const [email, setEmail] = useState('')
   // password input
@@ -22,6 +25,21 @@ export default function SignupPage() {
   const [result, setResult] = useState<any>(null)
   // show or hide password
   const [showPassword, setShowPassword] = useState(false)
+
+  // Redirect if already signed in (URL protection)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supa.auth.getUser()
+        if (user) {
+          router.replace('/profile')
+          return
+        }
+      } finally {
+        setChecking(false)
+      }
+    })()
+  }, [supa, router])
 
 
   // this function runs when the form is submitted
@@ -50,6 +68,14 @@ export default function SignupPage() {
     } finally {
       setLoading(false) // hide loading spinner
     }
+  }
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-sm opacity-70" style={{ color: 'var(--muted)' }}>Preparing sign up…</div>
+      </div>
+    )
   }
 
   return (

@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { supabaseBrowser } from '@/utils/supabase/browser';
 
 export default function HostSharePage() {
   const router = useRouter();
+  const supa = supabaseBrowser();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,6 +17,25 @@ export default function HostSharePage() {
   const [hostPrefs, setHostPrefs] = useState(null);
   const [starting, setStarting] = useState(false);
 
+  // Auth gate: require login at this step (after host prefs are set)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supa.auth.getUser();
+        if (!user) {
+          // Ensure pending prefs are saved so nothing is lost
+          // (hostPrefs might not be in state yet; preserve if present)
+          try {
+            if (hostPrefs) localStorage.setItem('hostPrefs:pending', JSON.stringify(hostPrefs));
+          } catch {}
+          const redirect = encodeURIComponent('/game/host/share');
+          router.replace(`/auth/signin?redirect=${redirect}`);
+          return;
+        }
+      } catch {}
+    })();
+  }, [supa, router, hostPrefs]);
+
   useEffect(() => {
     // Load pending prefs saved by host page
     const saved = localStorage.getItem('hostPrefs:pending');
@@ -23,7 +44,7 @@ export default function HostSharePage() {
     }
   }, []);
 
-  async function loadGroups() {
+  const loadGroups = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -38,9 +59,9 @@ export default function HostSharePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedGroupId]);
 
-  useEffect(() => { loadGroups(); }, []);
+  useEffect(() => { loadGroups(); }, [loadGroups]);
 
   async function createGroup() {
     const name = newGroupName.trim();

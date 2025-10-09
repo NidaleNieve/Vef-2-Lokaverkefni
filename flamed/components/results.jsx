@@ -401,7 +401,7 @@ export default function Results({
               title="Publish results now (host only)"
               style={{ minWidth: '250px' }}
             >
-              {publishing ? '📣 Publishing…' : '� View Results & End Game'}
+              {publishing ? '📣 Publishing…' : '📣 View Results & End Game'}
             </button>
           </div>
         </div>
