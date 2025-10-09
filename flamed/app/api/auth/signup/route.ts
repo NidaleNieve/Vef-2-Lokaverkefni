@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   const { email, password, full_name } = await req.json()
   const supa = await serverClient()
   const url = new URL(req.url)
-  const origin = url.origin || (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+  const origin = url.origin || (process.env.NEXT_PUBLIC_SITE_URL || 'http://gastroswipe.app')
   const emailRedirectTo = `${origin}/auth/signin?welcome=1`
   const { data, error } = await supa.auth.signUp({
     email,

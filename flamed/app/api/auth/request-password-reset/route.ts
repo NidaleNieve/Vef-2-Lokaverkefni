@@ -3,7 +3,7 @@ import { serverClient } from '@/utils/supabase/server'
 
 // Note: Build redirect URLs dynamically from the request origin to avoid localhost in production emails.
 // Keep env as a fallback only.
-const FALLBACK_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const FALLBACK_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://gastroswipe.app'
 
 export async function POST(req: Request) {
   try {
