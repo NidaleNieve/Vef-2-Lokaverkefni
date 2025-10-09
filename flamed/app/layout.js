@@ -16,9 +16,16 @@ export const metadata = {
   title: "Gastroswipe",
   description: "Find the perfect restaurant for your group!",
   icons: {
-    icon: "/logo_720.png",
-    shortcut: "/logo_720.png",
-    apple: "/logo_720.png",
+    icon: [
+      { url: "/logo_720.png", type: "image/png", sizes: "any" },
+      { url: "/logo_48x48.png", type: "image/png", sizes: "48x48" },
+    ],
+    shortcut: [
+      { url: "/logo_48x48.png", type: "image/png", sizes: "48x48" },
+    ],
+    apple: [
+      { url: "/logo_720.png", type: "image/png", sizes: "180x180" },
+    ],
   },
 };
 
