@@ -1,14 +1,17 @@
 
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { supabaseBrowser } from '@/utils/supabase/browser'
 
 
 // main signin component
 export default function SigninPage() {
   const router = useRouter()
+  const supa = supabaseBrowser()
+  const [checking, setChecking] = useState(true)
   // email input
   const [email, setEmail] = useState('')
   // password input
@@ -19,6 +22,18 @@ export default function SigninPage() {
   const [result, setResult] = useState<any>(null)
   // show or hide password
   const [showPassword, setShowPassword] = useState(false)
+
+  // Redirect if already signed in
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supa.auth.getUser()
+      if (user) {
+        router.replace('/profile')
+        return
+      }
+      setChecking(false)
+    })()
+  }, [supa, router])
 
 
   // this function runs when the form is submitted
@@ -37,6 +52,9 @@ export default function SigninPage() {
       const json = await res.json()
       setResult(json)
       if (json?.ok) {
+        // notify app about auth change for reactive nav
+        try { localStorage.setItem('auth:updated', String(Date.now())); } catch {}
+        try { window.dispatchEvent(new Event('auth:updated')); } catch {}
         // redirect home when sign-in successful
         router.replace('/?welcome=1')
         return
@@ -47,6 +65,14 @@ export default function SigninPage() {
     } finally {
       setLoading(false) // hide loading spinner
     }
+  }
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-sm opacity-70" style={{ color: 'var(--muted)' }}>Preparing sign in…</div>
+      </div>
+    )
   }
 
   return (

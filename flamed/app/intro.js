@@ -98,7 +98,13 @@ export default function Intro() {
       setGroupId(gid);
       setIsHost(false);
       setReadyToSwipe(false);
-      localStorage.setItem('lastGroupId', gid);
+      // Persist group + invite so downstream screens can show the invite chip immediately
+      try {
+        localStorage.setItem('lastGroupId', gid);
+        localStorage.setItem('activeGameGroupId', gid);
+        try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {}
+        localStorage.setItem('activeGameInviteCode', code);
+      } catch {}
       router.push(`/game/preferences?groupId=${encodeURIComponent(gid)}`);
     } catch (err) {
       alert(err?.message || 'Failed to join group');

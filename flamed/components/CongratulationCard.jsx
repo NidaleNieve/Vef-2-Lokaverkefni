@@ -129,8 +129,7 @@ export default function CongratulationCard({ restaurantNames, isVisible }) {
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 1, duration: 0.6 }}
-        >
-          Time to pick a game! 
+        > 
         </motion.p>
       </div>
 

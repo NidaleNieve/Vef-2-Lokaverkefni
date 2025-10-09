@@ -71,16 +71,26 @@ export default function HostSharePage() {
     });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) { alert(j?.error || `Failed to create invite (${res.status})`); return; }
-    setInviteCode(j?.code || '');
+    const code = j?.code || ''
+    setInviteCode(code);
+    try {
+      if (code) localStorage.setItem('activeGameInviteCode', String(code))
+      if (selectedGroupId) {
+        localStorage.setItem('activeGameGroupId', String(selectedGroupId))
+        try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {}
+      }
+    } catch {}
   }
 
   async function startRoundAndAnnounce() {
     if (!selectedGroupId) { alert('Pick a group first'); return; }
+    if (!inviteCode) { alert('Generate an invite code before starting'); return }
     setStarting(true);
     try {
       // Persist host prefs under the selected group as well
       if (hostPrefs) localStorage.setItem(`hostPrefs:${selectedGroupId}`, JSON.stringify(hostPrefs));
       localStorage.setItem('lastGroupId', selectedGroupId);
+      try { localStorage.setItem('activeGameGroupId', selectedGroupId); try { localStorage.setItem('activeGameCreatedAt', new Date().toISOString()) } catch {} } catch {}
 
       // Start a game round for this group
       const res = await fetch(`/api/groups/${selectedGroupId}/round`, {
@@ -270,16 +280,21 @@ export default function HostSharePage() {
 
         {/* Start Game Section */}
         <section>
+          {!inviteCode && (
+            <div className="mb-3 p-3 rounded-lg text-sm" style={{ background: 'var(--nav-item-hover)', color: 'var(--muted)', border: '1px solid var(--nav-shadow)' }}>
+              Generate an invite code to enable starting the game.
+            </div>
+          )}
           <button 
             className="w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group"
             style={{
-              backgroundColor: (selectedGroupId && !starting) ? 'var(--accent)' : 'var(--nav-item-hover)',
-              color: (selectedGroupId && !starting) ? 'var(--nav-text)' : 'var(--muted)',
+              backgroundColor: (selectedGroupId && inviteCode && !starting) ? 'var(--accent)' : 'var(--nav-item-hover)',
+              color: (selectedGroupId && inviteCode && !starting) ? 'var(--nav-text)' : 'var(--muted)',
               '--tw-ring-color': 'var(--accent)',
-              boxShadow: (selectedGroupId && !starting) ? '0 6px 20px rgba(170, 96, 200, 0.4)' : 'none'
+              boxShadow: (selectedGroupId && inviteCode && !starting) ? '0 6px 20px rgba(170, 96, 200, 0.4)' : 'none'
             }}
             onClick={startRoundAndAnnounce} 
-            disabled={!selectedGroupId || starting}
+            disabled={!selectedGroupId || !inviteCode || starting}
           >
             <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300" style={{
               background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 100%)'
@@ -295,7 +310,7 @@ export default function HostSharePage() {
                 </>
               ) : (
                 <>
-                  Start Game & Notify Players
+                  Start Game
                   <svg className="w-6 h-6 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
