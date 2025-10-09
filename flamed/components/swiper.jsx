@@ -227,17 +227,34 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
 
     //sýnir loading
     if (loading) {
-        return <div className="text-gray-600">Loading...</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-var(--accent) mb-4"></div>
+                <div style={{color: 'var(--muted)'}}>Loading restaurants...</div>
+            </div>
+        );
     }
 
     //error handling, ef enginn veitingastaður fundinn
     if (restaurants.length === 0) {
-        return <div className="text-red-600">No restaurants found.</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-96 text-center p-6">
+                <div className="text-4xl mb-4" style={{color: 'var(--muted)'}}>🍽️</div>
+                <div style={{color: 'var(--muted)'}} className="text-lg mb-2">No restaurants found</div>
+                <div style={{color: 'var(--muted)'}} className="text-sm">Try adjusting your preferences</div>
+            </div>
+        );
     }
 
     //sýnir generic error 
     if (error) {
-        return <div className="text-red-600">Error: {error}</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-96 text-center p-6">
+                <div className="text-4xl mb-4" style={{color: 'var(--muted)'}}>⚠️</div>
+                <div style={{color: 'var(--muted)'}} className="text-lg mb-2">Something went wrong</div>
+                <div style={{color: 'var(--muted)'}} className="text-sm">{error}</div>
+            </div>
+        );
     }
 
     const t = restaurants[current];
@@ -258,13 +275,22 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
 
     //byrti loading eða error ef í group ef round er ekki byrjað
     if (groupId && roundLoading) {
-        return <div className="text-gray-600">Loading game…</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-var(--accent) mb-4"></div>
+                <div style={{color: 'var(--muted)'}}>Loading game...</div>
+            </div>
+        );
     }
     if (groupId && sessionId === null) {
         return (
-            <div className="text-gray-700 dark:text-gray-300">
-                <p>No active game in this group. Ask the host to start a round.</p>
-                {roundError && <p className="text-red-600 mt-2">{roundError}</p>}
+            <div className="flex flex-col items-center justify-center min-h-96 text-center p-6">
+                <div className="text-4xl mb-4" style={{color: 'var(--muted)'}}>🎮</div>
+                <div style={{color: 'var(--foreground)'}} className="mb-4">
+                    <p className="text-lg font-medium mb-2">No active game</p>
+                    <p className="text-sm">Ask the host to start a round</p>
+                </div>
+                {roundError && <p style={{color: 'var(--muted)'}} className="text-sm mt-2">{roundError}</p>}
             </div>
         );
     }
@@ -295,11 +321,11 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
     };
 
     return (
-        <div className="min-h-[28rem] flex flex-col items-center justify-center">
+        <div className="min-h-[32rem] flex flex-col items-center justify-center px-4">
 
             {/* Filters summary removed for a cleaner, more game-like experience */}
 
-            <div className="relative w-72 h-96">
+            <div className="relative w-80 h-[28rem] mb-8">
                 {/*Animate Presence leyfir exit animation að virka vel og hverfa*/}
                 <AnimatePresence initial={false} mode="popLayout">
                     {visibleCards.map((restaurant, index) => {
@@ -323,42 +349,66 @@ export default function Swiper({ groupId, hostPreferences = {}, playerPreference
                 </AnimatePresence>
             </div>
 
-            <div className="mt-8 pt-2 px-2 sm:px-0 flex items-center gap-3">
-                
-                <button onClick={() => triggerAction('reject')}
-                    aria-label="Reject" 
-                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-red-600 dark:text-red-400 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 hover:bg-red-50/60 dark:hover:bg-red-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-95 active:-translate-y-0.5 active:shadow-inner">
+            <div className="flex flex-col items-center gap-6 w-full max-w-sm">
+                <div className="flex items-center justify-center gap-4 w-full">
                     
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <span className="hidden md:inline">Reject</span>
-                </button>
+                    <button 
+                        onClick={() => triggerAction('reject')}
+                        aria-label="Reject" 
+                        className="group inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus:outline-none active:scale-95 active:translate-y-0"
+                        style={{
+                            backgroundColor: 'var(--background)',
+                            border: '2px solid var(--muted)',
+                            color: 'var(--muted)'
+                        }}
+                    >
+                        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
 
-                <button onClick={() => triggerAction('skip')}
-                    aria-label="Skip"
-                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600 hover:bg-gray-50/60 dark:hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner">
-                    
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="9" />
-                        <path strokeLinecap="round" d="M8 12h8" />
-                    </svg>
-                    <span className="hidden md:inline">Skip</span>
-                </button>
+                    <button 
+                        onClick={() => triggerAction('skip')}
+                        aria-label="Skip"
+                        className="group inline-flex items-center justify-center w-16 h-16 rounded-full shadow-lg transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus:outline-none active:scale-95 active:translate-y-0"
+                        style={{
+                            backgroundColor: 'var(--background)',
+                            border: '2px solid var(--foreground)',
+                            color: 'var(--foreground)'
+                        }}
+                    >
+                        <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="9" />
+                            <path strokeLinecap="round" d="M8 12h8" />
+                        </svg>
+                    </button>
 
-                <button onClick={() => triggerAction('accept')}
-                    aria-label="Accept"
-                    className="group inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-black/80 px-3 md:px-4 py-2 font-medium text-green-600 dark:text-green-400 shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50/60 dark:hover:bg-green-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-black active:scale-98 active:-translate-y-0.5 active:shadow-inner">
+                    <button 
+                        onClick={() => triggerAction('accept')}
+                        aria-label="Accept"
+                        className="group inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus:outline-none active:scale-95 active:translate-y-0"
+                        style={{
+                            backgroundColor: 'var(--accent)',
+                            border: '2px solid var(--accent)',
+                            color: 'var(--background)'
+                        }}
+                    >
+                        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </button>
                     
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="hidden md:inline">Accept</span>
-                </button>
-                
-            </div>
-            <div className="text-sm text-gray-500 mt-4">
-                {current + 1} / {restaurants.length}
+                </div>
+
+                <div className="flex items-center gap-3 text-sm font-medium">
+                    <span style={{color: 'var(--muted)'}}>Reject</span>
+                    <span style={{color: 'var(--foreground)'}}>Skip</span>
+                    <span style={{color: 'var(--accent)'}}>Accept</span>
+                </div>
+
+                <div className="text-sm mt-2" style={{color: 'var(--muted)'}}>
+                    {current + 1} of {restaurants.length}
+                </div>
             </div>
         </div>
     );
@@ -500,19 +550,19 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
             transition={{ type: 'spring', stiffness: 260, damping: 22 }}
         >
             <motion.div
-                //nota tailwind fyrir sum style til þess að stylea fyrir dark mode létllega
-                className="bg-white dark:bg-black 
-                            shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_5px_rgba(128,128,128,0.2)] 
-                            border border-gray-300 dark:border-gray-700
-                            [--drag-shadow:0_8px_25px_rgba(0,0,0,0.35)] 
-                            dark:[--drag-shadow:0_8px_15px_rgba(128,128,128,0.25)]"
+                //using global CSS variables for consistent theming
+                className="glass-card"
                     style={{
+                    background: 'var(--background)',
+                    border: '2px solid var(--muted)',
+                    boxShadow: '0 8px 25px var(--nav-shadow)',
+                    '--drag-shadow': '0 15px 35px var(--nav-shadow)',
                     x,
                     y,
                     rotate,
                     width: '100%',
                     height: '100%',
-                    borderRadius: '16px',
+                    borderRadius: '20px',
                     //backgroundColor: '#fff',
                     overflow: 'hidden',
                     //boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -533,22 +583,30 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     boxShadow: "var(--drag-shadow)"
                 }}
             >
-                <Image
-                    src={imageSrc}
-                    alt={restaurant.name}
-                    width={300}
-                    height={400}
-                    className="w-full h-72 object-cover"
-                    draggable={false}
-                    onError={handleImageError}
-                />
-                <div className="p-3">
-                    <h3 className="text-lg font-semibold">
+                <div className="relative w-full h-64 overflow-hidden">
+                    <Image
+                        src={imageSrc}
+                        alt={restaurant.name}
+                        fill
+                        className="object-cover"
+                        draggable={false}
+                        onError={handleImageError}
+                    />
+                </div>
+                <div className="p-4">
+                    <h3 className="text-xl font-bold mb-2" style={{color: 'var(--foreground)'}}>
                         {restaurant.name}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {restaurant.parent_city} • {restaurant.avg_rating ?? 'N/A'} ({restaurant.review_count ?? 0})
-                    </p>
+                    <div className="flex items-center justify-between text-sm">
+                        <span style={{color: 'var(--muted)'}}>
+                            {restaurant.parent_city}
+                        </span>
+                        <div className="flex items-center gap-1" style={{color: 'var(--muted)'}}>
+                            <span>⭐</span>
+                            <span>{restaurant.avg_rating ?? 'N/A'}</span>
+                            <span>({restaurant.review_count ?? 0})</span>
+                        </div>
+                    </div>
                 </div>
         </motion.div>
 
@@ -561,7 +619,7 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     pointerEvents: 'none',
                     zIndex: 9999,
                     opacity: likeOpacity,
-                    background: 'linear-gradient(to right, rgba(34,197,94,0) 75%, rgba(34,197,94,0.45) 100%)',
+                    background: 'linear-gradient(to right, rgba(34,197,94,0) 75%, rgba(34,197,94,0.45) 100%)', // Green for like
                     willChange: 'opacity',
                 }}
             />
@@ -572,7 +630,7 @@ function Card({ restaurant, isTop, stackIndex, acceptedItem, rejectedItem, ignor
                     pointerEvents: 'none',
                     zIndex: 9999,
                     opacity: dislikeOpacity,
-                    background: 'linear-gradient(to left, rgba(239,68,68,0) 75%, rgba(239,68,68,0.45) 100%)',
+                    background: 'linear-gradient(to left, rgba(239,68,68,0) 75%, rgba(239,68,68,0.45) 100%)', // Red for dislike
                     willChange: 'opacity',
                 }}
             />
