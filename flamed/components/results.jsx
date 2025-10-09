@@ -352,21 +352,31 @@ export default function Results({
             </button>
             {/* Manual refresh removed – auto polling handles updates */}
             {!published && isHost && (
-              <button
-                className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${publishing ? 'animate-pulse-shrink' : ''}`}
-                onClick={publishNow}
-                disabled={publishing}
-                title="Publish results now (host only)"
-              >
-                {publishing ? '📣 Publishing…' : '📣 View results and End Game'}
-              </button>
+              <>
+                <button
+                  className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${publishing ? 'animate-pulse-shrink' : ''}`}
+                  onClick={publishNow}
+                  disabled={publishing}
+                  title="Publish results now (host only)"
+                >
+                  {publishing ? '📣 Publishing…' : '📣 View results and End Game'}
+                </button>
+                <div className="glass-card rounded-lg px-4 py-2 border-2 border-[var(--accent)] animate-fade-in">
+                  <div className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
+                    👥 Submissions: {status?.submitters ?? agg?.submitters ?? 0} / {memberCount ?? '?'}
+                  </div>
+                  <div className="text-xs opacity-70">Live count • Updates automatically</div>
+                </div>
+              </>
             )}
-            <div className="chip self-center animate-fade-in text-xs">
-              {published ? '✅ Published' : '⌛ Waiting for publish'} • You submitted: {submitted ? 'yes' : 'no'}
-            </div>
-            {typeof memberCount === 'number' && (
+            {!published && !isHost && (
               <div className="chip self-center animate-fade-in text-xs">
-                👥 {status?.submitters ?? agg?.submitters ?? 0} / {memberCount}
+                {published ? '✅ Published' : '⌛ Waiting for publish'} • You submitted: {submitted ? 'yes' : 'no'}
+              </div>
+            )}
+            {published && typeof memberCount === 'number' && (
+              <div className="chip self-center animate-fade-in text-xs">
+                👥 {status?.submitters ?? agg?.submitters ?? 0} / {memberCount} submitted
               </div>
             )}
           </>
