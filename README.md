@@ -73,7 +73,8 @@ Sótti gögn fyrir bakendan, bjó til api routes, bjó til account system, chat 
 
 ### Kiara
 #### Frontend
-xyz
+Útfærði Framer Motion animations, hannaði hybrid design system sem blandar Tailwind CSS og custom CSS variables, bjó til responsive design.
+
 
 =======
 ### Samantekt og næstu skref
