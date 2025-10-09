@@ -11,10 +11,10 @@ Daníel, Kiara, Hörður
 #### Game process:
 
 <div align="center">
-  <img src="./ReadmeMedia/HostPreferences.png" width="50%">
-  <img src="./ReadmeMedia/Invite.png" width="50%">
-  <img src="./ReadmeMedia/PlayerPreferences.png" width="50%">
-  <img src="./ReadmeMedia/Swiper.png" width="50%">
+  <img src="./ReadmeMedia/HostPreferences.png" width="48%">
+  <img src="./ReadmeMedia/Invite.png" width="48%">
+  <img src="./ReadmeMedia/PlayerPreferences.png" width="48%">
+  <img src="./ReadmeMedia/Swiper.png" width="48%">
 </div>
 
 ![Results Page Image](./ReadmeMedia/Results.png)
@@ -28,8 +28,16 @@ Daníel, Kiara, Hörður
 -->
 
 #### Social Media Aspect:
+<div align="center">
+  <img src="(./ReadmeMedia/Profile.png" width="48%">
+  <img src="./ReadmeMedia/Chat-Groups.png" width="48%">
+</div>
+
+
+<!-- Gömlu markdown myndirnar
 ![Profile Image](./ReadmeMedia/Profile.png)
 ![Chat-Group Image](./ReadmeMedia/Chat-Groups.png)
+-->
 
 ### Notendavirkni
 Hægt er að finna [myndbandið hér](./ReadmeMedia/Myndband.mp4)
