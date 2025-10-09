@@ -78,8 +78,11 @@ xyz
 =======
 ### Samantekt og næstu skref
 
-Það á eftir að búa til leikina 
-
+- Það á eftir að búa til leikina 
+- Bæta við allergens fyrir profiles, sem hefur áhrif á leit.
+- Anonymous users, sem geta gert hópa og boðið öðrum í hópa.
+- Laga restaurant gögnin til aðeins.
+- gera sér chat fyrir game logic.
 
 =======
 
