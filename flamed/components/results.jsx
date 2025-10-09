@@ -422,9 +422,9 @@ export default function Results({
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                       <div className="relative z-10 p-2 w-full text-center">
-                        <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{r?.name || p.id}</p>
+                        <p className="text-[11px] font-semibold truncate" style={{ color: 'white' }}>{r?.name || p.id}</p>
                         {dist && dist.distance_text && dist.duration_text && (
-                          <p className="text-[10px] opacity-80 truncate">{dist.distance_text} • {dist.duration_text}</p>
+                          <p className="text-[10px] opacity-80 truncate" style={{ color: 'white' }}>{dist.distance_text} • {dist.duration_text}</p>
                         )}
                       </div>
                     </button>
