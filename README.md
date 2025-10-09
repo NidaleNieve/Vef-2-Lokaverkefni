@@ -8,6 +8,8 @@ Daníel, Kiara, Hörður
 
 ![Homescreen Image](./ReadmeMedia/homescreen.png)
 
+#### Game process:
+
 <div align="center">
   <img src="./ReadmeMedia/HostPreferences.png" width="50%">
   <img src="./ReadmeMedia/Invite.png" width="50%">
@@ -15,14 +17,15 @@ Daníel, Kiara, Hörður
   <img src="./ReadmeMedia/Swiper.png" width="50%">
 </div>
 
+![Results Page Image](./ReadmeMedia/Results.png)
 
-#### Game process:
+<!-- Gömlu markdown myndirnar
 ![Host Preferences Image](./ReadmeMedia/HostPreferences.png)
 ![Invite Image](./ReadmeMedia/Invite.png)
 ![Player Preferences](./ReadmeMedia/PlayerPreferences.png)
 ![Swiping Game Image](./ReadmeMedia/Swiper.png)
 ![Results Page Image](./ReadmeMedia/Results.png)
-
+-->
 
 #### Social Media Aspect:
 ![Profile Image](./ReadmeMedia/Profile.png)
