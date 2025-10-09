@@ -80,6 +80,27 @@ see [API.md](./flamed/docs/API.md).
 
 =======
 
+## Deploy to Vercel
+
+This repository contains the Next.js app under `flamed/`. To deploy:
+
+- In Vercel, import this GitHub repo and set the Project Root to `flamed`.
+- Build Command: `next build` (default)
+- Output Directory: `.next` (default)
+- Install Command: `npm install` (default)
+
+Environment variables (set in Vercel → Settings → Environment Variables):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `GOOGLE_MAPS_API_KEY`
+
+For local development, copy `flamed/.env.example` to `flamed/.env.local` and fill the values.
+
+Once the project is connected, each push to `main` will trigger a new deployment. You can also deploy locally using Vercel CLI if needed.
+
+=======
+
 ## Sérvirkni
 #### Unanimous Pick Kerfi
 Fall sem finnur veitingastaði sem allir eru sammála um að fara í.
