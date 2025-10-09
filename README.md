@@ -38,11 +38,14 @@ see [API.md](./flamed/docs/API.md).
 =======
 
 ## Sérvirkni
-
+#### Unanimous Pick Kerfi
+Fall sem finnur veitingastaði sem allir eru sammála um að fara í.
+Það tekur inn arrays af 'Veitingastaða IDs' frá öllum spilendum og reiknar út prósentu sem sýnir hversu sammála allir spilendurnir eru um alla veitingastaðina.
 
 
 =======
 ### Daníel
+Vann í Leikja kerfinu, multiplayer logicinu, tengja backend við frontend, skipuleggja og raða verkefninu. Nánast allt Javascript.
 
 
 ### Hörður
