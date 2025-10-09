@@ -33,8 +33,8 @@ Ef að enginn er sammála, eða margir veitingastaðir fundnir, þá er hægt a�
 
 
 ## API & DATABASE Documentation
-see [DATABASE.md](./DATABASE.md).
-see [API.md](./API.md).
+see [DATABASE.md](./flamed/docs/DATABASE.md).
+see [API.md](./flamed/docs/API.md).
 
 
 
