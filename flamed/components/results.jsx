@@ -339,23 +339,20 @@ export default function Results({
         </div>
       )}
 
-      <div className="flex gap-3 flex-wrap mb-6 items-center">
-        {groupId && sessionId ? (
-          <>
-            <button
-              className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${submitted ? 'animate-subtle-ping' : ''} ${submitting ? 'animate-pulse-shrink' : ''}`}
-              onClick={submitMyPicks}
-              disabled={submitting || submitted}
-              title="Send your picks to the server for this round"
-            >
-              {submitted ? '✅ Submitted' : (submitting ? '⏳ Submitting…' : '📤 Submit picks')}
-            </button>
+      {/* Hide entire section after submission and during published results */}
+      {!(submitted && !published) && !published && (
+        <div className="flex gap-3 flex-wrap mb-6 items-center">
+          {groupId && sessionId ? (
+            <>
+              <button
+                className={`nav-item rounded-lg px-4 py-3 font-medium text-sm transition-all duration-200 ${submitted ? 'animate-subtle-ping' : ''} ${submitting ? 'animate-pulse-shrink' : ''}`}
+                onClick={submitMyPicks}
+                disabled={submitting || submitted}
+                title="Send your picks to the server for this round"
+              >
+                {submitted ? '✅ Submitted' : (submitting ? '⏳ Submitting…' : '📤 Submit picks')}
+              </button>
             {/* Manual refresh removed – auto polling handles updates */}
-            {!published && !isHost && (
-              <div className="chip self-center animate-fade-in text-xs">
-                {published ? '✅ Published' : '⌛ Waiting for publish'} • You submitted: {submitted ? 'yes' : 'no'}
-              </div>
-            )}
             {published && typeof memberCount === 'number' && (
               <div className="chip self-center animate-fade-in text-xs">
                 👥 {status?.submitters ?? agg?.submitters ?? 0} / {memberCount} submitted
@@ -372,43 +369,129 @@ export default function Results({
             🔄 Start over
           </button>
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Non-host waiting section - centered with better border */}
+      {!published && !isHost && groupId && sessionId && (
+        <div className="glass-card rounded-lg p-6 mb-6 animate-fade-in-grow border-2 border-dashed" 
+             style={{ borderColor: 'var(--accent)', background: 'var(--nav-item-bg)' }}>
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-[var(--accent)] border-t-transparent opacity-80"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg">⌛</span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+                Waiting for Host to Publish Results
+              </h3>
+              <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full" 
+                   style={{ background: 'var(--nav-item-hover)', border: '1px solid var(--accent)' }}>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                  You submitted: {submitted ? '✅ Yes' : '📤 Submitting...'}
+                </span>
+              </div>
+              
+              {typeof memberCount === 'number' && (
+                <p className="text-sm opacity-75 mt-2" style={{ color: 'var(--muted)' }}>
+                  👥 {status?.submitters ?? agg?.submitters ?? 0} / {memberCount} players have submitted
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Host submission counter and publish button - centered */}
       {!published && isHost && groupId && sessionId && (
-        <div className="glass-card rounded-lg p-6 mb-6 animate-fade-in-grow">
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <div className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>
-                  {status?.submitters ?? agg?.submitters ?? 0}
+        <div className="glass-card rounded-lg p-8 mb-6 animate-fade-in-grow border-2 border-solid" 
+             style={{ borderColor: 'var(--accent)', background: 'var(--nav-item-bg)' }}>
+          <div className="flex flex-col items-center justify-center text-center space-y-6">
+            
+            {/* Submission Progress Circle */}
+            <div className="relative w-28 h-28 flex items-center justify-center">
+              <svg className="w-28 h-28 transform -rotate-90" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  stroke="var(--nav-item-hover)"
+                  strokeWidth="6"
+                  fill="none"
+                  opacity="0.3"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  stroke="var(--accent)"
+                  strokeWidth="6"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 50}`}
+                  strokeDashoffset={`${2 * Math.PI * 50 * (1 - ((status?.submitters ?? agg?.submitters ?? 0) / (memberCount ?? 1)))}`}
+                  className="transition-all duration-500 ease-out"
+                  strokeLinecap="round"
+                />
+              </svg>
+              
+              {/* Center content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>
+                    {status?.submitters ?? agg?.submitters ?? 0}
+                  </span>
+                  <span className="text-lg opacity-60">/</span>
+                  <span className="text-2xl font-semibold opacity-80" style={{ color: 'var(--foreground)' }}>
+                    {memberCount ?? '?'}
+                  </span>
                 </div>
-                <div className="text-2xl opacity-60">/</div>
-                <div className="text-3xl font-bold opacity-80">
-                  {memberCount ?? '?'}
-                </div>
+                <span className="text-xs font-medium mt-1" style={{ color: 'var(--muted)' }}>
+                  Players
+                </span>
               </div>
-              <div className="text-sm font-medium mb-1" style={{ color: 'var(--foreground)' }}>
-                👥 Players Submitted
-              </div>
-              <div className="text-xs opacity-60">Updates live every {published ? '12' : '8'} seconds</div>
             </div>
             
+            {/* Status Text */}
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                🎯 Waiting for Players to Submit
+              </h3>
+              <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full" 
+                   style={{ background: 'var(--nav-item-hover)', border: '1px solid var(--accent)' }}>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                  Updates every {published ? '12' : '8'} seconds
+                </span>
+              </div>
+            </div>
+            
+            {/* Publish Button */}
             <button
-              className={`nav-item rounded-lg px-6 py-4 font-semibold text-base transition-all duration-200 ${publishing ? 'animate-pulse-shrink' : 'hover:scale-105'}`}
+              className={`nav-item rounded-lg px-8 py-4 font-semibold text-base transition-all duration-200 shadow-lg border-2 ${publishing ? 'animate-pulse' : 'hover:scale-105 hover:shadow-xl'}`}
               onClick={publishNow}
               disabled={publishing}
               title="Publish results now (host only)"
-              style={{ minWidth: '250px' }}
+              style={{ minWidth: '280px', borderColor: 'var(--accent)' }}
             >
-              {publishing ? '📣 Publishing…' : '📣 View Results & End Game'}
+              {publishing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent"></div>
+                  📣 Publishing Results…
+                </span>
+              ) : (
+                '📣 Publish Results & End Game'
+              )}
             </button>
           </div>
         </div>
       )}
 
       {agg && (
-        <div className="glass-card rounded-lg p-5 mb-6 animate-fade-in-grow">
+        <div className="glass-card rounded-lg p-5 mb-3 animate-fade-in-grow">
           <h3 className="font-semibold text-lg mb-4 animate-text-pulse" style={{ color: 'var(--accent)' }}>
             🤝 Group Aggregation
           </h3>
