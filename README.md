@@ -69,7 +69,7 @@ Vann í Leikja kerfinu, multiplayer logicinu, tengja backend við frontend, skip
 
 ### Hörður
 #### Backend
-xyz
+Sótti gögn fyrir bakendan, bjó til api routes, bjó til account system, chat system og filtered search fyrir gögnin.
 
 ### Kiara
 #### Frontend
