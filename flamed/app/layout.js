@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/Navbar";
+import EnsureAnonSession from './_ensure-anon-session'
+import RealtimeAuthBridge from './_realtime-auth-bridge'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +39,10 @@ export default function RootLayout({ children }) {
         className="antialiased"
         style={{ margin: 0, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif" }}
       >
+        {/* 1) ensure a session exists (creates anonymous session if needed) */}
+        <EnsureAnonSession />
+        {/* 2) sync session to Realtime (keeps websocket auth up to date) */}
+        <RealtimeAuthBridge />
         <Navbar />
         <div style={{ height: "64px" }} />
         {children}
