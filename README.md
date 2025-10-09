@@ -40,14 +40,13 @@ Daníel, Kiara, Hörður
 -->
 
 ### Notendavirkni myndband
-<!-- Gömla markdown linkurinn
 Hægt er að finna [myndbandið hér](./ReadmeMedia/Myndband.mp4)
--->
-
+<!-- Video virkar ekki á Github
 <video controls width="640">
   <source src="./ReadmeMedia/myndband.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
+-->
 
 ### Lýsing
 #### Vefapp þar sem hægt er að finna veitingastað í hóp.
