@@ -4,7 +4,25 @@
 Daníel, Kiara, Hörður
 
 =======
-## Flamed?
+## Gastroswipe?
+
+![Homescreen Image](./ReadmeMedia/homescreen.png)
+
+#### Game process:
+![Host Preferences Image](./ReadmeMedia/HostPreferences.png)
+![Invite Image](./ReadmeMedia/Invite.png)
+![Player Preferences](./ReadmeMedia/PlayerPreferences.png)
+![Swiping Game Image](./ReadmeMedia/Swiper.png)
+![Results Page Image](./ReadmeMedia/Results.png)
+
+
+
+#### Social Media Aspect:
+![Profile Image](./ReadmeMedia/Profile.png)
+![Chat-Group Image](./ReadmeMedia/Chat-Groups.png)
+
+
+
 ### Lýsing
 #### Vefapp þar sem hægt er að finna veitingastað í hóp.
 
