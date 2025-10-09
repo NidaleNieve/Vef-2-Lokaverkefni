@@ -433,8 +433,8 @@ export default function Results({
                       className={`relative flex flex-col items-center justify-end rounded-lg transition-all duration-200 overflow-hidden group border ${selectedTopId === p.id ? 'border-[var(--accent)] shadow-lg scale-[1.03]' : 'border-transparent hover:scale-[1.04]'}`}
                       style={{ height: baseHeight, width: 130, background: 'var(--nav-item-bg)' }}
                     >
-                      <div className="absolute top-1 left-1 chip text-[10px] px-2 py-1">#{rank}</div>
-                      <div className="absolute top-1 right-1 chip text-[10px] px-2 py-1">{(p.pct * 100).toFixed(0)}%</div>
+                      <div className="absolute top-1 left-1 chip text-[10px] px-2 py-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid rgba(0, 0, 0, 0.9)' }}>#{rank}</div>
+                      <div className="absolute top-1 right-1 chip text-[10px] px-2 py-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid rgba(0, 0, 0, 0.9)' }}>{(p.pct * 100).toFixed(0)}%</div>
                       {r?.square_img_url || r?.hero_img_url ? (
                         <Image
                           src={r.square_img_url || r.hero_img_url}
@@ -447,9 +447,9 @@ export default function Results({
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                       <div className="relative z-10 p-2 w-full text-center">
-                        <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{r?.name || p.id}</p>
+                        <p className="text-[11px] font-semibold truncate" style={{ color: 'white' }}>{r?.name || p.id}</p>
                         {dist && dist.distance_text && dist.duration_text && (
-                          <p className="text-[10px] opacity-80 truncate">{dist.distance_text} • {dist.duration_text}</p>
+                          <p className="text-[10px] opacity-80 truncate" style={{ color: 'white' }}>{dist.distance_text} • {dist.duration_text}</p>
                         )}
                       </div>
                     </button>
@@ -528,8 +528,8 @@ export default function Results({
                             <div className="absolute inset-0 flex items-center justify-center text-[10px] text-[var(--muted)]">No img</div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
-                          <div className="absolute top-1 left-1 chip text-[10px] px-2 py-1">#{3 + idx + 1}</div>
-                          <div className="absolute top-1 right-1 chip text-[10px] px-2 py-1">{(p.pct * 100).toFixed(0)}%</div>
+                          <div className="absolute top-1 left-1 chip text-[10px] px-2 py-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid rgba(0, 0, 0, 0.9)' }}>#{3 + idx + 1}</div>
+                          <div className="absolute top-1 right-1 chip text-[10px] px-2 py-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid rgba(0, 0, 0, 0.9)' }}>{(p.pct * 100).toFixed(0)}%</div>
                           <div className="relative z-10 p-2 text-left">
                             <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{r?.name || p.id}</p>
                             {dist?.distance_text && dist?.duration_text && (
