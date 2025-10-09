@@ -13,8 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Swipe App",
-  description: "Tinder-like swipe cards built with Next.js",
+  title: "Gastroswipe",
+  description: "Find the perfect restaurant for your group!",
+  icons: {
+    icon: "/logo_48x48.png",
+    shortcut: "/logo_48x48.png",
+    apple: "/logo_48x48.png",
+  },
 };
 
 export default function RootLayout({ children }) {
