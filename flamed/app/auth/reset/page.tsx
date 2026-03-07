@@ -1,12 +1,13 @@
-'use client'
+"use client"
+
+export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabaseBrowser } from '@/utils/supabase/browser'
 
 export default function ResetPasswordPage() {
   const supa = supabaseBrowser()
-  const search = useSearchParams()
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')

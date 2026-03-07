@@ -184,13 +184,13 @@ export default function Navbar() {
               </a>
             </li>
             <li>
-              <a 
+              <Link 
                 href="/groups" 
                 className="px-4 py-2 rounded-lg flex items-center gap-2 group bg-[var(--nav-item-bg)] hover:bg-[var(--nav-item-hover)] text-[color:var(--nav-text)] hover:shadow-sm transition-colors duration-200 ease-out will-change-transform transform-gpu hover:scale-[1.02]"
               >
                 <Users size={18} className="transition-transform duration-200 ease-out group-hover:scale-105" />
                 Groups
-              </a>
+              </Link>
             </li>
             <li className="pl-2">
               <DarkModeToggle iconSize={20} />

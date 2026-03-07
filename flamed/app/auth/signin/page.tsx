@@ -1,16 +1,17 @@
 
-'use client'
+"use client"
+
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/utils/supabase/browser'
 
 
 // main signin component
 export default function SigninPage() {
   const router = useRouter()
-  const search = useSearchParams()
   const supa = supabaseBrowser()
   const [checking, setChecking] = useState(true)
   // email input
@@ -29,7 +30,8 @@ export default function SigninPage() {
     (async () => {
       const { data: { user } } = await supa.auth.getUser()
       if (user) {
-        const rd = search?.get('redirect')
+        // read redirect param from client-side search params
+        const rd = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null
         if (rd) {
           router.replace(rd)
         } else {
@@ -39,7 +41,7 @@ export default function SigninPage() {
       }
       setChecking(false)
     })()
-  }, [supa, router, search])
+  }, [supa, router])
 
 
   // this function runs when the form is submitted
@@ -62,7 +64,7 @@ export default function SigninPage() {
         try { localStorage.setItem('auth:updated', String(Date.now())); } catch {}
         try { window.dispatchEvent(new Event('auth:updated')); } catch {}
         // redirect to target if provided, else home/profile as before
-        const rd = search?.get('redirect')
+        const rd = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null
         if (rd) {
           router.replace(rd)
         } else {

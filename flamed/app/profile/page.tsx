@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { User, Settings, LogOut, Save, Edit3, Camera, Check } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabaseBrowser } from '@/utils/supabase/browser'
 
 // pre-defined avatar seeds for consistent, diverse avatars
@@ -77,6 +78,7 @@ export default function ProfilePage() {
       }))
       setNewName(fullName)
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Load user preferences from localStorage
@@ -206,16 +208,22 @@ export default function ProfilePage() {
                   border: '3px solid var(--accent)'
                 }}>
                   {userProfile.avatarSeed ? (
-                    <img 
+                    <Image 
                       src={getAvatarUrl(userProfile.avatarSeed)} 
                       alt="Profile Avatar" 
                       className="w-full h-full object-cover"
+                      width={96}
+                      height={96}
+                      unoptimized
                     />
                   ) : userProfile.profilePicture ? (
-                    <img 
+                    <Image 
                       src={userProfile.profilePicture} 
                       alt="Profile" 
                       className="w-full h-full rounded-full object-cover"
+                      width={96}
+                      height={96}
+                      unoptimized
                     />
                   ) : (
                     <User size={40} style={{ color: 'var(--accent)' }} />
@@ -370,10 +378,13 @@ export default function ProfilePage() {
                           borderColor: userProfile.avatarSeed === seed ? 'var(--accent)' : 'transparent'
                         }}
                       >
-                        <img 
+                        <Image 
                           src={getAvatarUrl(seed)} 
                           alt={`Avatar ${seed}`}
                           className="w-full h-full object-cover"
+                          width={200}
+                          height={200}
+                          unoptimized
                         />
                       </button>
                       

@@ -267,7 +267,7 @@ export default function GroupsPage() {
             no groups yet
           </h3>
           <p style={{ color: 'var(--muted)' }}>
-            you haven't joined any groups yet.
+            you haven&apos;t joined any groups yet.
           </p>
         </div>
       )}

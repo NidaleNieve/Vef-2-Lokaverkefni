@@ -1,14 +1,14 @@
-'use client';
+"use client";
+
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import PreferencesPanel from '../../../components/preferences-panel';
 
 export default function PreferencesPage() {
-  const search = useSearchParams();
-  const spGroupId = search.get('groupId') || '';
   const router = useRouter();
-  const [groupId, setGroupId] = useState(spGroupId || '');
+  const [groupId, setGroupId] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [copyFeedback, setCopyFeedback] = useState(false);
 
@@ -28,11 +28,16 @@ export default function PreferencesPage() {
   });
 
   useEffect(() => {
-    if (!spGroupId) {
+    // Read groupId from URL on client-side to avoid useSearchParams prerender bailout
+    try {
+      const params = new URLSearchParams(window.location.search || '')
+      const g = params.get('groupId') || localStorage.getItem('lastGroupId') || ''
+      if (g) setGroupId(g)
+    } catch (e) {
       const last = localStorage.getItem('lastGroupId') || '';
       if (last) setGroupId(last);
     }
-  }, [spGroupId]);
+  }, []);
 
   useEffect(() => {
     if (!groupId) return;
